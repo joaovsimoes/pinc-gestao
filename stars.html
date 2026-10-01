@@ -73,11 +73,19 @@
   </div>
 </section>
 </main></div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 const STORAGE='pinc-gestao-v6', BACKUP_STORAGE='pinc-gestao-backup-v1', PREVIOUS='pinc-gestao-v4';
 const FALLBACK={locations:[{name:'Anápolis',code:'ANP'},{name:'Goiânia',code:'GYN'}],settings:{tolerance:10},agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}}},participants:[],absents:[],reports:[],welcomeSchedule:{}};
 let S=load(), selected={location:S.currentLocation||S.locations?.[0]?.name||'Anápolis',audience:'efetivos',day:1,shift:'matutino'}, peopleFilter='all';
 const channel='BroadcastChannel' in window?new BroadcastChannel('pinc-live-sync'):null;
+const PINC_FIREBASE_CONFIG={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e",measurementId:"G-PN2S2K265E"};
+let starsDb=null,starsSharedUnsub=null;
+function applySharedCoreStars(data){if(!data)return;if(data.agenda)S.agenda=structuredClone(data.agenda);if(Array.isArray(data.locations)&&data.locations.length)S.locations=structuredClone(data.locations);if(!S.locations.some(l=>l.name===selected.location))selected.location=S.locations[0]?.name||'';try{const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()}
+async function initSharedCoreStars(){try{if(!firebase.apps.length)firebase.initializeApp(PINC_FIREBASE_CONFIG);const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();starsDb=firebase.firestore();starsSharedUnsub=starsDb.collection('pincShared').doc('core').onSnapshot(s=>{if(s.exists)applySharedCoreStars(s.data())},e=>console.error('PINC agenda sync',e))}catch(e){console.error('PINC agenda init',e)}}
+
 function load(){try{const raw=localStorage.getItem(STORAGE)||localStorage.getItem(BACKUP_STORAGE);return migrate(raw?JSON.parse(raw):structuredClone(FALLBACK))}catch(e){return structuredClone(FALLBACK)}}
 function migrate(x){x=x&&typeof x==='object'?x:structuredClone(FALLBACK);if(!x.locations?.length)x.locations=structuredClone(FALLBACK.locations);if(!x.agenda)x.agenda=structuredClone(FALLBACK.agenda);if(!x.agenda.aprendizes?.matutino)x.agenda.aprendizes=structuredClone(FALLBACK.agenda.aprendizes);if(!x.live)x.live=structuredClone(FALLBACK.live);if(!x.participants)x.participants=structuredClone(FALLBACK.participants);if(!x.absents)x.absents=[];if(!x.reports)x.reports=[];if(!x.settings)x.settings={tolerance:10,notificationLead:10,desktopNotifications:false};if(x.settings.notificationLead==null)x.settings.notificationLead=10;if(!x.welcomeSchedule)x.welcomeSchedule={};const addMin=(start,mins)=>{const p=String(start||'00:00').split(':').map(Number),t=((p[0]*60+p[1]+(+mins||0))%1440+1440)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};[x.agenda?.efetivos?.[1],x.agenda?.efetivos?.[2],x.agenda?.aprendizes?.matutino,x.agenda?.aprendizes?.vespertino].forEach(g=>(g||[]).forEach(s=>{if(Array.isArray(s)&&!s[5])s[5]=addMin(s[2],s[3])}));return x}
 if(channel)channel.onmessage=e=>{S=migrate(e.data);renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()};
@@ -123,6 +131,6 @@ function notificationPermissionLocal(){try{return parent&&parent.PINC_NOTIFICATI
 function updateNotificationBell(){const b=document.getElementById('notificationBell');if(!b)return;const p=notificationPermissionLocal(),enabled=localStorage.getItem('pinc-notifications-local')==='true';b.classList.toggle('active',p==='granted'&&enabled);b.classList.toggle('blocked',p==='denied');b.title=p==='granted'&&enabled?'Notificações ativas':p==='denied'?'Notificações bloqueadas no navegador':'Ativar notificações no computador'}
 async function requestLocalNotifications(){let p='unsupported';try{if(parent&&parent.PINC_REQUEST_NOTIFICATIONS)p=await parent.PINC_REQUEST_NOTIFICATIONS();else if('Notification'in window)p=Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){p='blocked'}if(p==='granted'){localStorage.setItem('pinc-notifications-local','true');try{if(parent&&parent.PINC_NOTIFY)parent.PINC_NOTIFY('PINC • Notificações ativadas','Você receberá avisos do Programa de Integração de Novos Colaboradores neste computador.','notifications-enabled')}catch(e){}starsNotifyToast('Notificações ativadas neste computador.')}else if(p==='denied'){localStorage.removeItem('pinc-notifications-local');starsNotifyToast('As notificações estão bloqueadas nas permissões do navegador.')}else{starsNotifyToast('Este navegador não oferece notificações para esta página.')}updateNotificationBell()}
 
-renderLocations();chooseAudience('efetivos');updateNotificationBell();
+renderLocations();chooseAudience('efetivos');updateNotificationBell();initSharedCoreStars();
 </script>
 </body></html>

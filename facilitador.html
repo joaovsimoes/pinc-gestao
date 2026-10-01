@@ -91,6 +91,10 @@ const LOCK_TTL_MS=90000, LOCK_HEARTBEAT_MS=15000;
 const FAC_SESSION_KEY='pinc-facilitador-session-v1';
 let FAC_SESSION=sessionStorage.getItem(FAC_SESSION_KEY);if(!FAC_SESSION){FAC_SESSION=(crypto.randomUUID?crypto.randomUUID():'sess-'+Date.now()+'-'+Math.random().toString(16).slice(2));sessionStorage.setItem(FAC_SESSION_KEY,FAC_SESSION)}
 let lockDb=null,lockAuthUser=null,lockUnsub=null,lockHeartbeatTimer=null,remoteLock=null,lastObservedLive=null,lockReady=false,lockInitPromise=null;
+let sharedCoreUnsub=null;
+function applySharedCoreFac(data){if(!data)return;if(data.agenda)S.agenda=structuredClone(data.agenda);if(Array.isArray(data.locations)&&data.locations.length)S.locations=structuredClone(data.locations);if(!S.locations.some(l=>l.name===selected.location))selected.location=S.locations[0]?.name||'';try{const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}renderLocations();if(!operationView.classList.contains('hidden'))renderOperation()}
+async function initSharedCoreFac(){try{if(!await initCloudLock())return;if(sharedCoreUnsub)return;sharedCoreUnsub=lockDb.collection('pincShared').doc('core').onSnapshot(s=>{if(s.exists)applySharedCoreFac(s.data())},e=>console.error('PINC agenda sync',e))}catch(e){console.error('PINC agenda init',e)}}
+
 function lockPeriod(){return selected.audience==='efetivos'?String(selected.day):selected.shift}
 function lockContextKey(){return [selected.location,selected.audience,lockPeriod()].join('|').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9|_-]/g,'_')}
 function lockDoc(){return lockDb.collection('pincLocks').doc(lockContextKey())}
@@ -156,5 +160,5 @@ function notificationPermissionLocal(){try{return parent&&parent.PINC_NOTIFICATI
 function updateNotificationBell(){const b=document.getElementById('notificationBell');if(!b)return;const p=notificationPermissionLocal(),enabled=localStorage.getItem('pinc-notifications-local')==='true';b.classList.toggle('active',p==='granted'&&enabled);b.classList.toggle('blocked',p==='denied');b.title=p==='granted'&&enabled?'Notificações ativas':p==='denied'?'Notificações bloqueadas no navegador':'Ativar notificações no computador'}
 async function requestLocalNotifications(){let p='unsupported';try{if(parent&&parent.PINC_REQUEST_NOTIFICATIONS)p=await parent.PINC_REQUEST_NOTIFICATIONS();else if('Notification'in window)p=Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){p='blocked'}if(p==='granted'){localStorage.setItem('pinc-notifications-local','true');try{if(parent&&parent.PINC_NOTIFY)parent.PINC_NOTIFY('PINC • Notificações ativadas','Você receberá avisos do Programa de Integração de Novos Colaboradores neste computador.','notifications-enabled')}catch(e){}showToast('Notificações ativadas neste computador.')}else if(p==='denied'){localStorage.removeItem('pinc-notifications-local');showToast('As notificações estão bloqueadas nas permissões do navegador.')}else{showToast('Este navegador não oferece notificações para esta página.')}updateNotificationBell()}
 
-renderLocations();chooseAudience('efetivos');updateNotificationBell();
+renderLocations();chooseAudience('efetivos');updateNotificationBell();initSharedCoreFac();
 </script><script src="https://open.spotify.com/embed/iframe-api/v1" async></script></body></html>
