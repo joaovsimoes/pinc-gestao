@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /pincLocks/{lockId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && (
+                      resource.data.ownerUid == request.auth.uid
+                      || resource.data.heartbeatAt < request.time - duration.value(2, 'm')
+                    );
+      allow delete: if request.auth != null
+                    && resource.data.ownerUid == request.auth.uid;
+    }
+    match /pincMeta/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
