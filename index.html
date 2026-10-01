@@ -103,7 +103,7 @@ const PINC_MODULES={gestao:'gestao.html',facilitador:'facilitador.html',stars:'s
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
-const PINC_STATE_KEY='pinc-gestao-v5';
+const PINC_STATE_KEY='pinc-gestao-v6';
 const PINC_NOTIFIED_KEY='pinc-desktop-notified-v1';
 function pincGetState(){try{return JSON.parse(localStorage.getItem(PINC_STATE_KEY)||'null')}catch(e){return null}}
 function pincShiftTime(time,minutes){if(!time||!/^([01]?\d|2[0-3]):[0-5]\d$/.test(time))return null;const [h,m]=time.split(':').map(Number);let t=(h*60+m+minutes)%1440;if(t<0)t+=1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
