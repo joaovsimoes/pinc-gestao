@@ -10,3 +10,6 @@ Portal integrado do Programa de Integração de Novos Colaboradores.
 - `firebase.json` — configuração do Firebase Hosting
 
 Firebase Project ID: `pinc-gestao`
+
+## Deploy
+Deploy automático configurado com GitHub Actions para Firebase Hosting.
