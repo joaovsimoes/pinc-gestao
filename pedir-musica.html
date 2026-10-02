@@ -44,7 +44,7 @@ button{width:100%;height:54px;border:0;border-radius:15px;background:linear-grad
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 const cfg={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e"};
-const locationName=(new URLSearchParams(location.search).get('localidade')||'Anápolis').slice(0,80);locationLabel.textContent='PINC • '+locationName;
+const locationName=(new URLSearchParams(location.search).get('localidade')||'Anápolis').slice(0,80),locationLabel=document.getElementById('locationLabel'),error=document.getElementById('error'),song=document.getElementById('song'),artist=document.getElementById('artist'),requester=document.getElementById('requester'),sendBtn=document.getElementById('sendBtn'),musicForm=document.getElementById('musicForm'),success=document.getElementById('success');locationLabel.textContent='PINC • '+locationName;
 let db=null,authUser=null,busy=false;
 async function init(){try{if(!firebase.apps.length)firebase.initializeApp(cfg);const auth=firebase.auth();const cred=auth.currentUser?{user:auth.currentUser}:await auth.signInAnonymously();authUser=cred.user;db=firebase.firestore();locationLabel.textContent='PINC • '+locationName+' • pronto para receber pedidos'}catch(e){console.error(e);error.textContent='Não foi possível conectar agora. Tente novamente em instantes.'}}
 init();
