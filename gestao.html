@@ -55,6 +55,23 @@
 .att-na{font-size:9px;color:#98a1b3;font-weight:700}
 .attendance-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .attendance-table td,.attendance-table th{vertical-align:middle}
+.music-layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:14px}
+.music-qr-card{padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.music-qr-card h3{margin:0 0 6px;font-size:15px}.music-qr-card p{margin:0 0 16px;color:var(--muted);font-size:10px;line-height:1.5}
+.music-qr-box{width:220px;height:220px;display:grid;place-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:0 8px 24px rgba(25,34,61,.06)}
+.music-link{margin-top:12px;width:100%;padding:9px 10px;border-radius:9px;background:#f7f8fc;color:#68738a;font-size:8px;word-break:break-all}
+.music-queue{padding:0;overflow:hidden}.music-queue-head{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.music-queue-head h3{margin:0;font-size:14px}.music-queue-head span{font-size:9px;color:var(--muted)}
+.music-request{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line)}
+.music-request:last-child{border-bottom:0}.music-note{width:38px;height:38px;border-radius:12px;background:var(--purpleSoft);color:var(--purple);display:grid;place-items:center;font-size:17px;font-weight:900}
+.music-request strong{display:block;font-size:11px;color:var(--text);margin-bottom:3px}.music-request .meta{font-size:8px;color:var(--muted);line-height:1.5}
+.music-request .time{font-size:8px;color:#8e97a8;white-space:nowrap}.music-empty{padding:34px;text-align:center;color:var(--muted);font-size:10px}
+.music-fullscreen{position:fixed;inset:0;background:rgba(22,27,42,.92);z-index:999;display:flex;align-items:center;justify-content:center;padding:30px}
+.music-fullscreen.hidden{display:none}.music-fullscreen-card{width:min(560px,94vw);background:#fff;border-radius:26px;padding:28px;text-align:center;position:relative}
+.music-fullscreen-card h2{margin:6px 0 8px;font-size:28px}.music-fullscreen-card p{margin:0 0 18px;color:var(--muted)}.music-fullscreen-card .qr-big{width:330px;height:330px;max-width:72vw;max-height:72vw;margin:0 auto;display:grid;place-items:center}
+.music-fullscreen-card .close-full{position:absolute;right:16px;top:16px;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:18px}
+@media(max-width:980px){.music-layout{grid-template-columns:1fr}.music-qr-card{align-items:flex-start;text-align:left}.music-qr-box{align-self:center}}
+
 @media(max-width:900px){.attendance-kpis{grid-template-columns:repeat(2,1fr)}.attendance-grid{grid-template-columns:1fr}.attendance-controls{justify-content:flex-start}}
 .registry-result{font-size:9px;color:#8a93a4;white-space:nowrap}.table-wrap table th:last-child,.table-wrap table td:last-child{min-width:220px}@media(max-width:800px){.registry-tools{grid-template-columns:1fr}.registry-result{display:none}.presence-actions{min-width:195px}}.import-preview{max-height:250px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}.import-preview table{min-width:620px}
 </style>
@@ -66,6 +83,7 @@
     <button class="active" data-view="agenda"><span class="ico">▦</span><b>Agenda</b></button>
     <button data-view="registros"><span class="ico">◉</span><b>Registros</b></button>
     <button data-view="presenca"><span class="ico">✓</span><b>Presença</b></button>
+    <button data-view="musicas"><span class="ico">♫</span><b>Músicas</b></button>
     <button data-view="relatorios"><span class="ico">↗</span><b>Relatórios</b></button>
     <button data-view="acolhimento"><span class="ico">✦</span><b>Acolhimento</b></button>
     <button data-view="configuracoes"><span class="ico">⚙</span><b>Configurações</b></button>
@@ -124,6 +142,30 @@
     </table>
   </div>
 </section>
+<section class="view" id="musicas">
+  <div class="page-head">
+    <div><h2>Músicas</h2><p>Pedidos musicais enviados pelo QR Code durante o PINC.</p></div>
+    <div class="head-actions">
+      <button class="btn secondary" onclick="copyMusicRequestLink()">⧉ Copiar link</button>
+      <button class="btn primary" onclick="openMusicQrFullscreen()">▣ Exibir QR Code</button>
+    </div>
+  </div>
+  <div class="music-layout">
+    <div class="card music-qr-card">
+      <h3>Peça sua música 🎵</h3>
+      <p>Projete este QR Code na sala. Os pedidos aparecem aqui em tempo real.</p>
+      <div class="music-qr-box" id="musicQr"></div>
+      <div class="music-link" id="musicRequestLink"></div>
+    </div>
+    <div class="card music-queue">
+      <div class="music-queue-head">
+        <div><h3>Fila de pedidos</h3><span id="musicQueueSubtitle">Aguardando pedidos...</span></div>
+        <span class="status green" id="musicLiveStatus">● Ao vivo</span>
+      </div>
+      <div id="musicQueue"><div class="music-empty">Nenhum pedido musical recebido ainda.</div></div>
+    </div>
+  </div>
+</section>
 <section class="view" id="relatorios">
   <div class="page-head"><div><h2>Relatórios</h2><p>Desvios do cronograma e oportunidades de melhoria.</p></div><div class="head-actions"><span class="chip" id="toleranceChip">Tolerância ±10 min</span><button class="btn primary" onclick="downloadReportPDF()">↓ Emitir PDF</button></div></div>
   <div class="kpis"><div class="card kpi"><small>Em atraso</small><strong id="lateCount">0</strong><span>acima da tolerância</span></div><div class="card kpi"><small>Adiantadas</small><strong id="earlyCount">0</strong><span>abaixo do previsto</span></div><div class="card kpi"><small>No esperado</small><strong id="okCount">0</strong><span>dentro da margem</span></div><div class="card kpi"><small>Saldo</small><strong id="balance">0 min</strong><span>cronograma analisado</span></div></div>
@@ -170,12 +212,23 @@
   </div>
 </section>
 </div></main></div>
+<div class="music-fullscreen hidden" id="musicQrFullscreen">
+  <div class="music-fullscreen-card">
+    <button class="close-full" onclick="closeMusicQrFullscreen()">×</button>
+    <div style="font-size:12px;font-weight:900;color:var(--purple);text-transform:uppercase;letter-spacing:.08em">PINC • Peça sua música</div>
+    <h2>Qual música toca agora?</h2>
+    <p>Aponte a câmera do celular para o QR Code e mande seu pedido.</p>
+    <div class="qr-big" id="musicQrBig"></div>
+    <div class="music-link" id="musicRequestLinkBig"></div>
+  </div>
+</div>
 <div class="modal-backdrop" id="modal"><div class="modal"><div class="modal-head"><h3 id="modalTitle">Modal</h3><button class="icon-btn" onclick="closeModal()">×</button></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></div></div>
 <div class="toast" id="toast"></div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
@@ -183,6 +236,17 @@ const PREVIOUS_STORAGE='pinc-gestao-v4';
 const DEFAULT={audience:'efetivos',day:1,apprenticeShift:'matutino',mailCount:0,currentLocation:'Anápolis',settings:{tolerance:10,email:'',emails:[],teamsEnabled:false,teamsWebhook:'',teamsChannel:'',outlookDraftWebhook:'',desktopNotifications:false,notificationLead:10},released:{efetivos:false,aprendizes:false},locations:[{id:'loc1',name:'Anápolis',code:'ANP'},{id:'loc2',name:'Goiânia',code:'GYN'}],accesses:[],agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}}},absents:[],reports:[],participants:[],welcomeSchedule:{}};
 let S=load();
 const PINC_FIREBASE_CONFIG={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e",measurementId:"G-PN2S2K265E"};
+let musicDb=null,musicAuth=null,musicRequestsUnsub=null,musicQrInstance=null,musicQrBigInstance=null,musicRequestsCache=[];
+function musicRequestUrl(){return 'https://www.gestaopinc.com.br/pedir-musica.html?localidade='+encodeURIComponent(S.currentLocation||'Anápolis')}
+function renderMusicQr(){const url=musicRequestUrl(),box=g('musicQr'),big=g('musicQrBig');if(g('musicRequestLink'))g('musicRequestLink').textContent=url;if(g('musicRequestLinkBig'))g('musicRequestLinkBig').textContent=url;if(typeof QRCode==='undefined')return;if(box){box.innerHTML='';musicQrInstance=new QRCode(box,{text:url,width:194,height:194,colorDark:'#171d2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H})}if(big&&!g('musicQrFullscreen')?.classList.contains('hidden')){big.innerHTML='';musicQrBigInstance=new QRCode(big,{text:url,width:320,height:320,colorDark:'#171d2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H})}}
+async function ensureMusicFirebase(){if(musicDb)return true;try{if(!firebase.apps.length)firebase.initializeApp(PINC_FIREBASE_CONFIG);musicAuth=firebase.auth();if(!musicAuth.currentUser)await musicAuth.signInAnonymously();musicDb=firebase.firestore();return true}catch(e){console.error('Music Firebase',e);return false}}
+function musicTimeLabel(d){const ms=d?.createdAt?.toMillis?.()||d?.createdAtMillis||0;if(!ms)return 'agora';return new Date(ms).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+function renderMusicRequests(){const rows=[...musicRequestsCache].sort((a,b)=>(b.createdAt?.toMillis?.()||b.createdAtMillis||0)-(a.createdAt?.toMillis?.()||a.createdAtMillis||0));const q=g('musicQueue');if(q)q.innerHTML=rows.length?rows.map(r=>`<div class="music-request"><div class="music-note">♫</div><div><strong>${esc(r.song||'Música sem nome')}</strong><div class="meta">${esc(r.artist||'Artista não informado')}${r.requester?' • pedido por '+esc(r.requester):''}</div></div><div class="time">${musicTimeLabel(r)}</div></div>`).join(''):'<div class="music-empty">Nenhum pedido musical recebido ainda.</div>';if(g('musicQueueSubtitle'))g('musicQueueSubtitle').textContent=rows.length?`${rows.length} pedido${rows.length===1?'':'s'} recebido${rows.length===1?'':'s'} em ${S.currentLocation}`:'Aguardando pedidos em '+S.currentLocation}
+async function initMusicRequests(){renderMusicQr();if(!await ensureMusicFirebase()){if(g('musicLiveStatus'))g('musicLiveStatus').textContent='Offline';return}if(musicRequestsUnsub){musicRequestsUnsub();musicRequestsUnsub=null}musicRequestsUnsub=musicDb.collection('musicRequests').where('location','==',S.currentLocation).limit(100).onSnapshot(s=>{musicRequestsCache=s.docs.map(d=>({id:d.id,...d.data()}));renderMusicRequests();if(g('musicLiveStatus'))g('musicLiveStatus').textContent='● Ao vivo'},e=>{console.error('Music requests',e);if(g('musicLiveStatus'))g('musicLiveStatus').textContent='Sem acesso'})}
+async function copyMusicRequestLink(){const url=musicRequestUrl();try{await navigator.clipboard.writeText(url);toast('Link dos pedidos musicais copiado.')}catch(e){toast(url)}}
+function openMusicQrFullscreen(){g('musicQrFullscreen')?.classList.remove('hidden');renderMusicQr()}
+function closeMusicQrFullscreen(){g('musicQrFullscreen')?.classList.add('hidden');const big=g('musicQrBig');if(big)big.innerHTML=''}
+
 let sharedDb=null,sharedRef=null,sharedUnsub=null,sharedReady=false,sharedSyncTimer=null,lastSharedSignature='';
 function sharedSignature(){try{return JSON.stringify({agenda:S.agenda,locations:S.locations,reports:S.reports})}catch(e){return''}}
 function localHasAgenda(){const a=S.agenda||{};return !!((a.efetivos?.[1]?.length||0)+(a.efetivos?.[2]?.length||0)+(a.aprendizes?.matutino?.length||0)+(a.aprendizes?.vespertino?.length||0))}
@@ -209,7 +273,7 @@ if(syncChannel)syncChannel.onmessage=e=>{const incoming=migrate(e.data);if(incom
 window.addEventListener('storage',e=>{if((e.key===STORAGE||e.key===BACKUP_STORAGE)&&e.newValue){const incoming=migrate(JSON.parse(e.newValue)),incomingAt=Number(incoming?._meta?.updatedAt||0),currentAt=Number(S?._meta?.updatedAt||0);if(incomingAt>=currentAt){S=incoming;renderAgenda();renderReports();renderWelcome()}}});
 window.addEventListener('beforeunload',()=>persist({broadcast:false}));
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2300)}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.view).classList.add('active');if(b.dataset.view==='registros')renderAbs();if(b.dataset.view==='presenca')renderAttendance();if(b.dataset.view==='acolhimento')renderWelcome();if(b.dataset.view==='relatorios')renderReports();if(b.dataset.view==='configuracoes')renderSettingsLists();})
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.view).classList.add('active');if(b.dataset.view==='registros')renderAbs();if(b.dataset.view==='presenca')renderAttendance();if(b.dataset.view==='musicas')initMusicRequests();if(b.dataset.view==='acolhimento')renderWelcome();if(b.dataset.view==='relatorios')renderReports();if(b.dataset.view==='configuracoes')renderSettingsLists();})
 function list(){return S.audience==='efetivos'?S.agenda.efetivos[S.day]:S.agenda.aprendizes[S.apprenticeShift]}
 function currentLive(){return S.audience==='efetivos'?(S.live.efetivos[S.day]||{completed:0,activeIndex:0,activePct:0}):(S.live.aprendizes[S.apprenticeShift]||{completed:0,activeIndex:0,activePct:0})}
 function progressData(){const a=list(),l=currentLive();const total=a.reduce((s,x)=>s+(+x[3]||0),0)||1;let done=0;for(let i=0;i<Math.min(l.completed,a.length);i++)done+=+a[i][3]||0;if(l.activeIndex<a.length&&l.activeIndex>=l.completed)done+=(+a[l.activeIndex][3]||0)*Math.max(0,Math.min(100,+l.activePct||0))/100;const pct=Math.min(100,Math.round(done/total*100));const current=a[l.activeIndex]?.[0]||((l.completed>=a.length)?'PINC concluído':'Aguardando início');return{pct,current,completed:Math.min(l.completed,a.length),totalStages:a.length}}
@@ -318,7 +382,7 @@ function confirmRelease(){const group=window.__pendingRelease;if(!group)return c
 function renderWelcome(){const q=(cdcSearch?.value||'').replace(/\D/g,'');if(cdcSearch&&cdcSearch.value!==q)cdcSearch.value=q;const rows=S.participants.filter(p=>p.present&&p.location===S.currentLocation&&(!q||String(p.cdc).includes(q)));welcomeTable.innerHTML=rows.length?rows.map((p,i)=>{const idx=S.participants.indexOf(p);return `<tr><td><strong>${p.name}</strong><div style="font-size:8px;color:#8a93a4;margin-top:2px">${p.matricula}</div></td><td>${p.cdc}</td><td>${p.role}</td><td>${p.manager}</td><td>${p.audience}</td><td>${p.welcomeDone?'<span class="status green">Acolhido</span>':'<span class="status amber">Pendente</span>'}</td><td><button class="btn primary" ${p.welcomeDone?'disabled':''} onclick="confirmWelcome(${idx})">${p.welcomeDone?'Confirmado':'Confirmar'}</button></td></tr>`}).join(''):`<tr><td colspan="7" style="text-align:center;color:#8a93a4;padding:22px">Nenhum colaborador presente encontrado para este CDC.</td></tr>`}
 function confirmWelcome(i){const p=S.participants[i];if(!p)return;window.__pendingWelcome=i;confirmDialog('Confirmar acolhimento',`Confirma que “${p.name}” foi acolhido?`,'Confirmar acolhimento','confirmWelcomeNow()',false)}
 function confirmWelcomeNow(){const i=window.__pendingWelcome;if(Number.isInteger(i)&&S.participants[i]){S.participants[i].welcomeDone=true;persist();renderWelcome()}window.__pendingWelcome=null;closeModal();successDialog('Acolhimento confirmado','O colaborador foi marcado como acolhido.')}
-function renderLocationSelect(){const auth=(window.parent&&window.parent.PINC_AUTH_USER)||null;const locs=auth?.location?S.locations.filter(l=>l.name===auth.location):S.locations;if(auth?.location)S.currentLocation=auth.location;topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!!auth?.location}function setLocation(v){const auth=(window.parent&&window.parent.PINC_AUTH_USER)||null;if(auth?.location&&v!==auth.location){toast('Seu acesso está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}S.currentLocation=v;persist();renderAbs();renderAttendance();renderWelcome();if(g('welcomeAudience'))changeWelcomeAudience();toast('Localidade alterada.')}
+function renderLocationSelect(){const auth=(window.parent&&window.parent.PINC_AUTH_USER)||null;const locs=auth?.location?S.locations.filter(l=>l.name===auth.location):S.locations;if(auth?.location)S.currentLocation=auth.location;topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!!auth?.location}function setLocation(v){const auth=(window.parent&&window.parent.PINC_AUTH_USER)||null;if(auth?.location&&v!==auth.location){toast('Seu acesso está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}S.currentLocation=v;persist();renderAbs();renderAttendance();renderWelcome();if(g('musicas')?.classList.contains('active'))initMusicRequests();if(g('welcomeAudience'))changeWelcomeAudience();toast('Localidade alterada.')}
 function renderSettingsLists(){locationList.innerHTML=S.locations.map((l,i)=>`<div class="compact-row"><div><strong>${l.name}</strong><span>Código: ${l.code}</span></div><div style="display:flex;gap:6px"><span class="tag">Localidade</span>${S.locations.length>1?`<button class="icon-btn delete" onclick="removeLocation(${i})">×</button>`:''}</div></div>`).join('');accessList.innerHTML=S.accesses.map((u,i)=>`<div class="compact-row"><div><strong>${u.name}</strong><span>${u.email} • usuário: ${esc(u.username||'—')} • ${u.location}</span></div><div style="display:flex;gap:6px;align-items:center"><span class="status ${u.active?'green':'red'}">${u.active?'Ativo':'Inativo'}</span><button class="icon-btn" title="Redefinir senha" onclick="resetAccessPassword(${i})">⌘</button><button class="icon-btn" onclick="toggleAccess(${i})">↻</button><button class="icon-btn delete" onclick="removeAccess(${i})">×</button></div></div>`).join('');if(g('welcomeAudience'))changeWelcomeAudience();updateNotificationStatus()}
 function openLocationModal(){openDialog('Nova localidade',`<div class="form-grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Nome da localidade</label><input id="locName" placeholder="Ex.: Brasília"></div><div class="field"><label>Código</label><input id="locCode" placeholder="Ex.: BSB"></div></div>`,`<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveLocation()">Cadastrar</button>`)}
 function saveLocation(){const n=g('locName')?.value.trim(),c=g('locCode')?.value.trim().toUpperCase();if(!n||!c)return toast('Informe nome e código.');S.locations.push({id:'loc'+Date.now(),name:n,code:c});closeModal();renderLocationSelect();renderSettingsLists();persist();successDialog('Localidade cadastrada','A nova localidade foi adicionada com sucesso.')}

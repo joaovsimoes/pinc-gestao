@@ -21,6 +21,20 @@ service cloud.firestore {
                             && request.resource.data.keys().hasOnly(['agenda','locations','reports','updatedAtMillis','updatedBy']);
       allow delete: if false;
     }
+    match /musicRequests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['song','artist','requester','location','ownerUid','createdAt','createdAtMillis'])
+                    && request.resource.data.song is string
+                    && request.resource.data.artist is string
+                    && request.resource.data.location is string
+                    && request.resource.data.song.size() > 0
+                    && request.resource.data.song.size() <= 100
+                    && request.resource.data.artist.size() > 0
+                    && request.resource.data.artist.size() <= 100;
+      allow update, delete: if false;
+    }
     match /pincMeta/{docId} {
       allow read: if request.auth != null;
       allow write: if false;

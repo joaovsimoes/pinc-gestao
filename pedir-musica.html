@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Peça sua música • PINC</title>
+<meta name="theme-color" content="#7417ff">
+<link rel="icon" type="image/png" href="/pinc-icon-64.png?v=5">
+<style>
+:root{--purple:#7417ff;--purple2:#a243ff;--pink:#ff1493;--text:#20283a;--muted:#778198;--line:#e8ebf3}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 10% 10%,rgba(255,20,147,.09),transparent 35%),radial-gradient(circle at 90% 90%,rgba(116,23,255,.12),transparent 40%),#f7f8fc;color:var(--text);display:flex;align-items:center;justify-content:center;padding:22px}
+.card{width:min(520px,100%);background:#fff;border:1px solid rgba(226,229,238,.9);border-radius:28px;padding:26px;box-shadow:0 24px 70px rgba(31,38,66,.1)}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:26px}.brand img{width:50px;height:50px}.brand b{font-size:24px;color:var(--purple);letter-spacing:.02em}.brand span{display:block;font-size:11px;color:var(--muted);font-weight:650}
+.pill{display:inline-flex;padding:7px 11px;border-radius:999px;background:#f3ecff;color:var(--purple);font-size:11px;font-weight:800;margin-bottom:12px}
+h1{font-size:32px;line-height:1.05;margin:0 0 9px;letter-spacing:-.035em}p{margin:0 0 22px;color:var(--muted);font-size:14px;line-height:1.55}
+.field{margin-bottom:14px}.field label{display:block;font-size:11px;font-weight:800;margin-bottom:7px;color:#485167}.field input{width:100%;height:52px;border:1px solid var(--line);border-radius:14px;padding:0 15px;font-size:15px;outline:none;background:#fbfcff}.field input:focus{border-color:#b89aff;box-shadow:0 0 0 4px rgba(116,23,255,.07);background:#fff}
+button{width:100%;height:54px;border:0;border-radius:15px;background:linear-gradient(90deg,var(--purple),var(--purple2));color:#fff;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 12px 25px rgba(116,23,255,.2)}button:disabled{opacity:.55;cursor:wait}
+.loc{font-size:11px;color:#8b94a6;margin-top:14px;text-align:center}.success{display:none;text-align:center;padding:24px 4px}.success.show{display:block}.form.hidden{display:none}.success .icon{width:72px;height:72px;border-radius:22px;background:#ecfff7;color:#0b9a70;display:grid;place-items:center;font-size:34px;margin:0 auto 18px}.success h2{margin:0 0 8px}.success p{margin-bottom:18px}.again{background:#fff;color:var(--purple);border:1px solid #d9c6ff;box-shadow:none}.error{min-height:18px;color:#d84a61;font-size:11px;font-weight:700;margin:5px 0 9px}
+@media(max-width:520px){body{align-items:flex-start;padding:14px}.card{margin-top:12px;border-radius:22px;padding:20px}h1{font-size:29px}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand"><img src="/pinc-icon-192.png?v=5" alt="PINC"><div><b>PINC</b><span>Programa de Integração de Novos Colaboradores</span></div></div>
+  <div class="form" id="musicForm">
+    <div class="pill">🎵 PEDIDO MUSICAL</div>
+    <h1>Qual música não pode faltar?</h1>
+    <p>Manda seu pedido e ele entra direto na fila do time PINC.</p>
+    <div class="field"><label>Música</label><input id="song" maxlength="100" autocomplete="off" placeholder="Ex.: Amei Te Ver"></div>
+    <div class="field"><label>Artista</label><input id="artist" maxlength="100" autocomplete="off" placeholder="Ex.: Tiago Iorc"></div>
+    <div class="field"><label>Seu nome <span style="font-weight:500;color:#98a1b3">(opcional)</span></label><input id="requester" maxlength="60" autocomplete="off" placeholder="Como quer aparecer na fila?"></div>
+    <div class="error" id="error"></div>
+    <button id="sendBtn" onclick="sendRequest()">Pedir essa música</button>
+    <div class="loc" id="locationLabel"></div>
+  </div>
+  <div class="success" id="success">
+    <div class="icon">✓</div>
+    <h2>Pedido enviado!</h2>
+    <p>Já chegou para o time PINC. Agora é torcer para entrar na próxima sequência. 🎧</p>
+    <button class="again" onclick="sendAnother()">Pedir outra música</button>
+  </div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>
+const cfg={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e"};
+const locationName=(new URLSearchParams(location.search).get('localidade')||'Anápolis').slice(0,80);locationLabel.textContent='PINC • '+locationName;
+let db=null,authUser=null,busy=false;
+async function init(){try{if(!firebase.apps.length)firebase.initializeApp(cfg);const auth=firebase.auth();const cred=auth.currentUser?{user:auth.currentUser}:await auth.signInAnonymously();authUser=cred.user;db=firebase.firestore()}catch(e){error.textContent='Não foi possível conectar agora. Tente novamente em instantes.'}}
+init();
+async function sendRequest(){if(busy)return;const s=song.value.trim(),a=artist.value.trim(),r=requester.value.trim();error.textContent='';if(!s)return error.textContent='Informe o nome da música.';if(!a)return error.textContent='Informe o artista.';if(!db||!authUser)return error.textContent='A conexão ainda está iniciando. Tente novamente em alguns segundos.';const last=Number(localStorage.getItem('pinc-last-music-request')||0);if(Date.now()-last<15000)return error.textContent='Seu último pedido acabou de chegar. Aguarde alguns segundos para enviar outro.';busy=true;sendBtn.disabled=true;sendBtn.textContent='Enviando...';try{await db.collection('musicRequests').add({song:s,artist:a,requester:r,location:locationName,ownerUid:authUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp(),createdAtMillis:Date.now()});localStorage.setItem('pinc-last-music-request',String(Date.now()));musicForm.classList.add('hidden');success.classList.add('show')}catch(e){console.error(e);error.textContent='Não consegui enviar o pedido agora. Tente novamente.'}finally{busy=false;sendBtn.disabled=false;sendBtn.textContent='Pedir essa música'}}
+function sendAnother(){song.value='';artist.value='';requester.value='';success.classList.remove('show');musicForm.classList.remove('hidden');song.focus()}
+</script>
+</body>
+</html>
