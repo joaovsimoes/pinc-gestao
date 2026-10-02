@@ -18,7 +18,7 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create, update: if request.auth != null
                             && docId == 'core'
-                            && request.resource.data.keys().hasOnly(['agenda','locations','updatedAtMillis','updatedBy']);
+                            && request.resource.data.keys().hasOnly(['agenda','locations','reports','updatedAtMillis','updatedBy']);
       allow delete: if false;
     }
     match /pincMeta/{docId} {
