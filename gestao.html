@@ -236,6 +236,26 @@ const BACKUP_STORAGE='pinc-gestao-backup-v1';
 const PREVIOUS_STORAGE='pinc-gestao-v4';
 const DEFAULT={audience:'efetivos',day:1,apprenticeShift:'matutino',mailCount:0,currentLocation:'Anápolis',settings:{tolerance:10,email:'',emails:[],teamsEnabled:false,teamsWebhook:'',teamsChannel:'',outlookDraftWebhook:'',desktopNotifications:false,notificationLead:10},released:{efetivos:false,aprendizes:false},locations:[{id:'loc1',name:'Anápolis',code:'ANP'},{id:'loc2',name:'Goiânia',code:'GYN'}],accesses:[],agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}}},absents:[],reports:[],participants:[],welcomeSchedule:{}};
 let S=load();
+const DAY2_RESET_KEY='day2AgendaReset20261002_v1';
+function applyOneTimeDay2Reset(){
+  S._migrations=S._migrations&&typeof S._migrations==='object'?S._migrations:{};
+  if(S._migrations[DAY2_RESET_KEY])return false;
+  if(!S.agenda)S.agenda=structuredClone(DEFAULT.agenda);
+  if(!S.agenda.efetivos)S.agenda.efetivos={1:[],2:[]};
+  S.agenda.efetivos[2]=[];
+  if(!S.live)S.live=structuredClone(DEFAULT.live);
+  if(!S.live.efetivos)S.live.efetivos={1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}};
+  S.live.efetivos[2]={completed:0,activeIndex:0,activePct:0,running:false};
+  S.reports=(S.reports||[]).filter(r=>!(r.audience==='efetivos'&&(String(r.period||'').toLowerCase()==='dia 2'||String(r.period||'')==='2')));
+  for(const loc of Object.keys(S.welcomeSchedule||{})){
+    const eff=S.welcomeSchedule?.[loc]?.efetivos;
+    if(eff&&typeof eff==='object'){delete eff[2];delete eff['2']}
+  }
+  S._migrations[DAY2_RESET_KEY]=true;
+  try{const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}
+  return true
+}
+const DAY2_RESET_APPLIED=applyOneTimeDay2Reset();
 const PINC_FIREBASE_CONFIG={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e",measurementId:"G-PN2S2K265E"};
 let musicDb=null,musicAuth=null,musicRequestsUnsub=null,musicQrInstance=null,musicQrBigInstance=null,musicRequestsCache=[];
 function musicRequestUrl(){return 'https://www.gestaopinc.com.br/pedir-musica.html?localidade='+encodeURIComponent(S.currentLocation||'Anápolis')}
@@ -251,12 +271,12 @@ function openMusicDisplay(){const url='/telao-pinc.html?localidade='+encodeURICo
 
 
 let sharedDb=null,sharedRef=null,sharedUnsub=null,sharedReady=false,sharedSyncTimer=null,lastSharedSignature='',sharedAuthUser=null,agendaRealtimeTimer=null,lastAgendaRealtimeSignature='';
-function packedAgenda(){const a=structuredClone(S.agenda||{});a._welcomeSchedule=structuredClone(S.welcomeSchedule||{});a._settings={tolerance:Number(S.settings?.tolerance||10),notificationLead:Number(S.settings?.notificationLead||10)};a._syncAt=Date.now();return a}
-function unpackAgendaPayload(a){if(!a||typeof a!=='object')return null;const copy=structuredClone(a);if(copy._welcomeSchedule)S.welcomeSchedule=structuredClone(copy._welcomeSchedule);if(copy._settings)S.settings={...(S.settings||{}),...copy._settings};delete copy._welcomeSchedule;delete copy._settings;delete copy._syncAt;return copy}
-function sharedSignature(){try{return JSON.stringify({agenda:S.agenda,welcomeSchedule:S.welcomeSchedule,tolerance:S.settings?.tolerance,locations:S.locations,reports:S.reports})}catch(e){return''}}
-function agendaRealtimeSignature(){try{return JSON.stringify({agenda:S.agenda,welcomeSchedule:S.welcomeSchedule,tolerance:S.settings?.tolerance,reports:S.reports,currentLocation:S.currentLocation})}catch(e){return''}}
+function packedAgenda(){const a=structuredClone(S.agenda||{});a._welcomeSchedule=structuredClone(S.welcomeSchedule||{});a._settings={tolerance:Number(S.settings?.tolerance||10),notificationLead:Number(S.settings?.notificationLead||10)};a._migrations=structuredClone(S._migrations||{});a._syncAt=Date.now();return a}
+function unpackAgendaPayload(a){if(!a||typeof a!=='object')return null;const copy=structuredClone(a),incomingMigrations=copy._migrations&&typeof copy._migrations==='object'?copy._migrations:{};if(copy._welcomeSchedule)S.welcomeSchedule=structuredClone(copy._welcomeSchedule);if(copy._settings)S.settings={...(S.settings||{}),...copy._settings};S._migrations={...(S._migrations||{}),...incomingMigrations};if(S._migrations?.[DAY2_RESET_KEY]&&!incomingMigrations[DAY2_RESET_KEY]){if(!copy.efetivos)copy.efetivos={1:[],2:[]};copy.efetivos[2]=[]}delete copy._welcomeSchedule;delete copy._settings;delete copy._migrations;delete copy._syncAt;return copy}
+function sharedSignature(){try{return JSON.stringify({agenda:S.agenda,welcomeSchedule:S.welcomeSchedule,tolerance:S.settings?.tolerance,locations:S.locations,reports:S.reports,migrations:S._migrations})}catch(e){return''}}
+function agendaRealtimeSignature(){try{return JSON.stringify({agenda:S.agenda,welcomeSchedule:S.welcomeSchedule,tolerance:S.settings?.tolerance,reports:S.reports,currentLocation:S.currentLocation,migrations:S._migrations})}catch(e){return''}}
 function safeAgendaSyncId(){const loc=String(S.currentLocation||'local').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,60);return 'agendaSync_'+(sharedAuthUser?.uid||'anon')+'_'+loc}
-async function publishAgendaRealtime(){if(!sharedDb||!sharedAuthUser)return;const sig=agendaRealtimeSignature();if(!sig||sig===lastAgendaRealtimeSignature)return;try{await sharedDb.collection('pincLocks').doc(safeAgendaSyncId()).set({type:'agendaSnapshot',ownerUid:sharedAuthUser.uid,location:S.currentLocation||'',agenda:packedAgenda(),reports:structuredClone(S.reports||[]),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAtMillis:Date.now()},{merge:true});lastAgendaRealtimeSignature=sig}catch(e){console.error('PINC agenda realtime',e)}}
+async function publishAgendaRealtime(){if(!sharedDb||!sharedAuthUser)return;const sig=agendaRealtimeSignature();if(!sig||sig===lastAgendaRealtimeSignature)return;try{await sharedDb.collection('pincLocks').add({type:'agendaSnapshot',ownerUid:sharedAuthUser.uid,location:S.currentLocation||'',agenda:packedAgenda(),reports:structuredClone(S.reports||[]),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAtMillis:Date.now()});lastAgendaRealtimeSignature=sig}catch(e){console.error('PINC agenda realtime',e)}}
 function scheduleAgendaRealtime(){clearTimeout(agendaRealtimeTimer);agendaRealtimeTimer=setTimeout(publishAgendaRealtime,120)}
 function localHasAgenda(){const a=S.agenda||{};return !!((a.efetivos?.[1]?.length||0)+(a.efetivos?.[2]?.length||0)+(a.aprendizes?.matutino?.length||0)+(a.aprendizes?.vespertino?.length||0))}
 function cloudHasAgenda(d){const a=d?.agenda||{};return !!((a.efetivos?.[1]?.length||0)+(a.efetivos?.[2]?.length||0)+(a.aprendizes?.matutino?.length||0)+(a.aprendizes?.vespertino?.length||0))}
