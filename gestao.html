@@ -256,6 +256,23 @@ function applyOneTimeDay2Reset(){
   return true
 }
 const DAY2_RESET_APPLIED=applyOneTimeDay2Reset();
+function recoverDay2WelcomeSchedule(){
+  try{
+    const current=S.welcomeSchedule?.[S.currentLocation]?.efetivos?.[2]||S.welcomeSchedule?.[S.currentLocation]?.efetivos?.['2'];
+    if(current&&(current.hypera||current.brainfarma))return false;
+    const raw=localStorage.getItem(PREVIOUS_STORAGE);
+    if(!raw)return false;
+    const old=JSON.parse(raw),oldLoc=old?.welcomeSchedule?.[S.currentLocation]?.efetivos?.[2]||old?.welcomeSchedule?.[S.currentLocation]?.efetivos?.['2'];
+    if(!oldLoc||(!oldLoc.hypera&&!oldLoc.brainfarma))return false;
+    S.welcomeSchedule=S.welcomeSchedule||{};
+    S.welcomeSchedule[S.currentLocation]=S.welcomeSchedule[S.currentLocation]||{};
+    S.welcomeSchedule[S.currentLocation].efetivos=S.welcomeSchedule[S.currentLocation].efetivos||{};
+    S.welcomeSchedule[S.currentLocation].efetivos[2]=structuredClone(oldLoc);
+    try{const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}
+    return true
+  }catch(e){return false}
+}
+const DAY2_WELCOME_RECOVERED=recoverDay2WelcomeSchedule();
 const PINC_FIREBASE_CONFIG={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e",measurementId:"G-PN2S2K265E"};
 let musicDb=null,musicAuth=null,musicRequestsUnsub=null,musicQrInstance=null,musicQrBigInstance=null,musicRequestsCache=[];
 function musicRequestUrl(){return 'https://www.gestaopinc.com.br/pedir-musica.html?localidade='+encodeURIComponent(S.currentLocation||'Anápolis')}
