@@ -91,7 +91,7 @@ const params=new URLSearchParams(location.search),locationName=(params.get('loca
 let db=null,currentLock=null,lockUnsub=null,lastActiveAt=0;
 const byId=id=>document.getElementById(id);
 byId('locationInfo').textContent=locationName;byId('qrLocation').textContent=locationName;
-const requestUrl='https://www.gestaopinc.com.br/pedir-musica.html?v=20261002-2&localidade='+encodeURIComponent(locationName);
+const requestUrl='https://www.gestaopinc.com.br/pedir-musica.html?v=20261002-3&localidade='+encodeURIComponent(locationName);
 let qrResizeTimer=null;
 function renderQr(){const box=byId('qrBox');if(!box||typeof QRCode==='undefined')return;box.innerHTML='';const available=Math.min(box.clientWidth,box.clientHeight);const inner=Math.max(180,Math.floor(available*0.92));new QRCode(box,{text:requestUrl,width:inner,height:inner,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});requestAnimationFrame(()=>{const img=box.querySelector('img'),canvas=box.querySelector('canvas');if(canvas)canvas.style.display='none';if(img){img.style.display='block';img.style.width=inner+'px';img.style.height=inner+'px';img.style.maxWidth='94%';img.style.maxHeight='94%';img.style.objectFit='contain';img.style.margin='auto'}})}
 renderQr();
