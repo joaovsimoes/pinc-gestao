@@ -104,7 +104,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
   </div>
 </div>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261002-7',facilitador:'facilitador.html?v=20261002-7',stars:'stars.html?v=20261002-7'};
+const PINC_MODULES={gestao:'gestao.html?v=20261002-8',facilitador:'facilitador.html?v=20261002-8',stars:'stars.html?v=20261002-8'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
