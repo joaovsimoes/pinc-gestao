@@ -35,12 +35,13 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
 .qr-card:before{content:"♫";position:absolute;right:-24px;top:-48px;font-size:190px;color:rgba(116,23,255,.045);font-weight:900;transform:rotate(12deg)}
 .qr-kicker{position:relative;z-index:1;display:inline-flex;padding:7px 10px;border-radius:999px;background:#f3ecff;color:var(--purple);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
 .qr-card h2{position:relative;z-index:1;font-size:31px;line-height:1.05;margin:14px 0 8px;letter-spacing:-.035em}.qr-card p{position:relative;z-index:1;font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 18px;max-width:310px}
-.qr-box{position:relative;z-index:1;width:min(300px,25vw);height:min(300px,25vw);min-width:210px;min-height:210px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 15px 35px rgba(37,31,76,.10);display:grid;place-items:center}
-.qr-box img,.qr-box canvas{max-width:100%;height:auto!important}
+.qr-box{position:relative;z-index:1;width:min(300px,100%);aspect-ratio:1/1;height:auto;padding:14px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 15px 35px rgba(37,31,76,.10);display:grid;place-items:center;overflow:hidden}
+.qr-box img,.qr-box canvas{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important}
 .location{position:relative;z-index:1;margin-top:16px;font-size:10px;color:#8b94a7;font-weight:800}.location b{color:var(--ink)}
 .waiting .stage-title{color:#7c8598}.waiting .timer{color:#c1c6d0}.waiting .progress-fill{width:0!important;background:#dfe2e9}
 .overtime .timer{color:#df3d57}.overtime .progress-fill{background:linear-gradient(90deg,#ef5570,#d83755)}
-@media(max-width:1100px){.shell{padding:18px;gap:16px}.main{grid-template-columns:1fr 350px;gap:16px}.stage-card{padding:25px}.qr-card{padding:22px}.qr-box{width:230px;height:230px;min-width:0;min-height:0}}
+@media(max-width:1100px){.shell{padding:18px;gap:16px}.main{grid-template-columns:minmax(0,1fr) 340px;gap:16px}.stage-card{padding:25px}.qr-card{padding:22px}.qr-box{width:min(250px,100%)}}
+@media(max-width:780px){html,body{overflow:auto}.shell{height:auto;min-height:100vh;padding:14px}.top{gap:12px;align-items:flex-start}.brand strong{font-size:22px}.brand span{font-size:8px}.live-pill{padding:8px 11px;font-size:9px}.main{grid-template-columns:1fr}.stage-card{min-height:560px;border-radius:22px}.qr-card{border-radius:22px;padding:24px 18px}.qr-card h2{font-size:28px}.qr-box{width:min(320px,88vw);margin:0 auto}.bottom-info{grid-template-columns:1fr}.timer{font-size:clamp(66px,18vw,110px)}}
 </style>
 </head>
 <body>
@@ -91,7 +92,10 @@ let db=null,currentLock=null,lockUnsub=null,lastActiveAt=0;
 const byId=id=>document.getElementById(id);
 byId('locationInfo').textContent=locationName;byId('qrLocation').textContent=locationName;
 const requestUrl='https://www.gestaopinc.com.br/pedir-musica.html?localidade='+encodeURIComponent(locationName);
-new QRCode(byId('qrBox'),{text:requestUrl,width:270,height:270,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+let qrResizeTimer=null;
+function renderQr(){const box=byId('qrBox');if(!box||typeof QRCode==='undefined')return;box.innerHTML='';const inner=Math.max(150,Math.floor(Math.min(box.clientWidth,box.clientHeight)-28));new QRCode(box,{text:requestUrl,width:inner,height:inner,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H})}
+renderQr();
+window.addEventListener('resize',()=>{clearTimeout(qrResizeTimer);qrResizeTimer=setTimeout(renderQr,120)});
 function ms(v){return Number(v?.heartbeatAtMillis||v?.heartbeatAt?.toMillis?.()||0)}
 function active(v){return !!(v&&v.status==='active'&&v.running===true&&v.commandLock===true&&Date.now()-ms(v)<90000)}
 function chooseLock(rows){return rows.filter(active).sort((a,b)=>ms(b)-ms(a))[0]||null}
