@@ -6,45 +6,15 @@
 <title>Telão PINC</title>
 <meta name="theme-color" content="#11172a">
 <link rel="icon" type="image/png" href="/pinc-icon-64.png?v=5">
-<style>
-:root{--ink:#172033;--muted:#7f899e;--purple:#7417ff;--purple2:#9d42ff;--pink:#f40791;--green:#14b887;--soft:#f5f6fb;--line:#e8eaf2}
-*{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:#f6f7fb}
-body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(10px);pointer-events:none}
-body:before{width:520px;height:520px;left:-190px;top:-210px;background:radial-gradient(circle,rgba(244,7,145,.20),rgba(116,23,255,.04) 65%,transparent 72%)}
-body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial-gradient(circle,rgba(116,23,255,.22),rgba(116,23,255,.03) 66%,transparent 72%)}
-.shell{height:100vh;padding:30px;display:grid;grid-template-rows:auto 1fr;gap:24px;position:relative;z-index:1}
-.top{display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:13px}.brand img{width:54px;height:54px}.brand strong{font-size:28px;color:var(--purple);letter-spacing:.04em}.brand span{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:1px}
-.live-pill{display:flex;align-items:center;gap:9px;padding:10px 15px;border-radius:999px;border:1px solid #dfe4ec;background:rgba(255,255,255,.8);backdrop-filter:blur(12px);font-size:11px;font-weight:850;color:#667085}
-.live-pill i{width:9px;height:9px;border-radius:50%;background:#a2a9b7}.live-pill.running{color:#0d8f69;border-color:#cfede4;background:#effaf6}.live-pill.running i{background:#13b887;box-shadow:0 0 0 6px rgba(19,184,135,.10)}
-.main{min-height:0;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,.72fr);gap:24px}
-.stage-card,.qr-card{background:rgba(255,255,255,.92);border:1px solid rgba(228,231,239,.95);border-radius:30px;box-shadow:0 22px 60px rgba(24,32,55,.08)}
-.stage-card{padding:34px 40px;display:flex;flex-direction:column;min-height:0}
-.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.13em;font-weight:900;color:var(--purple);margin-bottom:10px}
-.stage-title{font-size:clamp(34px,4.2vw,68px);line-height:1.02;letter-spacing:-.045em;margin:0;max-width:1000px}
-.stage-owner{font-size:15px;color:var(--muted);font-weight:650;margin-top:10px}
-.timer-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0}
-.timer-label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;font-weight:900;color:#929bad;margin-bottom:4px}
-.timer{font-size:clamp(78px,11vw,170px);font-weight:950;letter-spacing:-.075em;line-height:.95;font-variant-numeric:tabular-nums;color:#172033}
-.duration{font-size:13px;color:var(--muted);margin-top:10px}.duration strong{color:var(--ink)}
-.progress-area{margin-top:16px}.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:11px;font-weight:800;color:#778198}
-.progress-track{height:14px;background:#eceef4;border-radius:999px;overflow:hidden}.progress-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--purple),var(--purple2),var(--pink));transition:width .6s ease}
-.bottom-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}.info-box{padding:13px 15px;border:1px solid var(--line);background:#fafbfe;border-radius:14px}.info-box small{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#9aa2b2;font-weight:850;margin-bottom:4px}.info-box strong{font-size:12px}
-.qr-card{padding:30px;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;position:relative;overflow:hidden}
-.qr-card:before{content:"♫";position:absolute;right:-24px;top:-48px;font-size:190px;color:rgba(116,23,255,.045);font-weight:900;transform:rotate(12deg)}
-.qr-kicker{position:relative;z-index:1;display:inline-flex;padding:7px 10px;border-radius:999px;background:#f3ecff;color:var(--purple);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
-.qr-card h2{position:relative;z-index:1;font-size:31px;line-height:1.05;margin:14px 0 8px;letter-spacing:-.035em}.qr-card p{position:relative;z-index:1;font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 18px;max-width:310px}
-.qr-box{position:relative;z-index:1;width:min(350px,94%);aspect-ratio:1/1;height:auto;padding:10px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 15px 35px rgba(37,31,76,.10);display:grid;place-items:center;overflow:hidden;margin:0 auto}
-.qr-box img{display:block!important;width:auto!important;height:auto!important;max-width:94%!important;max-height:94%!important;object-fit:contain!important;margin:auto!important}.qr-box canvas{display:none!important}
-.location{position:relative;z-index:1;margin-top:16px;font-size:10px;color:#8b94a7;font-weight:800}.location b{color:var(--ink)}
-.waiting .stage-title{color:#7c8598}.waiting .timer{color:#c1c6d0}.waiting .progress-fill{width:0!important;background:#dfe2e9}
-.overtime .timer{color:#df3d57}.overtime .progress-fill{background:linear-gradient(90deg,#ef5570,#d83755)}
-@media(max-width:1100px){.shell{padding:18px;gap:16px}.main{grid-template-columns:minmax(0,1fr) 340px;gap:16px}.stage-card{padding:25px}.qr-card{padding:22px}.qr-box{width:min(320px,94%)}}
-@media(max-width:780px){html,body{overflow:auto}.shell{height:auto;min-height:100vh;padding:14px}.top{gap:12px;align-items:flex-start}.brand strong{font-size:22px}.brand span{font-size:8px}.live-pill{padding:8px 11px;font-size:9px}.main{grid-template-columns:1fr}.stage-card{min-height:560px;border-radius:22px}.qr-card{border-radius:22px;padding:24px 18px}.qr-card h2{font-size:28px}.qr-box{width:min(330px,90vw);margin:0 auto;padding:10px}.bottom-info{grid-template-columns:1fr}.timer{font-size:clamp(66px,18vw,110px)}}
-</style>
+<link rel="stylesheet" href="/telao-pinc.css?v=20261003-1">
 </head>
 <body>
+<div class="ambient" aria-hidden="true">
+<svg class="wave wave-top" viewBox="0 0 1600 500" preserveAspectRatio="none"><defs><linearGradient id="waveColor"><stop stop-color="#bd8dff"/><stop offset=".5" stop-color="#f8b5ef"/><stop offset="1" stop-color="#a9acff"/></linearGradient></defs><path class="wave-body" d="M-100 260Q170 20 420 230T900 150T1700 240V500H-100Z"/><g class="wave-lines"><path d="M-100 220Q170 -20 420 190T900 110T1700 200"/><path d="M-100 229Q170 -8 420 199T900 117T1700 208"/><path d="M-100 238Q170 4 420 208T900 124T1700 216"/><path d="M-100 247Q170 16 420 217T900 131T1700 224"/><path d="M-100 256Q170 28 420 226T900 138T1700 232"/><path d="M-100 265Q170 40 420 235T900 145T1700 240"/><path d="M-100 274Q170 52 420 244T900 152T1700 248"/><path d="M-100 283Q170 64 420 253T900 159T1700 256"/><path d="M-100 292Q170 76 420 262T900 166T1700 264"/><path d="M-100 301Q170 88 420 271T900 173T1700 272"/><path d="M-100 310Q170 100 420 280T900 180T1700 280"/><path d="M-100 319Q170 112 420 289T900 187T1700 288"/></g></svg>
+<svg class="wave wave-bottom" viewBox="0 0 1600 500" preserveAspectRatio="none"><path class="wave-body" d="M-100 260Q170 20 420 230T900 150T1700 240V500H-100Z"/><g class="wave-lines"><path d="M-100 220Q170 -20 420 190T900 110T1700 200"/><path d="M-100 229Q170 -8 420 199T900 117T1700 208"/><path d="M-100 238Q170 4 420 208T900 124T1700 216"/><path d="M-100 247Q170 16 420 217T900 131T1700 224"/><path d="M-100 256Q170 28 420 226T900 138T1700 232"/><path d="M-100 265Q170 40 420 235T900 145T1700 240"/><path d="M-100 274Q170 52 420 244T900 152T1700 248"/><path d="M-100 283Q170 64 420 253T900 159T1700 256"/><path d="M-100 292Q170 76 420 262T900 166T1700 264"/><path d="M-100 301Q170 88 420 271T900 173T1700 272"/><path d="M-100 310Q170 100 420 280T900 180T1700 280"/><path d="M-100 319Q170 112 420 289T900 187T1700 288"/></g></svg>
+<span class="note note-one">♫</span><span class="note note-two">♪</span><span class="note note-three">♫</span>
+<span class="spark spark-one"></span><span class="spark spark-two"></span><span class="spark spark-three"></span><span class="spark spark-four"></span>
+</div>
 <div class="shell" id="shell">
   <header class="top">
     <div class="brand"><img src="/pinc-icon-192.png?v=5" alt="PINC"><div><strong>PINC</strong><span>Programa de Integração de Novos Colaboradores</span></div></div>
@@ -54,12 +24,12 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
     <section class="stage-card waiting" id="stageCard">
       <div>
         <div class="eyebrow">Etapa atual</div>
-        <h1 class="stage-title" id="stageTitle">Aguardando próxima etapa</h1>
+        <h1 class="stage-title" id="stageTitle">Aguardando <span class="gradient-text">próxima etapa</span></h1>
         <div class="stage-owner" id="stageOwner">O cronômetro aparecerá assim que o Facilitador iniciar.</div>
       </div>
       <div class="timer-wrap">
-        <div class="timer-label">Tempo da etapa</div>
-        <div class="timer" id="timer">00:00:00</div>
+        <div class="timer-capsule"><div class="timer" id="timer"><span>00</span><em>:</em><span>00</span><em>:</em><span>00</span></div></div>
+        <div class="timer-label">Tempo da etapa <span aria-hidden="true">ⓘ</span></div>
         <div class="duration" id="duration">Tempo padrão: <strong>—</strong></div>
       </div>
       <div class="progress-area">
@@ -67,20 +37,36 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       </div>
       <div class="bottom-info">
-        <div class="info-box"><small>Localidade</small><strong id="locationInfo">—</strong></div>
-        <div class="info-box"><small>Público</small><strong id="audienceInfo">—</strong></div>
-        <div class="info-box"><small>Próxima etapa</small><strong id="nextInfo">—</strong></div>
+        <div class="info-box"><span class="info-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.1 7-13A7 7 0 0 0 5 8c0 6.9 7 13 7 13Z"/><circle cx="12" cy="8" r="2" fill="white"/></svg></span><div><small>Localidade</small><strong id="locationInfo">—</strong></div></div>
+        <div class="info-box"><span class="info-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5 21v-4a7 7 0 0 1 14 0v4Z"/><path d="M3 7a3 3 0 0 0 0 6M21 7a3 3 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><div><small>Público</small><strong id="audienceInfo">—</strong></div></div>
+        <div class="info-box"><span class="info-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h14v3H8zM8 11h14v3H8zM8 18h14v3H8zM1 4h4v3H1zM1 11h4v3H1zM1 18h4v3H1z"/></svg></span><div><small>Próxima etapa</small><strong id="nextInfo">—</strong></div></div>
+        <div class="info-box"><span class="info-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M3 22v-3a9 9 0 0 1 18 0v3Z"/></svg></span><div><small>Responsável</small><strong id="ownerInfo">—</strong></div></div>
       </div>
+      <ol class="stage-timeline" aria-label="Situação da etapa">
+        <li class="current" id="timelineWaiting"><i></i><span>Aguardando<br>início da etapa</span></li>
+        <li id="timelineRunning"><i></i><span>Em andamento</span></li>
+        <li><i></i><span>Próxima etapa</span></li>
+        <li><i></i><span>Concluída</span></li>
+      </ol>
     </section>
     <aside class="qr-card">
       <div class="qr-kicker">🎵 Você escolhe a trilha</div>
-      <h2>Qual música toca depois?</h2>
+      <h2>Qual música<br>toca <span class="gradient-text">depois?</span></h2>
       <p>Escaneie o QR Code, mande seu pedido e ele chega direto para o time PINC.</p>
-      <div class="qr-box" id="qrBox"></div>
-      <div class="location">Pedidos musicais • <b id="qrLocation">—</b></div>
+      <section class="dj-card" aria-label="Último pedido musical" aria-live="polite">
+        <div class="dj-heading"><span aria-hidden="true">♛</span> DJ DA VEZ</div>
+        <div class="dj-content">
+          <div class="vinyl-halo" aria-hidden="true"><div class="vinyl"><div class="vinyl-label"><i></i></div></div></div>
+          <div class="dj-details"><span class="dj-status" id="djStatus">ESPERANDO SEU PEDIDO</span><h3 id="djSong">Seja o próximo DJ</h3><div class="dj-artist" id="djArtist"></div><div class="dj-requester">♟ <span>Escolhida por: <strong id="djRequester">—</strong></span></div></div>
+          <div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+      </section>
+      <div class="qr-well"><div class="qr-box" id="qrBox"></div></div>
+      <div class="location"><span aria-hidden="true">♬</span> Pedidos musicais • <b id="qrLocation">—</b></div>
     </aside>
   </main>
 </div>
+<script src="/pinc-reset.js?v=20261003-1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -88,23 +74,26 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
 <script>
 const cfg={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e"};
 const params=new URLSearchParams(location.search),locationName=(params.get('localidade')||'Anápolis').slice(0,80);
-let db=null,currentLock=null,lockUnsub=null,lastActiveAt=0;
+let db=null,currentLock=null,lockUnsub=null,resetRows=[],connectionFailed=false;
 const byId=id=>document.getElementById(id);
 byId('locationInfo').textContent=locationName;byId('qrLocation').textContent=locationName;
 const requestUrl='https://www.gestaopinc.com.br/pedir-musica.html?v=20261002-3&localidade='+encodeURIComponent(locationName);
 let qrResizeTimer=null;
-function renderQr(){const box=byId('qrBox');if(!box||typeof QRCode==='undefined')return;box.innerHTML='';const available=Math.min(box.clientWidth,box.clientHeight);const inner=Math.max(180,Math.floor(available*0.92));new QRCode(box,{text:requestUrl,width:inner,height:inner,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});requestAnimationFrame(()=>{const img=box.querySelector('img'),canvas=box.querySelector('canvas');if(canvas)canvas.style.display='none';if(img){img.style.display='block';img.style.width=inner+'px';img.style.height=inner+'px';img.style.maxWidth='94%';img.style.maxHeight='94%';img.style.objectFit='contain';img.style.margin='auto'}})}
+function renderQr(){const box=byId('qrBox');if(!box||typeof QRCode==='undefined')return;box.innerHTML='';const available=Math.min(box.clientWidth,box.clientHeight);const inner=Math.max(96,Math.floor(available*0.84));new QRCode(box,{text:requestUrl,width:inner,height:inner,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});requestAnimationFrame(()=>{const img=box.querySelector('img'),canvas=box.querySelector('canvas');if(canvas)canvas.style.display='none';if(img){img.style.display='block';img.style.width=inner+'px';img.style.height=inner+'px';img.style.maxWidth='94%';img.style.maxHeight='94%';img.style.objectFit='contain';img.style.margin='auto'}})}
 renderQr();
 window.addEventListener('resize',()=>{clearTimeout(qrResizeTimer);qrResizeTimer=setTimeout(renderQr,120)});
 function ms(v){return Number(v?.heartbeatAtMillis||v?.heartbeatAt?.toMillis?.()||0)}
-function active(v){return !!(v&&v.status==='active'&&v.running===true&&v.commandLock===true&&Date.now()-ms(v)<90000)}
+function active(v){return !!(v&&v.status==='active'&&v.running===true&&v.commandLock===true&&v.location===locationName&&ms(v)>0&&Date.now()-ms(v)<90000&&window.PINC_RESET.freshFeed(v,resetRows))}
 function chooseLock(rows){return rows.filter(active).sort((a,b)=>ms(b)-ms(a))[0]||null}
 function fmt(sec){sec=Math.max(0,Math.floor(sec||0));const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return [h,m,s].map(v=>String(v).padStart(2,'0')).join(':')}
 function audienceLabel(v){return v==='aprendizes'?'Aprendizes':'Efetivos'}
 function periodLabel(v){if(String(v)==='1'||String(v)==='2')return 'Dia '+v;return String(v||'').replace(/^./,x=>x.toUpperCase())}
-function renderStatic(){const l=currentLock,running=active(l),card=byId('stageCard'),pill=byId('livePill');card.classList.toggle('waiting',!running);pill.classList.toggle('running',running);byId('liveText').textContent=running?'Etapa em andamento':'Aguardando etapa';byId('stageTitle').textContent=running?(l.stageName||'Etapa em andamento'):'Aguardando próxima etapa';byId('stageOwner').textContent=running?(l.stageOwner||'PINC'):'O cronômetro aparecerá assim que o Facilitador iniciar.';byId('duration').innerHTML='Tempo padrão: <strong>'+(running?(Number(l.stageDuration||0)+' min'):'—')+'</strong>';byId('audienceInfo').textContent=running?(audienceLabel(l.audience)+' • '+periodLabel(l.period)):'—';byId('nextInfo').textContent=running?(l.nextStageName||'Última etapa'):'—';if(!running){byId('timer').textContent='00:00:00';byId('stagePct').textContent='0%';byId('progressFill').style.width='0%';card.classList.remove('overtime')}}
-function tick(){const l=currentLock;if(!active(l)){if(l)currentLock=null;renderStatic();return}const start=Number(l.startedAtMillis||l.startedAt?.toMillis?.()||Date.now()),elapsedBefore=Number(l.elapsedBefore||0),sec=Math.max(0,Math.floor((Date.now()-start)/1000)+elapsedBefore),planned=Math.max(60,Number(l.stageDuration||1)*60),raw=sec/planned*100,pct=Math.min(100,raw);byId('timer').textContent=fmt(sec);byId('stagePct').textContent=Math.floor(raw)+'%';byId('progressFill').style.width=pct+'%';byId('stageCard').classList.toggle('overtime',sec>planned)}
-async function init(){try{if(!firebase.apps.length)firebase.initializeApp(cfg);const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();db=firebase.firestore();lockUnsub=db.collection('pincLocks').where('location','==',locationName).onSnapshot(s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()})),next=chooseLock(rows);currentLock=next;if(next)lastActiveAt=Date.now();renderStatic()},e=>{console.error(e);byId('liveText').textContent='Sem conexão'})}catch(e){console.error(e);byId('liveText').textContent='Sem conexão'}}
+function renderTimer(sec){const parts=fmt(sec).split(':');byId('timer').innerHTML=parts.map((part,index)=>(index?'<em>:</em>':'')+'<span>'+part+'</span>').join('')}
+function latestMusic(rows){return rows.filter(r=>r.type==='musicRequest'&&r.location===locationName&&r.status!=='deleted'&&String(r.song||'').trim()).sort((a,b)=>Number(b.createdAt?.toMillis?.()||b.createdAtMillis||0)-Number(a.createdAt?.toMillis?.()||a.createdAtMillis||0))[0]||null}
+function renderMusic(request){byId('djStatus').textContent=request?'PEDIDO RECEBIDO':'ESPERANDO SEU PEDIDO';byId('djSong').textContent=request?.song||'Seja o próximo DJ';byId('djArtist').textContent=request?.artist||'';byId('djRequester').textContent=request?(request.requester||'Participante'):'—'}
+function renderStatic(){const l=currentLock,running=active(l),card=byId('stageCard'),pill=byId('livePill');card.classList.toggle('waiting',!running);pill.classList.toggle('running',running);byId('liveText').textContent=connectionFailed?'Sem conexão':running?'Etapa em andamento':'Aguardando etapa';if(running){byId('stageTitle').textContent=l.stageName||'Etapa em andamento'}else{byId('stageTitle').innerHTML='Aguardando <span class="gradient-text">próxima etapa</span>'}byId('stageOwner').textContent=running?(l.stageOwner||'PINC'):'O cronômetro aparecerá assim que o Facilitador iniciar.';byId('duration').innerHTML='Tempo padrão: <strong>'+(running?(Number(l.stageDuration||0)+' min'):'—')+'</strong>';byId('audienceInfo').textContent=running?(audienceLabel(l.audience)+' • '+periodLabel(l.period)):'—';byId('nextInfo').textContent=running?(l.nextStageName||'Última etapa'):'—';byId('ownerInfo').textContent=running?(l.nextStageOwner||l.stageOwner||'—'):'—';byId('timelineWaiting').classList.toggle('current',!running);byId('timelineRunning').classList.toggle('current',running);if(!running){renderTimer(0);byId('stagePct').textContent='0%';byId('progressFill').style.width='0%';card.classList.remove('overtime')}}
+function tick(){const l=currentLock;if(!active(l)){if(l)currentLock=null;renderStatic();return}const start=Number(l.startedAtMillis||l.startedAt?.toMillis?.()||Date.now()),elapsedBefore=Number(l.elapsedBefore||0),sec=Math.max(0,Math.floor((Date.now()-start)/1000)+elapsedBefore),planned=Math.max(60,Number(l.stageDuration||1)*60),raw=sec/planned*100,pct=Math.min(100,raw);renderTimer(sec);byId('stagePct').textContent=Math.floor(raw)+'%';byId('progressFill').style.width=pct+'%';byId('stageCard').classList.toggle('overtime',sec>planned)}
+async function init(){try{if(!firebase.apps.length)firebase.initializeApp(cfg);const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();db=firebase.firestore();lockUnsub=db.collection('pincLocks').where('location','==',locationName).onSnapshot(s=>{const rows=s.docs.map(d=>({id:d.id,...d.data()}));resetRows=window.PINC_RESET.events(rows);currentLock=chooseLock(rows);connectionFailed=false;renderMusic(latestMusic(rows));renderStatic();tick()},e=>{console.error(e);connectionFailed=true;byId('liveText').textContent='Sem conexão'})}catch(e){console.error(e);connectionFailed=true;byId('liveText').textContent='Sem conexão'}}
 renderStatic();setInterval(tick,1000);init();
 </script>
 </body>
