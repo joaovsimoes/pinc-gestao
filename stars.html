@@ -34,7 +34,7 @@
 <main class="content">
 <section id="selectionView">
   <div class="launch">
-    <div class="launch-head"><div><div class="eyebrow">Stars</div><h1>Acompanhar a integração</h1></div><p>Sua localidade está vinculada ao código. Selecione o público e o período para acompanhar.</p></div>
+    <div class="launch-head"><div><div class="eyebrow">Welcome • Nível 1</div><h1>Acompanhar a integração</h1></div><p>Sua localidade está vinculada ao código. Selecione o público e o período para acompanhar.</p></div>
     <p id="portalIdentity" style="margin:0 0 18px;color:#7417ff;font-weight:750;overflow-wrap:anywhere"></p>
     <div class="launcher-grid">
       <div class="block"><div class="block-label">1 • Localidade</div><select id="locationSelect"></select></div>
@@ -45,7 +45,7 @@
   </div>
 </section>
 <section id="dashboardView" class="hidden">
-  <div class="dash-head"><div><div class="eyebrow">Stars • acompanhamento ao vivo</div><h1 id="dashTitle">PINC • Efetivos</h1></div><div class="context-chips"><span class="chip" id="locChip">Anápolis</span><span class="chip" id="audChip">Efetivos</span><span class="chip" id="periodChip">Dia 1</span></div></div>
+  <div class="dash-head"><div><div class="eyebrow">Welcome • Stars • acompanhamento ao vivo</div><h1 id="dashTitle">PINC • Efetivos</h1></div><div class="context-chips"><span class="chip" id="locChip">Anápolis</span><span class="chip" id="audChip">Efetivos</span><span class="chip" id="periodChip">Dia 1</span></div></div>
   <div class="dashboard">
     <section class="card stage-card" style="grid-column:1 / -1">
       <div class="stage-top">
@@ -98,7 +98,7 @@ function migrate(x){x=x&&typeof x==='object'?x:structuredClone(FALLBACK);if(!x.l
 if(channel)channel.onmessage=e=>{S=migrate(e.data);renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()};
 window.addEventListener('storage',e=>{if((e.key===STORAGE||e.key===BACKUP_STORAGE)&&e.newValue){S=migrate(JSON.parse(e.newValue));renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()}});
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderLocations(){const authorizedLocation=PORTAL_ACCESS_USER?.location||'';selected.location=authorizedLocation;S.currentLocation=authorizedLocation;locationSelect.innerHTML=authorizedLocation?`<option value="${esc(authorizedLocation)}">${esc(authorizedLocation)}</option>`:'';locationSelect.value=authorizedLocation;locationSelect.disabled=true;const identity=document.getElementById('portalIdentity');if(identity)identity.textContent=PORTAL_ACCESS_USER?[PORTAL_ACCESS_USER.name,PORTAL_ACCESS_USER.building,PORTAL_ACCESS_USER.code].filter(Boolean).join(' • '):''}
+function renderLocations(){const authorizedLocation=PORTAL_ACCESS_USER?.location||'';selected.location=authorizedLocation;S.currentLocation=authorizedLocation;locationSelect.innerHTML=authorizedLocation?`<option value="${esc(authorizedLocation)}">${esc(authorizedLocation)}</option>`:'';locationSelect.value=authorizedLocation;locationSelect.disabled=true;const identity=document.getElementById('portalIdentity');if(identity)identity.textContent=PORTAL_ACCESS_USER?[PORTAL_ACCESS_USER.profileName||'Welcome',PORTAL_ACCESS_USER.name,PORTAL_ACCESS_USER.building,PORTAL_ACCESS_USER.code].filter(Boolean).join(' • '):''}
 
 function chooseAudience(v){selected.audience=v;effChoice.classList.toggle('active',v==='efetivos');appChoice.classList.toggle('active',v==='aprendizes');effSegment.classList.toggle('hidden',v!=='efetivos');appSegment.classList.toggle('hidden',v!=='aprendizes');periodLabel.textContent=v==='efetivos'?'3 • Dia':'3 • Turno'}
 function chooseDay(v){selected.day=v;document.querySelectorAll('#effSegment .option').forEach((b,i)=>b.classList.toggle('active',i===v-1))}
