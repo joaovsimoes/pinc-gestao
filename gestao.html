@@ -83,10 +83,8 @@
   <nav class="nav">
     <button class="active" data-view="agenda"><span class="ico">▦</span><b>Agenda</b></button>
     <button data-view="registros"><span class="ico">◉</span><b>Registros</b></button>
-    <button data-view="presenca"><span class="ico">✓</span><b>Presença</b></button>
     <button data-view="musicas"><span class="ico">♫</span><b>Músicas</b></button>
     <button data-view="relatorios"><span class="ico">↗</span><b>Relatórios</b></button>
-    <button data-view="acolhimento"><span class="ico">✦</span><b>Acolhimento</b></button>
     <button data-view="cadastro"><span class="ico">♧</span><b>Cadastro</b></button>
     <button data-view="configuracoes"><span class="ico">⚙</span><b>Configurações</b></button>
   </nav>
@@ -100,49 +98,14 @@
   <div class="agenda-layout"><div class="card agenda-table"><div id="agendaList"></div></div><aside class="card summary"><div class="live-progress" style="margin-top:0"><div class="live-progress-head"><span>Evolução do PINC</span><strong id="progressPct">0%</strong></div><div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div><div class="progress-copy" id="progressCopy">Aguardando início do PINC.</div></div></aside></div>
 </section>
 <section class="view" id="registros">
-  <div class="page-head"><div><h2>Registros</h2><p>Importe os participantes e confirme presença ou ausência antes do acolhimento.</p></div><div class="head-actions records-head-actions"><input id="participantImport" type="file" accept=".csv,text/csv" hidden onchange="handleParticipantImport(event)"><button class="btn secondary" onclick="participantImport.click()" title="Importar lista de colaboradores">↑ Subir lista</button><button class="btn secondary" onclick="openEmailPreview()" title="Preparar comunicação dos ausentes">✉ Avisar ausentes</button><button class="btn secondary" style="color:var(--red);border-color:#f1ccd3" onclick="clearAllParticipants()" title="Excluir todos os colaboradores cadastrados">⌫ Limpar tudo</button><button class="btn primary" onclick="openAbsentModal()">+ Adicionar pessoa</button></div></div>
-  <div class="kpis"><div class="card kpi"><small>Participantes</small><strong id="partCount">0</strong><span>na localidade</span></div><div class="card kpi"><small>Presentes</small><strong id="presentCount">0</strong><span>confirmados</span></div><div class="card kpi"><small>Ausentes</small><strong id="absCount">0</strong><span>para comunicação</span></div><div class="card kpi"><small>Comunicados</small><strong id="mailCount">0</strong><span>e-mails preparados</span></div></div>
-  <div class="card panel" style="margin-bottom:12px"><div class="hint"><strong>Importação:</strong> use arquivo CSV com colunas como Colaborador, Matrícula, CDC, Cargo, Gestor Imediato, Empresa, Público e Status. Arquivos do Excel podem ser salvos como <b>CSV UTF-8</b>.</div></div>
-  <div class="card registry-tools">
+  <div class="page-head"><div><h2>Registros</h2><p>Cadastre e consulte os colaboradores participantes do PINC.</p></div><div class="head-actions records-head-actions"><input id="participantImport" type="file" accept=".csv,text/csv" hidden onchange="handleParticipantImport(event)"><button class="btn secondary" onclick="participantImport.click()" title="Importar lista de colaboradores">↑ Subir lista</button><button class="btn secondary" style="color:var(--red);border-color:#f1ccd3" onclick="clearAllParticipants()" title="Excluir todos os colaboradores cadastrados">⌫ Limpar tudo</button><button class="btn primary" onclick="openAbsentModal()">+ Adicionar pessoa</button></div></div>
+  <div class="kpis"><div class="card kpi"><small>Participantes</small><strong id="partCount">0</strong><span>na localidade</span></div><div class="card kpi"><small>Efetivos</small><strong id="effCount">0</strong><span>cadastrados</span></div><div class="card kpi"><small>Aprendizes</small><strong id="appCount">0</strong><span>cadastrados</span></div></div>
+  <div class="card panel" style="margin-bottom:12px"><div class="hint"><strong>Importação:</strong> use arquivo CSV com colunas como Colaborador, Matrícula, CDC, Cargo, Gestor Imediato, Empresa e Público. Arquivos do Excel podem ser salvos como <b>CSV UTF-8</b>.</div></div>
+  <div class="card registry-tools" style="grid-template-columns:minmax(240px,1fr) auto">
     <div class="registry-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg><input id="registrySearch" type="search" placeholder="Pesquisar colaborador, matrícula, CDC ou gestor..." oninput="renderAbs()" autocomplete="off"></div>
-    <select id="registryStatusFilter" onchange="renderAbs()" aria-label="Filtrar por status"><option value="all">Todos os status</option><option value="present">Somente presentes</option><option value="absent">Somente ausentes</option></select>
     <div class="registry-result" id="registryResult">0 registros exibidos</div>
   </div>
-  <div class="card panel table-wrap"><table><thead><tr><th>Colaborador</th><th>Matrícula</th><th>CDC</th><th>Gestor imediato</th><th>Público</th><th>Status</th><th>Ações</th></tr></thead><tbody id="absTable"></tbody></table></div>
-</section>
-<section class="view" id="presenca">
-  <div class="page-head">
-    <div><h2>Presença</h2><p>Controle de participação por dia da integração.</p></div>
-    <div class="head-actions">
-      <button class="btn secondary" onclick="markAllAttendance(1,'present')">✓ Todos presentes • Dia 1</button>
-      <button class="btn secondary" onclick="markAllAttendance(2,'present')">✓ Todos presentes • Dia 2</button>
-      <button class="btn primary" onclick="exportAttendanceExcel()">↓ Baixar Excel</button>
-    </div>
-  </div>
-  <div class="attendance-kpis">
-    <div class="card kpi"><small>Participantes</small><strong id="attendanceTotal">0</strong><span>na localidade</span></div>
-    <div class="card kpi"><small>Dia 1</small><strong id="attendanceDay1">0</strong><span>presenças confirmadas</span></div>
-    <div class="card kpi"><small>Dia 2</small><strong id="attendanceDay2">0</strong><span>presenças confirmadas</span></div>
-    <div class="card kpi"><small>Pendentes</small><strong id="attendancePending">0</strong><span>marcações restantes</span></div>
-  </div>
-  <div class="card registry-tools">
-    <div class="registry-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg><input id="attendanceSearch" type="search" placeholder="Pesquisar nome, matrícula, CDC ou gestor..." oninput="renderAttendance()" autocomplete="off"></div>
-    <select id="attendanceFilter" onchange="renderAttendance()">
-      <option value="all">Todos</option>
-      <option value="pending">Com pendência</option>
-      <option value="day1-present">Presentes • Dia 1</option>
-      <option value="day1-absent">Ausentes • Dia 1</option>
-      <option value="day2-present">Presentes • Dia 2</option>
-      <option value="day2-absent">Ausentes • Dia 2</option>
-    </select>
-    <div class="registry-result" id="attendanceResult">0 registros exibidos</div>
-  </div>
-  <div class="card panel table-wrap attendance-table">
-    <table>
-      <thead><tr><th>Colaborador</th><th>Matrícula</th><th>CDC</th><th>Gestor imediato</th><th>Público</th><th>Dia 1</th><th>Dia 2</th></tr></thead>
-      <tbody id="attendanceTable"></tbody>
-    </table>
-  </div>
+  <div class="card panel table-wrap"><table><thead><tr><th>Colaborador</th><th>Matrícula</th><th>CDC</th><th>Gestor imediato</th><th>Público</th><th>Ações</th></tr></thead><tbody id="absTable"></tbody></table></div>
 </section>
 <section class="view" id="musicas">
   <div class="page-head">
@@ -175,16 +138,6 @@
   <div class="kpis"><div class="card kpi"><small>Em atraso</small><strong id="lateCount">0</strong><span>acima da tolerância</span></div><div class="card kpi"><small>Adiantadas</small><strong id="earlyCount">0</strong><span>abaixo do previsto</span></div><div class="card kpi"><small>No esperado</small><strong id="okCount">0</strong><span>dentro da margem</span></div><div class="card kpi"><small>Saldo</small><strong id="balance">0 min</strong><span>cronograma analisado</span></div></div>
   <div class="report-grid"><div class="card panel"><div class="panel-head"><div><h3>Desvios</h3><p>Etapas fora da tolerância configurada.</p></div></div><div class="report-list" id="deviationList"></div></div><div class="card panel"><div class="panel-head"><div><h3>Pontos de oportunidade</h3><p>Sugestões automáticas a partir dos tempos.</p></div></div><div class="opps" id="oppList"></div></div></div>
 </section>
-<section class="view" id="acolhimento">
-  <div class="page-head"><div><h2>Acolhimento</h2><p>Consulta dos presentes por CDC e confirmação individual.</p></div><div class="head-actions"><span class="chip" id="starsBroadcastStatus">Stars não publicado</span><button class="btn primary" id="starsBroadcastBtn" onclick="enableStarsBroadcast()">↗ Disponibilizar no Stars</button></div></div>
-  <div class="welcome-controls">
-  <div class="card welcome-control"><div class="line"><div><h3>Efetivos • Hypera</h3><p>Libere o acolhimento da Hypera quando o grupo estiver pronto.</p></div><button class="btn primary" id="releaseEffHypera" onclick="release('efetivosHypera')">Liberar Hypera</button></div></div>
-  <div class="card welcome-control"><div class="line"><div><h3>Efetivos • Brainfarma &amp; Cosmed</h3><p>Libere o acolhimento da Brainfarma &amp; Cosmed separadamente.</p></div><button class="btn primary" id="releaseEffBrainfarma" onclick="release('efetivosBrainfarma')">Liberar Brainfarma &amp; Cosmed</button></div></div>
-  <div class="card welcome-control"><div class="line"><div><h3>Aprendizes</h3><p>Fluxo separado para os jovens.</p></div><button class="btn primary" id="releaseApp" onclick="release('aprendizes')">Liberar</button></div></div>
-</div>
-  <div class="searchbar"><input id="cdcSearch" placeholder="Pesquisar CDC numérico, ex.: 410203" inputmode="numeric" oninput="renderWelcome()"><button class="btn secondary" onclick="cdcSearch.value='';renderWelcome()">Limpar</button></div>
-  <div class="card panel table-wrap"><table><thead><tr><th>Colaborador</th><th>CDC</th><th>Cargo</th><th>Gestor imediato</th><th>Público</th><th>Status</th><th>Ação</th></tr></thead><tbody id="welcomeTable"></tbody></table></div>
-</section>
 <section class="view" id="cadastro">
   <div class="page-head"><div><h2>Cadastro</h2><p>Cadastre os Stars e Facilitadores que acessam os portais desta localidade.</p></div><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Star</button></div>
   <div class="card panel" style="margin-bottom:16px"><div class="panel-head"><div class="segment" id="portalRoleSegment"><button class="active" data-role="star" aria-pressed="true" onclick="selectPortalRegistrationRole('star')">✦ Stars</button><button data-role="host" aria-pressed="false" onclick="selectPortalRegistrationRole('host')">▶ Facilitadores</button></div><span class="chip" id="portalRegistrationLocation">—</span></div><div class="hint">Stars: <strong>STAR-NOME-DO-PREDIO-001</strong> • Facilitadores: <strong>HOST001</strong>. Os códigos são gerados automaticamente, sem repetição, e vinculados à localidade.</div></div>
@@ -195,20 +148,11 @@
 <section class="view" id="configuracoes">
   <div class="page-head"><div><h2>Configurações</h2><p>Localidades, responsáveis de Gestão e parâmetros da operação.</p></div><button class="btn primary" onclick="saveSettings()">Salvar parâmetros</button></div>
   <div class="settings-grid">
-    <div class="card panel"><div class="panel-head"><div><h3>Parâmetros gerais</h3><p>Configurações usadas em relatórios e comunicações.</p></div></div><div class="form-grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Tolerância (min)</label><input id="tol" type="number" value="10"></div><div class="field"><label>Horário Efetivos</label><input id="timeEff" value="07:30 às 18:00"></div><div class="field full"><label>Destinatários do relatório de ausentes</label><div class="recipient-editor"><input id="recipientEmail" type="email" placeholder="nome@empresa.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecipientEmail()}"><button type="button" class="btn secondary" onclick="addRecipientEmail()">+ Adicionar</button></div><div class="recipient-list" id="recipientList"></div><div class="recipient-empty" id="recipientEmpty">Nenhum destinatário cadastrado.</div></div><div class="field full"><label>Observação padrão</label><textarea id="standardObs" rows="3">Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.</textarea></div></div></div>
+    <div class="card panel"><div class="panel-head"><div><h3>Parâmetros gerais</h3><p>Configurações usadas na operação e nos relatórios.</p></div></div><div class="form-grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Tolerância (min)</label><input id="tol" type="number" value="10"></div><div class="field"><label>Horário Efetivos</label><input id="timeEff" value="07:30 às 18:00"></div><div class="field full"><label>Observação padrão</label><textarea id="standardObs" rows="3">Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.</textarea></div></div></div>
     <div class="card panel"><div class="panel-head"><div><h3>Localidades</h3><p>Cadastre as unidades que utilizam o PINC.</p></div><button class="btn secondary" onclick="openLocationModal()">+ Localidade</button></div><div class="compact-list" id="locationList"></div></div>
     <div class="card panel"><div class="panel-head"><div><h3>Acessos de Gestão</h3><p>Responsáveis autorizados por localidade.</p></div><button class="btn secondary" onclick="openAccessModal()">+ Criar acesso</button></div><div class="compact-list" id="accessList"></div></div>
-    <div class="card panel"><div class="panel-head"><div><h3>Horários de acolhimento</h3><p>Horário-base por localidade. A previsão é atualizada conforme o andamento real.</p></div></div>
-      <div class="hint" style="margin-bottom:10px">Localidade em edição: <strong id="welcomeLocationLabel">—</strong></div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr">
-        <div class="field"><label>Público</label><select id="welcomeAudience" onchange="changeWelcomeAudience()"><option value="efetivos">Efetivos</option><option value="aprendizes">Aprendizes</option></select></div>
-        <div class="field"><label>Período</label><select id="welcomePeriod" onchange="renderWelcomeScheduleFields()"></select></div>
-        <div class="field" id="welcomeHyperaField"><label>Hypera • horário previsto</label><input id="welcomeHypera" type="time" oninput="updateWelcomeDraft()"></div>
-        <div class="field" id="welcomeBrainfarmaField"><label>Brainfarma • horário previsto</label><input id="welcomeBrainfarma" type="time" oninput="updateWelcomeDraft()"></div>
-        <div class="field full" id="welcomeApprenticeField" style="display:none"><label>Aprendizes • horário previsto</label><input id="welcomeApprentices" type="time" oninput="updateWelcomeDraft()"></div>
-      </div>
-      <div class="divider"></div>
-      <div class="panel-head" style="margin-bottom:8px"><div><h3>Notificações no computador</h3><p>Avisos de atraso e aproximação do acolhimento.</p></div></div>
+    <div class="card panel">
+      <div class="panel-head"><div><h3>Notificações</h3><p>Avisos operacionais do PINC neste computador.</p></div></div>
       <div class="form-grid" style="grid-template-columns:1fr 1fr;align-items:end">
         <div class="field"><label>Antecedência do aviso (min)</label><input id="notificationLead" type="number" min="1" max="60" value="10"></div>
         <div class="field"><label>Status</label><div class="hint" id="notificationStatus" style="min-height:35px;display:flex;align-items:center">Não ativada</div></div>
@@ -223,7 +167,6 @@
       <div class="hint" style="margin-top:8px">O fluxo deve aceitar uma requisição POST em JSON. O portal envia os campos <strong>text</strong>, <strong>event</strong>, <strong>stage</strong>, <strong>location</strong>, <strong>audience</strong> e <strong>period</strong>.</div>
       <button class="btn secondary" style="margin-top:10px" onclick="testTeamsNotification()">Testar envio ao Teams</button>
     </div>
-    
   </div>
 </section>
 </div></main></div>
