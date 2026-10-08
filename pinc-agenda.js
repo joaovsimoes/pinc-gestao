@@ -21,7 +21,8 @@
   function latest(rows, location, core = null) {
     const candidates = (rows || []).filter(row => row.location === location && row.agenda &&
       ((row.type === 'agendaFeed' && row.status === 'published') || row.type === 'agendaSnapshot'));
-    if (core?.agenda && (!core.location || core.location === location)) candidates.push(core);
+    const locKey = String(location || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    if (core?.agenda && (core.location === location || (!core.location && locKey === 'anapolis'))) candidates.push(core);
     return candidates.sort((a, b) => version(b) - version(a))[0] || null;
   }
   window.PINC_AGENDA = { encode: value => transform(value, true), decode: value => transform(value, false), version, latest };
