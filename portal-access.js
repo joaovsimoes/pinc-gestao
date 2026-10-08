@@ -3,6 +3,9 @@
   'use strict';
   let database = null, connection = null;
   const normalizeCode = value => String(value || '').trim().toUpperCase().replace(/\s+/g, '');
+  const profileForRole = role => role === 'host'
+    ? { profile: 'guide', level: 2, profileName: 'Guide' }
+    : { profile: 'welcome', level: 1, profileName: 'Welcome' };
   const buildingSlug = value => String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/g, '');
   function prefix(role, building) {
@@ -40,7 +43,8 @@
           ['host', 'star'].includes(row.role) && (row.role === 'host') === row.code.startsWith('HOST') &&
           typeof row.location === 'string' && row.location) records.set(row.code, {
         id: row.code, code: row.code, role: row.role, name: row.name, building: row.building || '',
-        location: row.location, prefix: row.prefix, sequence: row.sequence, active: row.active !== false
+        location: row.location, prefix: row.prefix, sequence: row.sequence, active: row.active !== false,
+        ...profileForRole(row.role)
       });
       else if (row.type === 'portalAccessEvent' && records.has(row.targetId)) {
         const record = records.get(row.targetId);
@@ -74,12 +78,13 @@
           transaction.set(ref, {
             type: 'portalAccess', ownerUid: root.firebase.auth().currentUser.uid,
             code, role: input.role, name, building, location, prefix: p, sequence, active: true,
+            ...profileForRole(input.role),
             updatedAt: root.firebase.firestore.FieldValue.serverTimestamp(), updatedAtMillis: Date.now()
           });
         }));
         const saved = await timeout(ref.get({ source: 'server' }));
         if (!saved.exists) throw new Error('PORTAL_OFFLINE');
-        return { id: code, code, role: input.role, name, building, location, prefix: p, sequence, active: true };
+        return { id: code, code, role: input.role, name, building, location, prefix: p, sequence, active: true, ...profileForRole(input.role) };
       } catch (error) {
         if (error.message !== 'CODE_COLLISION') throw error;
       }
@@ -124,5 +129,5 @@
     };
     return messages[error?.message] || 'Não foi possível confirmar o cadastro na base online. Verifique a conexão e tente novamente.';
   }
-  root.PINC_PORTAL_ACCESS = { load, create, update, lookup, watch, message, codeFor, buildingSlug, normalizeCode };
+  root.PINC_PORTAL_ACCESS = { load, create, update, lookup, watch, message, codeFor, buildingSlug, normalizeCode, profileForRole };
 })(window);
