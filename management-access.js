@@ -132,6 +132,14 @@
   async function load(options = {}) {
     const database = await timeout(connect());
     let current = await read(database);
+
+    // One-time role migration: joao.v.simoes is the portal owner and must always be Master (level 5).
+    const owner = current.records.find(u => normalize(u.username) === 'joao.v.simoes');
+    if (owner && normalizeProfile(owner) !== 'master') {
+      const upgraded = await cloudRecord({ ...owner, profile: 'master', level: 5, profileName: 'Master' });
+      await append(database, { kind: 'upsert', id: upgraded.id, migration: 'owner-master-v1' }, [upgraded]);
+      current = await read(database);
+    }
     if (!current.exists && options.migrate !== false) {
       const local = localRecords();
       if (local.length) {
