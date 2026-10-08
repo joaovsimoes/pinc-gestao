@@ -7,7 +7,7 @@
   window.PINC_SHOW_PORTAL_LOGIN = function (value) {
     role = value === 'host' ? 'host' : 'star';
     const host = role === 'host', box = document.getElementById('portalCodeLogin');
-    document.getElementById('portalCodeTitle').textContent = host ? 'Acesso do Facilitador' : 'Acesso dos Stars';
+    document.getElementById('portalCodeTitle').textContent = host ? 'Acesso Guide' : 'Acesso Welcome';
     document.getElementById('portalCodeMark').textContent = host ? '▶' : '✦';
     const input = document.getElementById('portalCodeInput'); input.value = ''; input.placeholder = host ? 'HOST001' : 'STAR-NOME-DO-PREDIO-001';
     document.getElementById('portalCodeError').textContent = '';
