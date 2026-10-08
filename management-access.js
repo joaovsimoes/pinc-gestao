@@ -9,6 +9,24 @@
   let unsubscribe = null;
   let mutationQueue = Promise.resolve();
   const normalize = value => String(value || '').trim().toLowerCase();
+  const PROFILES = Object.freeze({
+    master: { level: 5, name: 'Master' },
+    hub: { level: 4, name: 'Hub' },
+    flow: { level: 3, name: 'Flow' }
+  });
+  function normalizeProfile(u) {
+    const raw = String(u?.profile || '').trim().toLowerCase();
+    if (PROFILES[raw]) return raw;
+    const level = Number(u?.level || 0);
+    if (level >= 5) return 'master';
+    if (level === 3) return 'flow';
+    return 'hub';
+  }
+  function enrich(u) {
+    if (!u || typeof u !== 'object') return u;
+    const profile = normalizeProfile(u), meta = PROFILES[profile];
+    return { ...u, profile, level: meta.level, profileName: meta.name };
+  }
   const legacy = u => u && u.username === 'joao.vitor' && u.password === '123456' && u.email === 'joao.vitor@empresa.com';
   const keyOf = u => String(u.id || normalize(u.username || u.email));
   function localRecords() {
@@ -24,11 +42,12 @@
     for (const u of candidates) {
       if (!u || legacy(u) || !normalize(u.username || u.email) || !u.location || !(u.password || u.passwordHash)) continue;
       const key = normalize(u.username || u.email);
-      if (!unique.has(key)) unique.set(key, { ...u, username: u.username || String(u.email).split('@')[0] });
+      if (!unique.has(key)) unique.set(key, enrich({ ...u, username: u.username || String(u.email).split('@')[0] }));
     }
     return [...unique.values()];
   }
   function cache(records) {
+    records = (records || []).map(enrich);
     try {
       root.localStorage.setItem(AUTH_KEY, JSON.stringify(records));
       // Keep the original browser's registry cache in step with the server.
@@ -51,8 +70,10 @@
     const salt = String(u.salt || id);
     const passwordHash = u.password ? await hash(u.password, salt) : String(u.passwordHash || '');
     if (!username || !u.location || !passwordHash) throw new Error('ACCESS_INCOMPLETE');
+    const profile = normalizeProfile(u), meta = PROFILES[profile];
     return { id, name: String(u.name || ''), email: String(u.email || '').trim(), username,
-      location: String(u.location), active: u.active !== false, salt, passwordHash };
+      location: String(u.location), profile, level: meta.level, profileName: meta.name,
+      active: u.active !== false, salt, passwordHash };
   }
   async function connect() {
     if (db && root.firebase.auth().currentUser) return db;
@@ -93,7 +114,7 @@
       } else if (row.operation?.kind === 'delete') records.delete(String(row.operation.id));
       if (row.schemaVersion === 2) migrated = true;
     }
-    return { exists: rows.length > 0, records: [...records.values()] };
+    return { exists: rows.length > 0, records: [...records.values()].map(enrich) };
   }
   async function read(database) {
     // A cached/failed request must never be reported as an invalid password.
@@ -162,5 +183,5 @@
     if (error?.message === 'ACCESS_NOT_FOUND') return 'O acesso foi alterado em outro computador. Atualize a lista e tente novamente.';
     return 'Não foi possível confirmar o acesso na base online. Verifique a conexão e tente novamente.';
   }
-  root.PINC_ACCESS = { load, upsert: account => mutate('upsert', account), remove: account => mutate('delete', account), watch, matches, message, normalize };
+  root.PINC_ACCESS = { load, upsert: account => mutate('upsert', account), remove: account => mutate('delete', account), watch, matches, message, normalize, profiles: PROFILES, normalizeProfile, enrich };
 })(window);
