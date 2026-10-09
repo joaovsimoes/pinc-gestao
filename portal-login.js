@@ -7,9 +7,9 @@
   window.PINC_SHOW_PORTAL_LOGIN = function (value) {
     role = value === 'host' ? 'host' : 'star';
     const host = role === 'host', box = document.getElementById('portalCodeLogin');
-    document.getElementById('portalCodeTitle').textContent = host ? 'Acesso Guide' : 'Acesso Welcome';
+    document.getElementById('portalCodeTitle').textContent = host ? 'Acesso Facilitador' : 'Acesso Star';
     document.getElementById('portalCodeMark').textContent = host ? '▶' : '✦';
-    const input = document.getElementById('portalCodeInput'); input.value = ''; input.placeholder = host ? 'HOST001' : 'STAR-NOME-DO-PREDIO-001';
+    const input = document.getElementById('portalCodeInput'); input.value = ''; input.placeholder = host ? 'G&G.001.A' : 'STAR-NOME-DO-PREDIO-001';
     document.getElementById('portalCodeError').textContent = '';
     box.classList.add('show'); box.setAttribute('aria-hidden', 'false'); setTimeout(() => input.focus(), 100);
   };
