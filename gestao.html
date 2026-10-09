@@ -75,6 +75,75 @@
 
 @media(max-width:900px){.attendance-kpis{grid-template-columns:repeat(2,1fr)}.attendance-grid{grid-template-columns:1fr}.attendance-controls{justify-content:flex-start}}
 .registry-result{font-size:9px;color:#8a93a4;white-space:nowrap}.table-wrap table th:last-child,.table-wrap table td:last-child{min-width:220px}@media(max-width:800px){.registry-tools{grid-template-columns:1fr}.registry-result{display:none}.presence-actions{min-width:195px}}.import-preview{max-height:250px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}.import-preview table{min-width:620px}
+
+/* Settings and access profiles — October 2026 */
+#configuracoes,#niveis{--settings-text:#263047;--settings-muted:#707b90}
+#configuracoes .page-head,#niveis .page-head{margin-bottom:22px;align-items:center}
+#configuracoes .page-head h2,#niveis .page-head h2{font-size:27px;font-weight:750}
+#configuracoes .page-head p,#niveis .page-head p{font-size:12px;line-height:1.6}
+.settings-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+.settings-column{display:grid;gap:18px;min-width:0}
+#configuracoes .panel{padding:24px;border-radius:20px;box-shadow:0 4px 18px rgba(29,37,65,.025);min-width:0}
+#configuracoes .panel-head{gap:16px;margin-bottom:22px;align-items:flex-start;flex-wrap:wrap}
+.settings-heading{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.settings-icon{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;border-radius:12px;background:#f2edfc;color:#8555ce}
+.settings-icon svg,.level-symbol svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#configuracoes h3{font-size:15px;font-weight:750;letter-spacing:-.02em}
+#configuracoes .panel-head p{font-size:11px;line-height:1.5;color:var(--settings-muted)}
+#configuracoes .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+#configuracoes .field{gap:8px;min-width:0}
+#configuracoes .field label{font-size:11px;font-weight:650;color:#536078}
+#configuracoes .field input,#configuracoes .field textarea{font-size:12px;padding:12px 13px;border-radius:11px;min-width:0;background:#fdfdff}
+#configuracoes .field textarea{line-height:1.6;resize:vertical}
+.settings-help{font-size:11px;color:var(--settings-muted);line-height:1.6;margin:0}
+#configuracoes .btn{font-size:11px;font-weight:700;padding:11px 14px;border-radius:11px;min-height:40px}
+#configuracoes .primary{background:#7c34ed;box-shadow:0 4px 12px #7417ff18}
+#configuracoes .recipient-editor{gap:8px;flex-wrap:wrap}
+#configuracoes .recipient-editor input{flex:1 1 180px}
+#configuracoes .recipient-list{gap:8px;margin-top:5px}
+#configuracoes .recipient-pill{font-size:11px;padding:8px 10px;overflow-wrap:anywhere;max-width:100%;background:#f6f3ff;border-color:#e9e2f7;color:#655584}
+#configuracoes .recipient-pill button{padding:2px 4px;font-size:14px;flex-shrink:0}
+#configuracoes .recipient-empty{font-size:11px;padding:8px 0}
+#configuracoes .compact-list{gap:0}
+#configuracoes .compact-row{border:0;border-bottom:1px solid #eef0f5;border-radius:0;padding:14px 0;min-width:0}
+#configuracoes .compact-row:first-child{padding-top:0}#configuracoes .compact-row:last-child{border-bottom:0;padding-bottom:0}
+.settings-location{display:flex;align-items:center;gap:12px;min-width:0}
+#configuracoes .location-code{width:43px;height:43px;flex:0 0 43px;border-radius:12px;display:grid;place-items:center;background:#f4f6fb;color:#64738c;font-size:11px;font-weight:750}
+#configuracoes .compact-row strong{font-size:12px;font-weight:700}
+#configuracoes .compact-row span:not(.location-code):not(.status):not(.tag){font-size:11px;line-height:1.5;margin-top:3px;overflow-wrap:anywhere}
+.settings-row-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#configuracoes .tag{font-size:10px;font-weight:650;padding:6px 9px;margin:0;background:#f4f1fb;color:#796392;white-space:nowrap}
+#configuracoes .status{font-size:10px;margin:0;white-space:nowrap}
+#configuracoes .icon-btn{width:34px;height:34px;flex-basis:34px;border-radius:10px;display:grid;place-items:center}
+#configuracoes .icon-btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#configuracoes #notificationStatus{padding:10px 12px;font-size:11px;line-height:1.5;border:1px solid #edf0f5;background:#f8fafc}
+#managementAccessPanel{grid-column:1/-1}
+#configuracoes .access-row{display:grid;grid-template-columns:minmax(180px,1fr) auto auto;gap:18px;align-items:center;padding:18px 0}
+.access-identity{display:flex;align-items:center;gap:13px;min-width:0}.access-identity>div{min-width:0}
+.access-avatar{width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:750;background:#f2edfc;color:#8555ce}
+.access-meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;color:#707b90;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+#configuracoes .access-meta span{margin:0!important;font-size:11px!important}
+.access-email{display:block;color:#8790a1;font-size:10px!important;margin-top:3px;overflow-wrap:anywhere}
+#configuracoes .access-action{border:1px solid var(--line);background:#fff;color:#647087;border-radius:9px;padding:8px 10px;font-size:10px;font-weight:650;min-height:34px;white-space:nowrap}
+#configuracoes button:focus-visible,#niveis button:focus-visible{outline:3px solid #ceb5fa;outline-offset:3px}
+.level-context{display:inline-flex;align-items:center;gap:9px;border:1px solid #e6d9fa;background:#faf7ff;color:#7143b3;padding:10px 14px;border-radius:12px;font-size:11px;font-weight:650;white-space:nowrap}
+.level-context:before{content:'';width:7px;height:7px;border-radius:50%;background:#9667da}
+.levels-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.level-card{--accent:#8250cc;--tint:#f4effc;background:#fff;border:1px solid #e8ebf3;border-radius:20px;padding:24px;min-width:0;position:relative;box-shadow:0 4px 18px rgba(29,37,65,.025)}
+.level-card.master{grid-column:span 2;background:linear-gradient(120deg,#fbf8ff,#fff);border-color:#e6d8f7;--accent:#7a42bf;--tint:#efe5fc}
+.level-card.hub{--accent:#557aca;--tint:#edf2fc}.level-card.flow{--accent:#218b86;--tint:#eaf7f4}.level-card.facilitador{--accent:#b88434;--tint:#fdf4e7}.level-card.star{--accent:#ae658c;--tint:#fbecf4}
+.level-card-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}
+.level-symbol{width:44px;height:44px;border-radius:14px;background:var(--tint);color:var(--accent);display:grid;place-items:center}
+.level-number{color:var(--accent);font-size:10px;letter-spacing:.08em;font-weight:750;text-transform:uppercase}
+.level-card h3{font-size:23px;letter-spacing:-.035em;margin:0 0 5px;font-weight:750}
+.level-title{font-size:11px;color:var(--accent);font-weight:650;margin:0 0 16px}
+.level-description{font-size:12px;line-height:1.75;color:#717b8f;margin:0;max-width:520px}
+.level-scope{display:flex;align-items:center;gap:8px;font-size:10px;color:#7c8699;border-top:1px solid #edf0f5;margin-top:20px;padding-top:15px}
+.level-scope b{font-weight:650;color:#4f5d75}.levels-footnote{margin:18px 2px 0;font-size:11px;color:#818b9d;line-height:1.7}
+@media(max-width:1100px){.levels-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.level-card.master{grid-column:1/-1}#configuracoes .access-row{grid-template-columns:minmax(0,1fr) auto}.access-row>.settings-row-actions:last-child{grid-column:1/-1;justify-content:flex-end}}
+@media(max-width:850px){.settings-grid{grid-template-columns:1fr}.levels-grid{gap:14px}#configuracoes .panel{padding:20px}}
+@media(max-width:560px){.levels-grid{grid-template-columns:1fr}.level-card.master{grid-column:auto}#configuracoes .form-grid{grid-template-columns:1fr}#configuracoes .access-row{grid-template-columns:1fr;gap:12px}.access-row>.settings-row-actions:last-child{justify-content:flex-start;flex-wrap:wrap}#configuracoes .page-head,#niveis .page-head{align-items:flex-start}.level-context{white-space:normal}.level-card{padding:22px}#configuracoes .panel-head>.btn{margin-left:52px}.settings-row-actions{flex-wrap:wrap}.settings-help{font-size:10px}}
+
 </style>
 </head><body>
 <div class="app">
@@ -169,34 +238,9 @@
   <p class="hint" id="portalRegistryStatus" aria-live="polite">Os cadastros ficam disponíveis em todos os computadores.</p>
 </section>
 <section class="view" id="niveis">
-  <div class="page-head"><div><h2>Níveis</h2><p>Entenda a hierarquia de acesso e o papel de cada perfil dentro do PINC.</p></div></div>
-  <div class="card panel">
-    <div class="panel-head"><div><h3>Níveis de acesso</h3><p>Hierarquia oficial de perfis do portal PINC.</p></div></div>
-    <div class="compact-list">
-      <div class="compact-row"><div><strong>Nível 5 • Master</strong><span>Controle geral de todo o portal e de todas as localidades.</span></div><span class="tag">Global</span></div>
-      <div class="compact-row"><div><strong>Nível 4 • Hub</strong><span>Administração e gestão de uma localidade.</span></div><span class="tag">Localidade</span></div>
-      <div class="compact-row"><div><strong>Nível 3 • Flow</strong><span>Coordenação, organização e acompanhamento das agendas.</span></div><span class="tag">Gestão</span></div>
-      <div class="compact-row"><div><strong>Nível 2 • Facilitador</strong><span>Facilitadores que conduzem as etapas do PINC.</span></div><span class="tag">Facilitador</span></div>
-      <div class="compact-row"><div><strong>Nível 1 • Star</strong><span>Stars responsáveis pelo acolhimento e acompanhamento.</span></div><span class="tag">Stars</span></div>
-    </div>
-  </div>
-</section>
-<section class="view" id="configuracoes">
-  <div class="page-head"><div><h2>Configurações</h2><p>Localidades, responsáveis de Gestão e parâmetros da operação.</p></div><button class="btn primary" onclick="saveSettings()">Salvar parâmetros</button></div>
-  <div class="settings-grid">
-    <div class="card panel"><div class="panel-head"><div><h3>Parâmetros gerais</h3><p>Configurações usadas na operação e nos relatórios.</p></div></div><div class="form-grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Tolerância (min)</label><input id="tol" type="number" value="10"></div><div class="field"><label>Horário Efetivos</label><input id="timeEff" value="07:30 às 18:00"></div><div class="field full"><label>Destinatários do relatório de ausentes</label><div class="recipient-editor"><input id="recipientEmail" type="email" placeholder="nome@empresa.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecipientEmail()}"><button type="button" class="btn secondary" onclick="addRecipientEmail()">+ Adicionar</button></div><div class="recipient-list" id="recipientList"></div><div class="recipient-empty" id="recipientEmpty">Nenhum destinatário cadastrado.</div></div><div class="field full"><label>Observação padrão</label><textarea id="standardObs" rows="3">Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.</textarea></div></div></div>
-    <div class="card panel" id="locationAdminPanel"><div class="panel-head"><div><h3>Localidades</h3><p>Exclusivo do perfil Master.</p></div><button class="btn secondary" onclick="openLocationModal()">+ Localidade</button></div><div class="compact-list" id="locationList"></div></div>
-    <div class="card panel" id="managementAccessPanel"><div class="panel-head"><div><h3>Acessos de Gestão</h3><p>Perfis Master, Hub e Flow.</p></div><button class="btn secondary" onclick="openAccessModal()">+ Criar acesso</button></div><div class="compact-list" id="accessList"></div></div>
-    <div class="card panel">
-      <div class="panel-head"><div><h3>Notificações</h3><p>Avisos operacionais do PINC neste computador.</p></div></div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;align-items:end">
-        <div class="field"><label>Antecedência do aviso (min)</label><input id="notificationLead" type="number" min="1" max="60" value="10"></div>
-        <div class="field"><label>Status</label><div class="hint" id="notificationStatus" style="min-height:35px;display:flex;align-items:center">Não ativada</div></div>
-      </div>
-      <button class="btn secondary" style="margin-top:10px" onclick="requestDesktopNotifications()" id="notificationBtn">Ativar notificações</button>
-    </div>
-  </div>
-</section>
+<div class="page-head"><div><h2>Níveis de acesso</h2><p>Cada perfil tem um papel na experiência de integração.</p></div><span class="level-context" id="currentLevelLabel">Seu perfil</span></div><div class="levels-grid"><article class="level-card master"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg></span><span class="level-number">Nível 05</span></div><h3>Master</h3><p class="level-title">Administração global</p><p class="level-description">Controle geral de todo o portal e de todas as localidades. Centraliza a gestão das unidades e dos acessos.</p><div class="level-scope">Abrangência <b>Todas as localidades</b></div></article><article class="level-card hub"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="level-number">Nível 04</span></div><h3>Hub</h3><p class="level-title">Gestão da localidade</p><p class="level-description">Administra e acompanha a operação do PINC na localidade vinculada ao seu acesso.</p><div class="level-scope">Abrangência <b>Localidade vinculada</b></div></article><article class="level-card flow"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18m-13 4 3 3 5-4"/></svg></span><span class="level-number">Nível 03</span></div><h3>Flow</h3><p class="level-title">Coordenação de agendas</p><p class="level-description">Organiza a programação e acompanha o andamento das agendas da sua localidade.</p><div class="level-scope">Abrangência <b>Agendas da localidade</b></div></article><article class="level-card facilitador"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><span class="level-number">Nível 02</span></div><h3>Facilitador</h3><p class="level-title">Condução das etapas</p><p class="level-description">Conduz as atividades do PINC e acompanha a etapa atual e o cronômetro pelo Portal do Facilitador.</p><div class="level-scope">Abrangência <b>Portal do Facilitador</b></div></article><article class="level-card star"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></span><span class="level-number">Nível 01</span></div><h3>Star</h3><p class="level-title">Acolhimento e acompanhamento</p><p class="level-description">Acompanha o andamento da integração e o acolhimento dos novos colaboradores pelo Portal do Star.</p><div class="level-scope">Abrangência <b>Portal do Star</b></div></article></div><p class="levels-footnote">Os acessos de Gestão são cadastrados em Configurações. Os perfis Star e Facilitador são cadastrados na aba Cadastro.</p></section>
+<section class="view" id="configuracoes"><div class="page-head"><div><h2>Configurações</h2><p>Organize a operação, as comunicações e os acessos do PINC.</p></div><button class="btn primary" onclick="saveSettings()">Salvar alterações</button></div><div class="settings-grid"><div class="settings-column"><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></span><div><h3>Operação</h3><p>Parâmetros usados na agenda e nos relatórios.</p></div></div></div><div class="form-grid"><div class="field"><label for="tol">Tolerância de horário (min)</label><input id="tol" type="number" value="10"></div><div class="field"><label for="timeEff">Horário dos Efetivos</label><input id="timeEff" value="07:30 às 18:00"></div><div class="field full"><label for="standardObs">Observação padrão</label><textarea id="standardObs" rows="2">Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.</textarea></div></div></div><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Comunicações</h3><p>Destinatários do relatório de ausentes.</p></div></div></div><div class="field"><label for="recipientEmail">Adicionar destinatário</label><div class="recipient-editor"><input id="recipientEmail" type="email" placeholder="nome@empresa.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecipientEmail()}"><button type="button" class="btn secondary" onclick="addRecipientEmail()">+ Adicionar</button></div><div class="recipient-list" id="recipientList"></div><div class="recipient-empty" id="recipientEmpty">Nenhum destinatário cadastrado.</div></div></div></div><div class="settings-column"><div class="card panel" id="locationAdminPanel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><h3>Localidades</h3><p>Unidades que utilizam o PINC.</p></div></div><button class="btn secondary" onclick="openLocationModal()">+ Localidade</button></div><div class="compact-list" id="locationList"></div></div><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></span><div><h3>Notificações</h3><p>Avisos do PINC neste computador.</p></div></div></div><div class="form-grid"><div class="field"><label for="notificationLead">Antecedência do aviso (min)</label><input id="notificationLead" type="number" min="1" max="60" value="10"></div><div class="field"><label>Status das notificações</label><div class="hint" id="notificationStatus" role="status" style="min-height:42px;display:flex;align-items:center">Não ativada</div></div></div><button class="btn secondary" style="margin-top:16px" onclick="requestDesktopNotifications()" id="notificationBtn">Ativar notificações</button></div></div><div class="card panel" id="managementAccessPanel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5"/></svg></span><div><h3>Acessos de Gestão</h3><p>Responsáveis com os perfis Master, Hub e Flow.</p></div></div><button class="btn secondary" onclick="openAccessModal()">+ Criar acesso</button></div><div class="compact-list" id="accessList"></div></div></div></section>
+
 </div></main></div>
 <div class="music-fullscreen hidden" id="musicQrFullscreen">
   <div class="music-fullscreen-card">
@@ -527,7 +571,27 @@ function confirmWelcome(i){const p=S.participants[i];if(!p)return;window.__pendi
 function confirmWelcomeNow(){const i=window.__pendingWelcome;if(Number.isInteger(i)&&S.participants[i]){S.participants[i].welcomeDone=true;persist();renderWelcome()}window.__pendingWelcome=null;closeModal();successDialog('Acolhimento confirmado','O colaborador foi marcado como acolhido.')}
 function renderLocationSelect(){const auth=managementAuth(),master=isMaster();const locs=master?S.locations:S.locations.filter(l=>l.name===auth.location);if(!master&&auth.location)S.currentLocation=auth.location;if(master&&!locs.some(l=>l.name===S.currentLocation))S.currentLocation=auth.location&&locs.some(l=>l.name===auth.location)?auth.location:(locs[0]?.name||'');topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!master;applyManagementAccessProfile()}
 async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();if(g('musicas')?.classList.contains('active'))initMusicRequests();if(window.renderPortalRegistrations)renderPortalRegistrations();renderSettingsLists();if(previous!==v)toast('Localidade alterada para '+v+'.')}
-function renderSettingsLists(){applyManagementAccessProfile();const level=managementLevel(),auth=managementAuth();if(g('locationList')){const locs=isMaster()?S.locations:S.locations.filter(l=>l.name===auth.location);locationList.innerHTML=locs.map(l=>{const i=S.locations.indexOf(l);return `<div class="compact-row"><div><strong>${l.name}</strong><span>Código: ${l.code}</span></div><div style="display:flex;gap:6px"><span class="tag">Localidade</span>${isMaster()&&S.locations.length>1?`<button class="icon-btn delete" onclick="removeLocation(${i})">×</button>`:''}</div></div>`}).join('')}if(g('accessList')){const rows=(S.accesses||[]).map((u,i)=>({u,i})).filter(({u})=>isMaster()||(u.location===auth.location&&accessLevel(u)<=level));accessList.innerHTML=rows.length?rows.map(({u,i})=>{const profile=accessProfile(u),meta=MANAGEMENT_PROFILES[profile];return `<div class="compact-row"><div><strong>${esc(u.name)}</strong><span>${esc(u.email||'—')} • usuário: ${esc(u.username||'—')} • ${esc(u.location)} • Nível ${meta.level} ${meta.name}</span></div><div style="display:flex;gap:6px;align-items:center"><span class="tag">${meta.name}</span><span class="status ${u.active?'green':'red'}">${u.active?'Ativo':'Inativo'}</span><button class="icon-btn" title="Redefinir senha" onclick="resetAccessPassword(${i})">⌘</button><button class="icon-btn" title="Ativar ou desativar" onclick="toggleAccess(${i})">↻</button><button class="icon-btn delete" title="Excluir acesso" onclick="removeAccess(${i})">×</button></div></div>`}).join(''):'<div class="hint">Nenhum acesso disponível para este perfil.</div>'}updateNotificationStatus()}
+function settingsTrashIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>'}
+function renderSettingsLists(){
+  applyManagementAccessProfile();
+  const level=managementLevel(),auth=managementAuth(),meta=MANAGEMENT_PROFILES[managementProfile()];
+  if(g('currentLevelLabel'))g('currentLevelLabel').textContent=`Seu perfil: ${meta.name} · Nível ${meta.level}`;
+  if(g('locationList')){
+    const locs=isMaster()?S.locations:S.locations.filter(l=>l.name===auth.location);
+    g('locationList').innerHTML=locs.map(l=>{
+      const i=S.locations.indexOf(l);
+      return `<div class="compact-row"><div class="settings-location"><span class="location-code">${esc(l.code)}</span><div><strong>${esc(l.name)}</strong><span>${l.name===S.currentLocation?'Localidade selecionada':'Localidade cadastrada'}</span></div></div><div class="settings-row-actions">${isMaster()&&S.locations.length>1?`<button class="icon-btn delete" title="Excluir localidade" aria-label="Excluir ${esc(l.name)}" onclick="removeLocation(${i})">${settingsTrashIcon()}</button>`:''}</div></div>`;
+    }).join('');
+  }
+  if(g('accessList')){
+    const rows=(S.accesses||[]).map((u,i)=>({u,i})).filter(({u})=>isMaster()||(u.location===auth.location&&accessLevel(u)<=level));
+    g('accessList').innerHTML=rows.length?rows.map(({u,i})=>{
+      const meta=MANAGEMENT_PROFILES[accessProfile(u)],name=String(u.name||u.username||'Responsável'),parts=name.trim().split(/\s+/),initials=((parts[0]?.[0]||'')+(parts.length>1?parts[parts.length-1][0]:'')).toUpperCase();
+      return `<div class="compact-row access-row"><div class="access-identity"><div class="access-avatar" aria-hidden="true">${esc(initials)}</div><div><strong>${esc(name)}</strong><div class="access-meta"><span>${esc(u.username||'—')}</span><span>${esc(u.location||'—')}</span></div>${u.email?`<span class="access-email">${esc(u.email)}</span>`:''}</div></div><div class="settings-row-actions"><span class="tag">${meta.name} · ${meta.level}</span><span class="status ${u.active?'green':'red'}">${u.active?'Ativo':'Inativo'}</span></div><div class="settings-row-actions"><button class="access-action" title="Redefinir senha" aria-label="Redefinir senha de ${esc(name)}" onclick="resetAccessPassword(${i})">Senha</button><button class="access-action" aria-label="${u.active?'Desativar':'Ativar'} acesso de ${esc(name)}" onclick="toggleAccess(${i})">${u.active?'Desativar':'Ativar'}</button><button class="icon-btn delete" title="Excluir acesso" aria-label="Excluir acesso de ${esc(name)}" onclick="removeAccess(${i})">${settingsTrashIcon()}</button></div></div>`;
+    }).join(''):'<p class="settings-help">Nenhum acesso disponível para este perfil.</p>';
+  }
+  updateNotificationStatus();
+}
 function openLocationModal(){if(!isMaster())return toast('Somente o perfil Master pode cadastrar localidades.');openDialog('Nova localidade',`<div class="form-grid" style="grid-template-columns:1fr 1fr"><div class="field"><label>Nome da localidade</label><input id="locName" placeholder="Ex.: Brasília"></div><div class="field"><label>Código</label><input id="locCode" placeholder="Ex.: BSB"></div></div>`,`<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveLocation()">Cadastrar</button>`)}
 function saveLocation(){if(!isMaster())return toast('Ação exclusiva do perfil Master.');const n=g('locName')?.value.trim(),code=g('locCode')?.value.trim().toUpperCase();if(!n||!code)return toast('Informe nome e código.');S.locations.push({id:'loc'+Date.now(),name:n,code});closeModal();renderLocationSelect();renderSettingsLists();persist();successDialog('Localidade cadastrada','A nova localidade foi adicionada com sucesso.')}
 function removeLocation(i){if(!isMaster())return toast('Ação exclusiva do perfil Master.');const l=S.locations[i];if(!l)return;if(S.accesses.some(u=>u.location===l.name))return openDialog('Não é possível excluir',`<div class="dialog-warning"><span>⚠</span><div>Esta localidade possui acessos vinculados. Remova ou altere esses acessos antes de excluir a localidade.</div></div>`,`<button class="btn primary" onclick="closeModal()">OK</button>`);window.__pendingLocationDelete=i;confirmDialog('Excluir localidade',`Deseja excluir a localidade “${l.name}”?`,'Excluir definitivamente','confirmRemoveLocation()',true)}
