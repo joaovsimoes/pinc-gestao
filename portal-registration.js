@@ -7,7 +7,7 @@
   window.renderPortalRegistrations = function () {
     const search = normalizeHeaderText(g('portalRegistrationSearch')?.value || '');
     const rows = here().filter(u => u.role === selectedRole && normalizeHeaderText([u.name, u.building, u.code].join(' ')).includes(search));
-    g('portalRegisterButton').textContent = selectedRole === 'star' ? '+ Cadastrar Welcome' : '+ Cadastrar Guide';
+    g('portalRegisterButton').textContent = selectedRole === 'star' ? '+ Cadastrar Star' : '+ Cadastrar Facilitador';
     g('portalBuildingHeader').style.display = selectedRole === 'star' ? '' : 'none';
     g('portalRegistrationLocation').textContent = location();
     g('portalRegistrationCount').textContent = rows.length + ' cadastro(s)';
@@ -22,7 +22,7 @@
       <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn secondary" onclick="copyPortalCode('${u.id}')">Copiar</button>
       <button class="btn secondary" onclick="openPortalRegistration('${u.id}')">Editar</button>
       <button class="btn secondary" onclick="togglePortalRegistration('${u.id}')">${u.active ? 'Desativar' : 'Ativar'}</button></div></td></tr>`).join('') :
-      `<tr><td colspan="${selectedRole === 'star' ? 6 : 5}" style="text-align:center;padding:28px">Nenhum ${selectedRole === 'star' ? 'Welcome' : 'Guide'} cadastrado nesta localidade.</td></tr>`;
+      `<tr><td colspan="${selectedRole === 'star' ? 6 : 5}" style="text-align:center;padding:28px">Nenhum ${selectedRole === 'star' ? 'Star' : 'Facilitador'} cadastrado nesta localidade.</td></tr>`;
   };
   window.selectPortalRegistrationRole = function (role) { selectedRole = role === 'host' ? 'host' : 'star'; renderPortalRegistrations(); };
   window.initPortalRegistration = async function () {
@@ -40,7 +40,7 @@
     if (id && !current) return toast('Cadastro não encontrado nesta localidade.');
     const role = current?.role || selectedRole;
     window.__portalRegistrationDraft = { id: current?.id, role, location: location() };
-    openDialog(current ? 'Editar cadastro' : role === 'star' ? 'Cadastrar Welcome' : 'Cadastrar Guide', `<div class="form-grid" style="grid-template-columns:1fr 1fr">
+    openDialog(current ? 'Editar cadastro' : role === 'star' ? 'Cadastrar Star' : 'Cadastrar Facilitador', `<div class="form-grid" style="grid-template-columns:1fr 1fr">
       <div class="field full"><label for="portalPersonName">Nome da pessoa</label><input id="portalPersonName" maxlength="120" value="${esc(current?.name || '')}" autocomplete="off"></div>
       ${role === 'star' ? `<div class="field full"><label for="portalPersonBuilding">Prédio</label><input id="portalPersonBuilding" maxlength="80" value="${esc(current?.building || '')}" ${current ? 'readonly' : ''} placeholder="Ex.: Goiás" autocomplete="off"></div>` : ''}
       <div class="field full"><label>Localidade vinculada</label><input readonly value="${esc(location())}"></div>
@@ -60,7 +60,7 @@
       entries = entries.filter(record => record.id !== saved.id).concat(saved); renderPortalRegistrations(); closeModal();
       openDialog(draft.id ? 'Cadastro atualizado' : 'Cadastro criado', `<div class="hint">${esc(saved.name)}<br>Localidade: <strong>${esc(saved.location)}</strong>${saved.building ? `<br>Prédio: <strong>${esc(saved.building)}</strong>` : ''}</div>
         <p style="margin-top:16px">Código confirmado online:</p><div style="padding:16px;background:var(--purpleSoft);border-radius:12px;font-size:20px;font-weight:850;overflow-wrap:anywhere">${esc(saved.code)}</div>
-        <p>Use este código ao acessar ${saved.role === 'host' ? 'Guide / Facilitador' : 'Welcome / Stars'} na página inicial.</p>`, `<button class="btn secondary" onclick="copyPortalCode('${saved.id}')">Copiar código</button><button class="btn primary" onclick="closeModal()">Concluir</button>`);
+        <p>Use este código ao acessar ${saved.role === 'host' ? 'Facilitador' : 'Star'} na página inicial.</p>`, `<button class="btn secondary" onclick="copyPortalCode('${saved.id}')">Copiar código</button><button class="btn primary" onclick="closeModal()">Concluir</button>`);
     } catch (error) { toast(api.message(error)); } finally { busy = false; if (button) { button.disabled = false; button.textContent = 'Salvar cadastro'; } }
   };
   window.copyPortalCode = async function (id) {
