@@ -5,6 +5,7 @@
   const api = window.PINC_PORTAL_ACCESS;
   const targetFor = value => value === 'host' ? 'facilitador' : 'stars';
   window.PINC_SHOW_PORTAL_LOGIN = function (value) {
+    if (value === 'host') { window.PINC_DO_LAUNCH('facilitador'); return; }
     role = value === 'host' ? 'host' : 'star';
     const host = role === 'host', box = document.getElementById('portalCodeLogin');
     document.getElementById('portalCodeTitle').textContent = host ? 'Acesso Facilitador' : 'Acesso Star';
