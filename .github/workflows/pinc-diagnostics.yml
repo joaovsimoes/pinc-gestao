@@ -1,0 +1,64 @@
+name: PINC read-only diagnostics
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/pinc-diagnostics.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install Google authentication client
+        run: python3 -m pip install --quiet google-auth requests
+      - name: Read project status and current progress
+        env:
+          PINC_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PINC_GESTAO }}
+        run: |
+          python3 - <<'PY'
+          import os,json,datetime,urllib.parse,hashlib
+          import requests
+          from google.oauth2 import service_account
+          from google.auth.transport.requests import Request
+          try:
+              credentials=service_account.Credentials.from_service_account_info(json.loads(os.environ['PINC_SERVICE_ACCOUNT']),scopes=['https://www.googleapis.com/auth/cloud-platform'])
+              credentials.refresh(Request())
+          except Exception as error:
+              print('AUTH_FAILED',type(error).__name__)
+              raise SystemExit(1)
+          session=requests.Session();session.headers['Authorization']='Bearer '+credentials.token
+          def read(label,url,payload=None):
+              response=session.get(url,timeout=30) if payload is None else session.post(url,json=payload,timeout=30)
+              try:data=response.json()
+              except ValueError:data={}
+              print(label+'_HTTP',response.status_code)
+              if response.status_code>=400:
+                  error=(data[0] if isinstance(data,list) and data else data).get('error',{})
+                  print(label+'_ERROR',error.get('status',''),error.get('message','')[:240]);return None
+              return data
+          project='pinc-gestao'
+          billing=read('BILLING','https://cloudbilling.googleapis.com/v1/projects/'+project+'/billingInfo')
+          if billing is not None:print('BILLING_ENABLED',billing.get('billingEnabled'))
+          fields=['type','status','running','audience','period','location','stageIndex','stageName','completed','activeIndex','startedAtMillis','heartbeatAtMillis','updatedAtMillis','createdAtMillis','kind','periodResetAt']
+          query={'structuredQuery':{'from':[{'collectionId':'pincLocks'}],'select':{'fields':[{'fieldPath':field} for field in fields]},'where':{'fieldFilter':{'field':{'fieldPath':'location'},'op':'EQUAL','value':{'stringValue':'Anápolis'}}}}}
+          rows=read('FIRESTORE','https://firestore.googleapis.com/v1/projects/'+project+'/databases/(default)/documents:runQuery',query)
+          def value(v):
+              if 'integerValue' in v:return int(v['integerValue'])
+              if 'doubleValue' in v:return v['doubleValue']
+              return v.get('stringValue',v.get('booleanValue',v.get('timestampValue')))
+          if rows is not None:
+              for row in rows:
+                  doc=row.get('document',{});data={key:value(val) for key,val in doc.get('fields',{}).items()}
+                  if data.get('type') in ['facilitatorLock','facilitatorProgress','periodReset']:
+                      data['recordHash']=hashlib.sha256(doc.get('name','').encode()).hexdigest()[:10]
+                      print('PROGRESS',json.dumps(data,ensure_ascii=False))
+          end=datetime.datetime.now(datetime.timezone.utc);start=end-datetime.timedelta(hours=24)
+          for metric in ['firestore.googleapis.com/document/read_count','firestore.googleapis.com/document/write_count']:
+              args={'filter':'metric.type="'+metric+'"','interval.startTime':start.isoformat(),'interval.endTime':end.isoformat(),'view':'FULL'}
+              usage=read('USAGE','https://monitoring.googleapis.com/v3/projects/'+project+'/timeSeries?'+urllib.parse.urlencode(args))
+              if usage is not None:
+                  total=sum(int(point.get('value',{}).get('int64Value',0)) for series in usage.get('timeSeries',[]) for point in series.get('points',[]))
+                  print('METRIC_24H',metric,total)
+          PY
