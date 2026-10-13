@@ -69,7 +69,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
     <footer class="home-foot"><span>PINC&nbsp; • &nbsp;Programa de Integração de Novos Colaboradores</span><span>Gestão&nbsp; • &nbsp;Facilitador&nbsp; • &nbsp;Star's</span></footer>
   </main>
 </section>
-<section id="moduleView"><iframe id="moduleFrame" title="Módulo PINC"></iframe></section><div id="routeTransition" aria-hidden="true"><div class="route-pulse"></div><div class="route-copy"><strong id="routeTransitionText">Carregando...</strong><span>Preparando seu ambiente PINC</span></div></div>
+<section id="moduleView"><iframe id="moduleFrame" title="Módulo PINC" allow="autoplay; encrypted-media"></iframe></section><div id="routeTransition" aria-hidden="true"><div class="route-pulse"></div><div class="route-copy"><strong id="routeTransitionText">Carregando...</strong><span>Preparando seu ambiente PINC</span></div></div>
 <div id="managementLogin" aria-hidden="true">
   <div class="login-card">
     <div class="login-head"><div class="login-mark">◎</div><div><h2>Acesso à Gestão</h2><p>Entre com seu usuário. O portal aplica automaticamente as permissões de Master, Hub ou Flow.</p></div></div>
@@ -94,7 +94,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
 <script src="management-access.js?v=20261008-2"></script>
 <script src="portal-access.js?v=20261009-area-1"></script>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261009-registros-1',facilitador:'facilitador.html?v=20261009-open-1',stars:'stars.html?v=20261009-stars-3'};
+const PINC_MODULES={gestao:'gestao.html?v=20261009-registros-1',facilitador:'facilitador.html?v=20261013-live-1',stars:'stars.html?v=20261009-stars-3'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
