@@ -1,8 +1,5 @@
 name: PINC read-only diagnostics
 on:
-  push:
-    branches: [main]
-    paths: ['.github/workflows/pinc-diagnostics.yml']
   workflow_dispatch:
 permissions:
   contents: read
