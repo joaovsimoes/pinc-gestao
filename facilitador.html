@@ -219,7 +219,7 @@ function viewStage(){const l=viewLive(),a=list();const local=a[l.activeIndex];if
 function viewElapsedSeconds(){const l=viewLive();if(!l.running||!l.startedAt)return Number(l.elapsedSeconds||0);return Math.max(0,Math.floor((Date.now()-new Date(l.startedAt).getTime())/1000)+Number(l.elapsedBefore||0))}
 function viewOverallData(){if(observingRemote())return{pct:Number(remoteLock.overallPct||0),completed:Number(remoteLock.completed||0),total:Number(remoteLock.agendaTotal||list().length||0)};if(lastObservedLive)return{pct:Number(lastObservedLive.overallPct||0),completed:Number(lastObservedLive.completed||0),total:Number(lastObservedLive.agendaTotal||list().length||0)};return overallData()}
 
-function facOnlineWait(promise,label){return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error(label+' demorou a responder. Verifique a conexão e tente novamente.')),12000);promise.then(value=>{clearTimeout(timeout);resolve(value)},error=>{clearTimeout(timeout);reject(error)})})}
+function facOnlineWait(promise,label){return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(new Error(label+' não foi confirmado pelo servidor do PINC no prazo. Aguarde a sincronização online.')),12000);promise.then(value=>{clearTimeout(timeout);resolve(value)},error=>{clearTimeout(timeout);reject(error)})})}
 async function initCloudLock(){
   if(lockReady)return true;if(lockInitPromise)return lockInitPromise;
   lockInitPromise=(async()=>{try{

@@ -1,5 +1,8 @@
-name: PINC read-only diagnostics
+name: PINC diagnostics
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/pinc-diagnostics.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,7 +13,7 @@ jobs:
     steps:
       - name: Install Google authentication client
         run: python3 -m pip install --quiet google-auth requests
-      - name: Read project status and current progress
+      - name: Inspect project and test isolated IO
         env:
           PINC_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PINC_GESTAO }}
         run: |
@@ -36,8 +39,6 @@ jobs:
                   print(label+'_ERROR',error.get('status',''),error.get('message','')[:240]);return None
               return data
           project='pinc-gestao'
-          billing=read('BILLING','https://cloudbilling.googleapis.com/v1/projects/'+project+'/billingInfo')
-          if billing is not None:print('BILLING_ENABLED',billing.get('billingEnabled'))
           fields=['type','status','running','audience','period','location','stageIndex','stageName','completed','activeIndex','startedAtMillis','heartbeatAtMillis','updatedAtMillis','createdAtMillis','kind','periodResetAt']
           query={'structuredQuery':{'from':[{'collectionId':'pincLocks'}],'select':{'fields':[{'fieldPath':field} for field in fields]},'where':{'fieldFilter':{'field':{'fieldPath':'location'},'op':'EQUAL','value':{'stringValue':'Anápolis'}}}}}
           rows=read('FIRESTORE','https://firestore.googleapis.com/v1/projects/'+project+'/databases/(default)/documents:runQuery',query)
@@ -51,11 +52,11 @@ jobs:
                   if data.get('type') in ['facilitatorLock','facilitatorProgress','periodReset']:
                       data['recordHash']=hashlib.sha256(doc.get('name','').encode()).hexdigest()[:10]
                       print('PROGRESS',json.dumps(data,ensure_ascii=False))
-          end=datetime.datetime.now(datetime.timezone.utc);start=end-datetime.timedelta(hours=24)
-          for metric in ['firestore.googleapis.com/document/read_count','firestore.googleapis.com/document/write_count']:
-              args={'filter':'metric.type="'+metric+'"','interval.startTime':start.isoformat(),'interval.endTime':end.isoformat(),'view':'FULL'}
-              usage=read('USAGE','https://monitoring.googleapis.com/v3/projects/'+project+'/timeSeries?'+urllib.parse.urlencode(args))
-              if usage is not None:
-                  total=sum(int(point.get('value',{}).get('int64Value',0)) for series in usage.get('timeSeries',[]) for point in series.get('points',[]))
-                  print('METRIC_24H',metric,total)
+          # Check one isolated temporary document; no operational or collaborator data is modified.
+          probe='projects/'+project+'/databases/(default)/documents/pincDiagnostics/io_'+os.environ['GITHUB_RUN_ID']
+          commit='https://firestore.googleapis.com/v1/projects/'+project+'/databases/(default)/documents:commit'
+          test=read('FIRESTORE_WRITE',commit,{'writes':[{'update':{'name':probe,'fields':{'purpose':{'stringValue':'Temporary PINC connection diagnostic'}}},'currentDocument':{'exists':False}}]})
+          if test is not None:
+              removed=read('DIAGNOSTIC_CLEANUP',commit,{'writes':[{'delete':probe}]})
+              if removed is None:print('TEMPORARY_DIAGNOSTIC_REMAINS',probe.split('/')[-1])
           PY
