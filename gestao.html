@@ -230,7 +230,7 @@
   <div class="report-grid"><div class="card panel"><div class="panel-head"><div><h3>Desvios</h3><p>Etapas fora da tolerância configurada.</p></div></div><div class="report-list" id="deviationList"></div></div><div class="card panel"><div class="panel-head"><div><h3>Pontos de oportunidade</h3><p>Sugestões automáticas a partir dos tempos.</p></div></div><div class="opps" id="oppList"></div></div></div>
 </section>
 <section class="view" id="acolhimento">
-  <div class="page-head"><div><h2>Acolhimento</h2><p>Confirme o acolhimento dos colaboradores presentes no PINC.</p></div><span class="chip" id="welcomeLocation">Anápolis</span></div>
+  <div class="page-head"><div><h2>Acolhimento</h2><p>Confirme o acolhimento dos colaboradores presentes no PINC.</p></div><div class="head-actions"><span class="chip" id="welcomeLocation">Anápolis</span><button class="btn primary" type="button" onclick="openWelcomeReport()">↓ Emitir relatório</button></div></div>
   <div class="kpis welcome-kpis">
     <div class="card kpi"><small>Colaboradores presentes</small><strong id="welcomePresentCount">0</strong><span>elegíveis ao acolhimento</span></div>
     <div class="card kpi"><small>Acolhidos</small><strong id="welcomeDoneCount">0</strong><span>confirmações realizadas</span></div>
@@ -628,6 +628,125 @@ function welcomePendingHere(){return participantsHere().filter(p=>p.present&&!p.
 function welcomeSyncSelection(){
   const valid=new Set(welcomePendingHere());
   for(const p of welcomeSelected)if(!valid.has(p))welcomeSelected.delete(p);
+}
+
+/* Relatório de acolhimento por CDC: somente colaboradores presentes, incluindo pendentes. */
+function welcomeReportCdcs(){
+  return [...new Set(participantsHere().filter(p=>p.present).map(welcomeCdcKey).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+}
+function welcomeReportRows(cdc){
+  const present=participantsHere().filter(p=>p.present);
+  const rows=cdc==='__all__'?present:present.filter(p=>welcomeCdcKey(p)===cdc);
+  return rows.slice().sort((a,b)=>welcomeCdcKey(a).localeCompare(welcomeCdcKey(b),'pt-BR',{numeric:true})||String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
+}
+function welcomeReportDate(p){
+  const date=p?.welcomeConfirmedAt?new Date(p.welcomeConfirmedAt):null;
+  return date&&!Number.isNaN(date.getTime())?date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Não informado';
+}
+function openWelcomeReport(){
+  const cdcs=welcomeReportCdcs();
+  if(!cdcs.length)return openDialog('Relatório de acolhimento','<div class="hint">Nenhum CDC possui colaboradores marcados como presentes nesta localidade. Confira os registros antes de emitir o relatório.</div>','<button class="btn primary" onclick="closeModal()">Entendi</button>');
+  window.__welcomeReportLocation=S.currentLocation;
+  const options=cdcs.map(cdc=>`<option value="${esc(cdc)}">CDC ${esc(cdc)}</option>`).join('');
+  openDialog('Emitir relatório de acolhimento',
+    `<div class="hint" style="margin-bottom:16px">Localidade: <strong>${esc(S.currentLocation)}</strong>. Selecione o CDC para incluir os colaboradores presentes, os acolhimentos confirmados, os pendentes e o Star responsável por cada confirmação.</div>
+    <div class="field"><label for="welcomeReportCdc">CDC do relatório *</label><select id="welcomeReportCdc" onchange="updateWelcomeReportPreview()" style="width:100%"><option value="">Selecione um CDC</option><option value="__all__">Todos os CDCs</option>${options}</select></div>
+    <div class="hint" id="welcomeReportPreview" aria-live="polite" style="margin-top:14px">Selecione um CDC para visualizar o resumo.</div>
+    <div class="hint" style="margin-top:12px">Os arquivos incluem: empresa, nome, matrícula, cargo, CDC, gestor imediato, público, status do acolhimento, nome e matrícula do Star e data/hora da confirmação. Os colaboradores ausentes não entram no relatório.</div>`,
+    '<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn secondary" onclick="exportWelcomeReportExcel()">↓ Excel</button><button class="btn primary" onclick="printWelcomeReportPDF()">↓ Emitir PDF</button>');
+}
+function welcomeReportSelection(){
+  if(window.__welcomeReportLocation!==S.currentLocation){toast('A localidade mudou. Abra o relatório novamente.');return null}
+  const cdc=g('welcomeReportCdc')?.value||'',valid=welcomeReportCdcs();
+  if(!cdc||(cdc!=='__all__'&&!valid.includes(cdc))){toast('Selecione um CDC válido para emitir o relatório.');g('welcomeReportCdc')?.focus();return null}
+  const rows=welcomeReportRows(cdc);
+  if(!rows.length){toast('Não há colaboradores presentes para o CDC selecionado.');return null}
+  return{cdc,rows,location:S.currentLocation,label:cdc==='__all__'?'Todos os CDCs':'CDC '+cdc};
+}
+function updateWelcomeReportPreview(){
+  const target=g('welcomeReportPreview'),cdc=g('welcomeReportCdc')?.value||'';
+  if(!target)return;
+  if(!cdc){target.textContent='Selecione um CDC para visualizar o resumo.';return}
+  if(cdc!=='__all__'&&!welcomeReportCdcs().includes(cdc)){target.textContent='CDC não encontrado nos registros atuais.';return}
+  const rows=welcomeReportRows(cdc),done=rows.filter(p=>p.welcomeDone).length;
+  target.innerHTML=`<strong>${rows.length}</strong> colaborador(es) presente(s) · <strong>${done}</strong> acolhido(s) · <strong>${rows.length-done}</strong> pendente(s).`;
+}
+function welcomeReportFileBase(report){
+  const loc=(S.locations||[]).find(x=>x.name===report.location);
+  const locName=String(loc?.code||report.location).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9_-]+/g,'_');
+  const code=report.cdc==='__all__'?'Todos_CDCs':('CDC_'+report.cdc.replace(/[^A-Za-z0-9_-]/g,'_'));
+  return 'PINC_Acolhimento_'+locName+'_'+code+'_'+new Date().toISOString().slice(0,10);
+}
+function printWelcomeReportPDF(){
+  const report=welcomeReportSelection();if(!report)return;
+  const done=report.rows.filter(p=>p.welcomeDone).length,now=new Date().toLocaleString('pt-BR'),filename=welcomeReportFileBase(report);
+  const rowHtml=report.rows.map((p,i)=>{
+    const confirmed=!!p.welcomeDone;
+    const starName=confirmed?(p.welcomeStarName||'Não informado (registro anterior)'):'—';
+    const starMat=confirmed?(p.welcomeStarMatricula||'Não informada'):'—';
+    return `<tr><td class="n">${i+1}</td><td><strong>${esc(p.name||'—')}</strong></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.company||'—')}</td><td>${esc(p.role||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'—')}</td><td>${esc(p.audience||'Efetivos')}</td><td><strong class="${confirmed?'done':'pending'}">${confirmed?'Acolhido':'Pendente'}</strong></td><td>${esc(starName)}<span class="small">Matrícula: ${esc(starMat)}</span></td><td>${confirmed?esc(welcomeReportDate(p)):'—'}</td></tr>`;
+  }).join('');
+  const html=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(filename)}</title><style>
+  *{box-sizing:border-box}body{font:12px Arial,Helvetica,sans-serif;color:#233046;background:#f4f6fa;margin:0;padding:24px}
+  .sheet{background:white;max-width:1440px;margin:auto;padding:28px 30px;border-radius:15px;box-shadow:0 2px 16px #0000000e}
+  .header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid #7417ff;padding-bottom:15px}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7417ff}
+  h1{font-size:23px;line-height:1.2;margin:9px 0 8px;color:#21273a}.sub{color:#68748c;font-size:11px;line-height:1.6}
+  .brand{font-size:12px;text-align:right;font-weight:800;color:#7417ff}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+  .stat{border:1px solid #e3e7f1;border-radius:10px;padding:12px 14px}.stat span{display:block;font-size:10px;text-transform:uppercase;color:#728095;letter-spacing:.05em}.stat strong{display:block;font-size:23px;margin-top:4px}
+  table{border-collapse:collapse;width:100%;table-layout:auto}thead{display:table-header-group}
+  th{background:#f0eafb;color:#4b3768;text-align:left;white-space:normal;font-size:9px;padding:9px 7px;border-bottom:1px solid #d9c9ee}
+  td{font-size:9px;line-height:1.4;padding:10px 7px;border-bottom:1px solid #e8ebf2;vertical-align:top;overflow-wrap:anywhere}
+  tbody tr{break-inside:avoid;page-break-inside:avoid}tbody tr:nth-child(even){background:#fafbfe}
+  .n{width:24px;color:#8790a0}.done{color:#16815c}.pending{color:#b27b21}.small{display:block;font-size:8px;color:#6d788a;margin-top:3px}
+  .footer{font-size:10px;color:#737e90;margin-top:16px;line-height:1.5;border-top:1px solid #e5e9f0;padding-top:12px}
+  .print{margin-top:20px;background:#7417ff;border:0;border-radius:9px;padding:11px 15px;color:white;font-weight:bold;cursor:pointer}
+  @page{size:A4 landscape;margin:10mm}
+  @media print{body{background:white;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.sheet{max-width:none;padding:0;box-shadow:none;border-radius:0}.print{display:none}h1{font-size:19px}th,td{font-size:8px;padding:6px 4px}.stats{gap:8px;margin:13px 0}.stat{padding:8px}.stat strong{font-size:19px}}
+  </style></head><body><main class="sheet"><header class="header"><div><div class="eyebrow">Programa de Integração de Novos Colaboradores</div><h1>Relatório de acolhimento</h1><div class="sub">Localidade: <strong>${esc(report.location)}</strong> · ${esc(report.label)}<br>Emitido em: ${esc(now)}</div></div><div class="brand">GESTÃO PINC</div></header>
+  <div class="stats"><div class="stat"><span>Colaboradores presentes</span><strong>${report.rows.length}</strong></div><div class="stat"><span>Acolhidos</span><strong>${done}</strong></div><div class="stat"><span>Pendentes</span><strong>${report.rows.length-done}</strong></div></div>
+  <table><thead><tr><th>Nº</th><th>Colaborador</th><th>Matrícula</th><th>Empresa</th><th>Cargo</th><th>CDC</th><th>Gestor imediato</th><th>Público</th><th>Acolhimento</th><th>Star responsável</th><th>Confirmado em</th></tr></thead><tbody>${rowHtml}</tbody></table>
+  <footer class="footer">Relatório gerado a partir dos registros de presença e acolhimento do PINC. Colaboradores ausentes não estão incluídos. Registros anteriores à identificação do Star podem aparecer sem responsável informado.</footer>
+  <button class="print" onclick="window.print()">Imprimir / Salvar como PDF</button></main></body></html>`;
+  const w=window.open('','_blank','width=1250,height=850');
+  if(!w){
+    const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=filename+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Pop-up bloqueado. O relatório HTML foi baixado para abrir e salvar como PDF.');
+    return;
+  }
+  closeModal();
+  w.document.open();w.document.write(html);w.document.close();
+  setTimeout(()=>{try{w.focus();w.print()}catch(e){console.warn('Impressão automática indisponível',e)}},350);
+}
+function exportWelcomeReportExcel(){
+  const report=welcomeReportSelection();if(!report)return;
+  const data=report.rows.map(p=>({
+    'Localidade':report.location,'CDC':p.cdc||'','Empresa':p.company||'',
+    'Colaborador':p.name||'','Matrícula do Colaborador':String(p.matricula||''),'Cargo':p.role||'',
+    'Gestor Imediato':p.manager||'','Público':p.audience||'Efetivos','Presença':'Presente',
+    'Status do Acolhimento':p.welcomeDone?'Acolhido':'Pendente',
+    'Star Responsável':p.welcomeDone?(p.welcomeStarName||'Não informado (registro anterior)'):'',
+    'Matrícula do Star':p.welcomeDone?String(p.welcomeStarMatricula||''):'',
+    'Confirmado em':p.welcomeDone?welcomeReportDate(p):'',
+    'Registrado pela Gestão':p.welcomeDone?(p.welcomeConfirmedBy||''):''
+  }));
+  const base=welcomeReportFileBase(report);
+  if(typeof XLSX!=='undefined'){
+    const ws=XLSX.utils.json_to_sheet(data);
+    ws['!cols']=[{wch:18},{wch:16},{wch:22},{wch:34},{wch:21},{wch:25},{wch:30},{wch:15},{wch:12},{wch:23},{wch:34},{wch:20},{wch:24},{wch:27}];
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Acolhimento');
+    XLSX.writeFile(wb,base+'.xlsx');closeModal();return;
+  }
+  const columns=Object.keys(data[0]);
+  const clean=v=>{const value=String(v??'');return /^[=+\-@\t\r]/.test(value)?"'"+value:value};
+  const csv=[columns.join(';'),...data.map(row=>columns.map(key=>'"'+clean(row[key]).replace(/"/g,'""')+'"').join(';'))].join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=base+'.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  closeModal();
+  toast('Arquivo CSV gerado. O Excel não estava disponível neste navegador.');
 }
 function welcomeStarResponsible(){
   const name=g('welcomeStarName')?.value.trim()||'',matricula=g('welcomeStarMatricula')?.value.trim()||'';
