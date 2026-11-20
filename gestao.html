@@ -302,7 +302,7 @@ function accessLevel(u){return MANAGEMENT_PROFILES[accessProfile(u)].level}
 function isMaster(){return managementLevel()>=5}
 function hasMasterAccess(){return (S.accesses||[]).some(u=>accessLevel(u)>=5)}
 function canManageAccessRecord(u){if(!u)return false;if(isMaster())return true;return managementLevel()>=4&&u.location===managementAuth()?.location&&accessLevel(u)<=managementLevel()}
-function applyManagementAccessProfile(){const level=managementLevel(),profile=managementProfile(),meta=MANAGEMENT_PROFILES[profile]||MANAGEMENT_PROFILES.hub,chip=g('profileChip');if(chip)chip.textContent=`Nível ${meta.level} • ${meta.name}`;const configBtn=document.querySelector('.nav button[data-view="configuracoes"]'),levelsBtn=document.querySelector('.nav button[data-view="niveis"]');if(configBtn)configBtn.style.display=level>=4?'':'none';if(levelsBtn)levelsBtn.style.display='';const locPanel=g('locationAdminPanel'),accessPanel=g('managementAccessPanel');if(locPanel)locPanel.style.display=level>=5?'':'none';if(accessPanel)accessPanel.style.display=level>=4?'':'none';const active=document.querySelector('.view.active');if(level<4&&active&&['configuracoes'].includes(active.id)){document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.querySelector('.nav button[data-view="agenda"]')?.classList.add('active');g('agenda')?.classList.add('active')}}
+function applyManagementAccessProfile(){const level=managementLevel(),profile=managementProfile(),meta=MANAGEMENT_PROFILES[profile]||MANAGEMENT_PROFILES.hub,chip=g('profileChip');if(chip)chip.textContent=`Nível ${meta.level} • ${meta.name}`;const starBtn=document.querySelector('.nav button[data-view="stars-cadastro"]'),configBtn=document.querySelector('.nav button[data-view="configuracoes"]'),levelsBtn=document.querySelector('.nav button[data-view="niveis"]');if(starBtn)starBtn.style.display=level>=4?'':'none';if(configBtn)configBtn.style.display=level>=4?'':'none';if(levelsBtn)levelsBtn.style.display='';const locPanel=g('locationAdminPanel'),accessPanel=g('managementAccessPanel');if(locPanel)locPanel.style.display=level>=5?'':'none';if(accessPanel)accessPanel.style.display=level>=4?'':'none';const active=document.querySelector('.view.active');if(level<4&&active&&['configuracoes','stars-cadastro'].includes(active.id)){document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.querySelector('.nav button[data-view="agenda"]')?.classList.add('active');g('agenda')?.classList.add('active')}}
 function emptyAgenda(){return structuredClone(DEFAULT.agenda)}
 function emptyLive(){return structuredClone(DEFAULT.live)}
 function locationKey(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}
@@ -413,7 +413,7 @@ if(syncChannel)syncChannel.onmessage=e=>{consumeManagementState(e.data);renderAg
 window.addEventListener('storage',e=>{if((e.key===STORAGE||e.key===BACKUP_STORAGE)&&e.newValue){consumeManagementState(JSON.parse(e.newValue));renderAgenda();renderReports();renderWelcome()}});
 window.addEventListener('beforeunload',()=>persist({broadcast:false}));
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2300)}
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.view).classList.add('active');if(b.dataset.view==='registros')renderAbs();if(b.dataset.view==='acolhimento')renderWelcome();if(b.dataset.view==='relatorios')renderReports();if(b.dataset.view==='configuracoes')renderSettingsLists();})
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.view).classList.add('active');if(b.dataset.view==='registros')renderAbs();if(b.dataset.view==='acolhimento'){renderWelcomeStarOptions();renderWelcome()}if(b.dataset.view==='stars-cadastro')initPortalRegistration();if(b.dataset.view==='relatorios')renderReports();if(b.dataset.view==='configuracoes')renderSettingsLists();})
 function list(){return S.audience==='efetivos'?S.agenda.efetivos[S.day]:S.agenda.aprendizes[S.apprenticeShift]}
 function currentLive(){return S.audience==='efetivos'?(S.live.efetivos[S.day]||{completed:0,activeIndex:0,activePct:0}):(S.live.aprendizes[S.apprenticeShift]||{completed:0,activeIndex:0,activePct:0})}
 function progressData(){const a=list(),l=currentLive();const total=a.reduce((s,x)=>s+(+x[3]||0),0)||1;let done=0;for(let i=0;i<Math.min(l.completed,a.length);i++)done+=+a[i][3]||0;if(l.activeIndex<a.length&&l.activeIndex>=l.completed)done+=(+a[l.activeIndex][3]||0)*Math.max(0,Math.min(100,+l.activePct||0))/100;const pct=Math.min(100,Math.round(done/total*100));const current=a[l.activeIndex]?.[0]||((l.completed>=a.length)?'PINC concluído':'Aguardando início');return{pct,current,completed:Math.min(l.completed,a.length),totalStages:a.length}}
@@ -761,11 +761,27 @@ function exportWelcomeReportExcel(){
   closeModal();
   toast('Arquivo CSV gerado. O Excel não estava disponível neste navegador.');
 }
+
+function renderWelcomeStarOptions(preferredId){
+  const select=g('welcomeStarSelect');if(!select)return;
+  const prior=typeof preferredId==='string'?preferredId:select.value;
+  const stars=(window.PINC_STAR_REGISTRY?.active?.()||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'pt-BR'));
+  select.innerHTML='<option value="">Selecione o Star responsável</option>'+stars.map(star=>`<option value="${esc(star.id)}">${esc(star.name)}</option>`).join('');
+  select.value=stars.some(star=>star.id===prior)?prior:'';
+  if(g('welcomeStarHint'))g('welcomeStarHint').textContent=stars.length?'Selecione o Star responsável. A matrícula será preenchida automaticamente.':'Nenhum Star ativo com matrícula cadastrado na localidade. Cadastre ou atualize o Star na aba Cadastro de Stars.';
+  renderWelcomeStarDetails();
+}
+function renderWelcomeStarDetails(){
+  const star=window.PINC_STAR_REGISTRY?.find?.(g('welcomeStarSelect')?.value||'');
+  if(g('welcomeStarMatricula'))g('welcomeStarMatricula').value=star&&star.active&&star.matricula&&star.location===S.currentLocation?String(star.matricula):'';
+}
 function welcomeStarResponsible(){
-  const name=g('welcomeStarName')?.value.trim()||'',matricula=g('welcomeStarMatricula')?.value.trim()||'';
-  if(!name){toast('Informe o nome completo do Star responsável pelo acolhimento.');g('welcomeStarName')?.focus();return null}
-  if(!matricula){toast('Informe a matrícula do Star responsável pelo acolhimento.');g('welcomeStarMatricula')?.focus();return null}
-  return{name,matricula};
+  const star=window.PINC_STAR_REGISTRY?.find?.(g('welcomeStarSelect')?.value||'');
+  if(!star||!star.active||!star.name||!star.matricula||star.location!==S.currentLocation){
+    toast('Selecione um Star ativo com matrícula cadastrada na aba Cadastro de Stars.');
+    g('welcomeStarSelect')?.focus();return null;
+  }
+  return{id:star.id,name:star.name,matricula:String(star.matricula)};
 }
 function renderWelcome(){
   const table=g('welcomeTable');if(!table)return;
@@ -860,6 +876,10 @@ function confirmWelcomeNow(){
   const eligible=new Set(welcomePendingHere());
   const same=pending.people.length&&pending.people.every(x=>eligible.has(x.ref)&&x.ref.name===x.name&&String(x.ref.matricula||'')===x.matricula&&welcomeCdcKey(x.ref)===x.cdc);
   if(!same){window.__pendingWelcome=null;closeModal();renderWelcome();return toast('Os registros mudaram. Revise a lista antes de confirmar.')}
+  const selectedStar=window.PINC_STAR_REGISTRY?.find?.(pending.star.id);
+  if(!selectedStar||!selectedStar.active||selectedStar.location!==pending.location||String(selectedStar.matricula||'')!==pending.star.matricula){
+    window.__pendingWelcome=null;closeModal();return toast('O cadastro do Star mudou. Selecione novamente.');
+  }
   const snapshots=pending.people.map(x=>({person:x.ref,data:{...x.ref}}));
   const now=new Date().toISOString(),auth=managementAuth();
   pending.people.forEach(x=>{
@@ -890,7 +910,7 @@ function confirmUndoWelcome(){
   successDialog('Confirmação desfeita',`${esc(p.name)} voltou para Pendente.`);
 }
 function renderLocationSelect(){const auth=managementAuth(),master=isMaster();const locs=master?S.locations:S.locations.filter(l=>l.name===auth.location);if(!master&&auth.location)S.currentLocation=auth.location;if(master&&!locs.some(l=>l.name===S.currentLocation))S.currentLocation=auth.location&&locs.some(l=>l.name===auth.location)?auth.location:(locs[0]?.name||'');topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!master;applyManagementAccessProfile()}
-async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();;renderSettingsLists();if(previous!==v)toast('Localidade alterada para '+v+'.')}
+async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();if(previous!==v)toast('Localidade alterada para '+v+'.')}
 function settingsTrashIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>'}
 function renderSettingsLists(){
   applyManagementAccessProfile();
@@ -935,5 +955,5 @@ async function testTeamsNotification(){const url=g('teamsWebhook')?.value.trim()
 function saveSettings(){confirmDialog('Salvar configurações','Deseja aplicar as alterações das configurações da Gestão?','Salvar alterações','confirmSaveSettings()',false)}
 function confirmSaveSettings(){try{S.settings.tolerance=+g('tol')?.value||10;S.settings.emails=recipientEmails();S.settings.email=S.settings.emails[0]||'';S.settings.timeEff=g('timeEff')?.value||'';S.settings.standardObs=g('standardObs')?.value||'';S.settings.notificationLead=Math.max(1,+g('notificationLead')?.value||10);S.settings.teamsEnabled=false;S.settings.teamsWebhook='';S.settings.teamsChannel='';if(!persist())return;renderReports();renderSettingsLists();closeModal();setTimeout(()=>successDialog('Configurações salvas','Parâmetros, destinatários e preferências de notificação foram atualizados com sucesso.'),40)}catch(e){console.error(e);toast('Não foi possível salvar as configurações. Tente novamente.')}}
 function hydrateSettings(){tol.value=S.settings.tolerance;renderRecipientEmails();if(g('timeEff'))g('timeEff').value=S.settings.timeEff||'07:30 às 18:00';if(g('standardObs'))g('standardObs').value=S.settings.standardObs||'Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.';if(g('notificationLead'))g('notificationLead').value=S.settings.notificationLead||10;S.settings.teamsEnabled=false;S.settings.teamsWebhook='';S.settings.teamsChannel='';updateNotificationStatus()}
-renderLocationSelect();applyManagementAccessProfile();hydrateSettings();shiftSeg.style.display=S.audience==='aprendizes'?'flex':'none';daySeg.style.display=S.audience==='efetivos'?'flex':'none';document.querySelectorAll('#shiftSeg button').forEach((b,i)=>b.classList.toggle('active',(S.apprenticeShift==='matutino'&&i===0)||(S.apprenticeShift==='vespertino'&&i===1)));renderAgenda();renderAbs();renderReports();renderSettingsLists();setInterval(renderLiveProgress,1000);setInterval(renderReports,1500);initSharedCloud();
+renderLocationSelect();applyManagementAccessProfile();hydrateSettings();shiftSeg.style.display=S.audience==='aprendizes'?'flex':'none';daySeg.style.display=S.audience==='efetivos'?'flex':'none';document.querySelectorAll('#shiftSeg button').forEach((b,i)=>b.classList.toggle('active',(S.apprenticeShift==='matutino'&&i===0)||(S.apprenticeShift==='vespertino'&&i===1)));renderAgenda();renderAbs();renderReports();renderSettingsLists();setInterval(renderLiveProgress,1000);setInterval(renderReports,1500);initSharedCloud();initPortalRegistration();
 </script></body></html>
