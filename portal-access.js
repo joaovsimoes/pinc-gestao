@@ -63,7 +63,7 @@
           typeof row.location === 'string' && row.location) {
         const host = row.role === 'host';
         records.set(row.code, {
-          id: row.code, code: row.code, role: row.role, name: row.name, building: row.building || '',
+          id: row.code, code: row.code, role: row.role, name: row.name, matricula: String(row.matricula || ''), building: row.building || '',
           area: host ? String(row.area || '') : '',
           areaLetter: host ? String(row.areaLetter || (row.code.match(/\.([A-Z])$/)?.[1] || '')) : '',
           legacyCode: host && row.code.startsWith('HOST') ? row.code : '',
@@ -75,7 +75,8 @@
         const record = records.get(row.targetId), patch = row.patch || {};
         const next = { ...record,
           name: typeof patch.name === 'string' ? patch.name : record.name,
-          active: typeof patch.active === 'boolean' ? patch.active : record.active };
+           matricula: record.role === 'star' && typeof patch.matricula === 'string' ? patch.matricula : record.matricula,
+           active: typeof patch.active === 'boolean' ? patch.active : record.active };
         if (record.role === 'host' && typeof patch.area === 'string' && patch.area.trim() && /^[A-Z]$/.test(patch.areaLetter)) {
           next.area = patch.area.trim(); next.areaLetter = patch.areaLetter;
           next.code = codeFor('host', '', record.sequence, next.areaLetter);
@@ -93,10 +94,13 @@
   async function create(input) {
     const name = String(input.name || '').trim(), location = String(input.location || '').trim();
     const building = input.role === 'star' ? String(input.building || '').trim() : '';
+    const matricula = input.role === 'star' ? String(input.matricula || '').trim() : '';
     if (!name || !location) throw new Error('FIELDS_REQUIRED');
+    if (input.role === 'star' && !matricula) throw new Error('MATRICULA_REQUIRED');
     const areaFields = input.role === 'host' ? hostArea(input) : {};
     const p = prefix(input.role, building), db = await timeout(connect());
     const records = await load();
+    if (input.role === 'star' && records.some(u => u.role === 'star' && u.location === location && u.matricula === matricula)) throw new Error('MATRICULA_DUPLICATE');
     let next = records.filter(u => input.role === 'host' ? u.role === 'host' : u.prefix === p).reduce((max, u) => Math.max(max, Number(u.sequence) || 0), 0) + 1;
     // A transaction claims the actual code document: two computers cannot create the same code.
     while (next <= 999) {
@@ -110,14 +114,14 @@
           if (existing.exists) throw new Error('CODE_COLLISION');
           transaction.set(ref, {
             type: 'portalAccess', ownerUid: root.firebase.auth().currentUser.uid,
-            code, role: input.role, name, building, ...areaFields, location, prefix: p, sequence, active: true,
+            code, role: input.role, name, matricula, building, ...areaFields, location, prefix: p, sequence, active: true,
             ...profileForRole(input.role),
             updatedAt: root.firebase.firestore.FieldValue.serverTimestamp(), updatedAtMillis: Date.now()
           });
         }));
         const saved = await timeout(ref.get({ source: 'server' }));
         if (!saved.exists) throw new Error('PORTAL_OFFLINE');
-        return { id: code, code, role: input.role, name, building, ...areaFields, location, prefix: p, sequence, active: true, ...profileForRole(input.role) };
+        return { id: code, code, role: input.role, name, matricula, building, ...areaFields, location, prefix: p, sequence, active: true, ...profileForRole(input.role) };
       } catch (error) {
         if (error.message !== 'CODE_COLLISION') throw error;
       }
@@ -133,6 +137,12 @@
       if (!patch.name) throw new Error('FIELDS_REQUIRED');
     }
     if ('active' in changes) patch.active = changes.active === true;
+    if (current.role === 'star' && 'matricula' in changes) {
+      patch.matricula = String(changes.matricula || '').trim();
+      if (!patch.matricula) throw new Error('MATRICULA_REQUIRED');
+      const all = await load();
+      if (all.some(u => u.role === 'star' && u.location === current.location && u.id !== id && u.matricula === patch.matricula)) throw new Error('MATRICULA_DUPLICATE');
+    }
     if (current.role === 'host' && ('area' in changes || 'areaLetter' in changes)) {
       Object.assign(patch, hostArea({ area: changes.area ?? current.area, areaLetter: changes.areaLetter ?? current.areaLetter }));
     }
@@ -161,6 +171,7 @@
   function message(error) {
     const messages = {
       FIELDS_REQUIRED: 'Informe o nome e a localidade.', BUILDING_REQUIRED: 'Informe o nome do prédio.',
+      MATRICULA_REQUIRED: 'Informe a matrícula do Star.', MATRICULA_DUPLICATE: 'Já existe um Star com esta matrícula nesta localidade.',
       AREA_REQUIRED: 'Informe a área do Facilitador.', AREA_LETTER_REQUIRED: 'Informe uma única letra de A a Z para identificar a área.',
       CODE_REQUIRED: 'Informe seu código de acesso.', CODE_INVALID: 'Código inválido, inativo ou de outro tipo de acesso.',
       ACCESS_NOT_FOUND: 'Este cadastro não foi encontrado. Atualize a lista.',
