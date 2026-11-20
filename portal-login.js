@@ -1,40 +1,37 @@
 (function(){
   'use strict';
   window.PINC_PORTAL_USER={star:null,host:null};
-  const KIND='pincStarCadastroV2',EVENT='pincStarCadastroEventV2';
   let busy=false;
-  const normalize=value=>String(value||'').trim().toLowerCase();
-  async function loadStars(){
+  const normalizeCdc=value=>String(value??'').trim();
+  const NO_PENDING_MESSAGE='Neste PINC não temos colaboradores para serem acolhidos no CDC informado.';
+  async function loadPendingForCdc(cdc){
     if(!window.firebase?.firestore||!window.firebase?.auth)throw new Error('FIREBASE_UNAVAILABLE');
-    const config=window.PINC_MANAGEMENT_CONFIG||window.PINC_FIREBASE_CONFIG;
-    if(!firebase.apps.length)firebase.initializeApp(config);
-    const auth=firebase.auth();
-    if(!auth.currentUser)await auth.signInAnonymously();
-    const snap=await firebase.firestore().collection('pincLocks').where('type','in',[KIND,EVENT]).get({source:'server'});
-    const docs=snap.docs.map(doc=>({...doc.data(),_doc:doc.id}))
-      .sort((a,b)=>Number(a.updatedAtMillis||0)-Number(b.updatedAtMillis||0)||a._doc.localeCompare(b._doc));
-    const users=new Map();
-    for(const d of docs){
-      if(d.type===KIND&&d.id&&d.location){
-        users.set(d.id,{id:d.id,name:String(d.name||''),matricula:String(d.matricula||''),cdc:String(d.cdc||''),username:normalize(d.username),location:String(d.location)});
-      }else if(d.type===EVENT&&users.has(d.targetId)){
-        if(d.deleted){users.delete(d.targetId);continue}
-        const patch=d.patch||{},u=users.get(d.targetId);
-        users.set(d.targetId,{...u,
-          name:typeof patch.name==='string'?patch.name:u.name,
-          matricula:typeof patch.matricula==='string'?patch.matricula:u.matricula,
-          cdc:typeof patch.cdc==='string'?patch.cdc:u.cdc,
-          username:typeof patch.username==='string'?normalize(patch.username):u.username
-        });
-      }
+    if(!firebase.apps.length)firebase.initializeApp(window.PINC_FIREBASE_CONFIG||window.PINC_MANAGEMENT_CONFIG);
+    const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();
+    const snap=await firebase.firestore().collection('pincShared').doc('core').get({source:'server'});
+    if(!snap.exists)throw new Error('PINC_DATA_UNAVAILABLE');
+    const data=snap.data()||{};
+    if(!Array.isArray(data.participants))throw new Error('PINC_DATA_UNAVAILABLE');
+    const locations=new Map();
+    for(const p of data.participants){
+      if(normalizeCdc(p.cdc)!==cdc||p.present!==true||p.welcomeDone===true)continue;
+      const loc=String(p.location||'').trim()||(Array.isArray(data.locations)&&data.locations.length===1?String(data.locations[0].name||'').trim():'');
+      if(!loc)continue;
+      locations.set(loc,(locations.get(loc)||0)+1);
     }
-    return [...users.values()];
+    return [...locations].map(([location,count])=>({location,count}))
+      .sort((a,b)=>a.location.localeCompare(b.location,'pt-BR'));
   }
   window.PINC_SHOW_STAR_LOGIN=function(){
-    const modal=document.getElementById('portalStarLogin'),input=document.getElementById('portalStarUsername'),error=document.getElementById('portalStarError');
     window.PINC_PORTAL_USER.star=null;
-    if(error)error.textContent='';
-    if(input)input.value='';
+    const modal=document.getElementById('portalStarLogin'),
+      form=document.getElementById('portalStarForm'),
+      empty=document.getElementById('portalStarEmpty'),
+      choice=document.getElementById('portalStarLocationChoice'),
+      input=document.getElementById('portalStarCdc'),
+      err=document.getElementById('portalStarError');
+    if(form)form.hidden=false;if(empty)empty.hidden=true;if(choice)choice.hidden=true;
+    if(input)input.value='';if(err)err.textContent='';
     if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false')}
     setTimeout(()=>input?.focus(),100);
   };
@@ -42,38 +39,77 @@
     const modal=document.getElementById('portalStarLogin');
     if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true')}
   };
-  window.PINC_LOGIN_STAR_USERNAME=async function(){
+  function showEmpty(cdc){
+    const form=document.getElementById('portalStarForm'),
+      empty=document.getElementById('portalStarEmpty'),
+      choice=document.getElementById('portalStarLocationChoice'),
+      code=document.getElementById('portalStarEmptyCode'),
+      msg=document.getElementById('portalStarEmptyMessage');
+    if(form)form.hidden=true;if(empty)empty.hidden=false;if(choice)choice.hidden=true;
+    if(code)code.textContent='CDC '+cdc;
+    if(msg)msg.textContent=NO_PENDING_MESSAGE;
+  }
+  function authorize(cdc,location,count){
+    window.PINC_PORTAL_USER.star={role:'star',profileName:'Star',cdc,location,pendingCount:count};
+    window.PINC_CLOSE_STAR_LOGIN();
+    window.PINC_DO_LAUNCH('stars');
+  }
+  window.PINC_LOGIN_STAR_CDC=async function(){
     if(busy)return;
-    const input=document.getElementById('portalStarUsername'),error=document.getElementById('portalStarError'),button=document.getElementById('portalStarSubmit');
-    const username=normalize(input?.value);
-    if(!username){if(error)error.textContent='Informe o nome de usuário.';return}
-    if(!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username)){if(error)error.textContent='Informe um usuário válido.';return}
-    busy=true;if(button){button.disabled=true;button.textContent='Verificando...'}
-    if(error)error.textContent='Consultando o cadastro online...';
+    const input=document.getElementById('portalStarCdc'),
+      err=document.getElementById('portalStarError'),
+      button=document.getElementById('portalStarSubmit'),
+      cdc=normalizeCdc(input?.value);
+    if(!cdc||!/^[0-9]{1,30}$/.test(cdc)){
+      if(err)err.textContent='Informe um CDC válido, somente com números.';return;
+    }
+    busy=true;if(button){button.disabled=true;button.textContent='Verificando CDC...'}
+    if(err)err.textContent='Verificando os colaboradores presentes e pendentes...';
     try{
-      const users=await loadStars();
-      const found=users.filter(u=>u.username===username&&u.name&&u.matricula&&u.cdc&&u.location);
-      if(found.length!==1){if(error)error.textContent='Usuário não encontrado. Solicite o cadastro à Gestão.';return}
-      window.PINC_PORTAL_USER.star={...found[0],profileName:'Star'};
-      window.PINC_CLOSE_STAR_LOGIN();window.PINC_DO_LAUNCH('stars');
+      const matches=await loadPendingForCdc(cdc);
+      if(!matches.length){if(err)err.textContent='';showEmpty(cdc);return}
+      if(matches.length===1){authorize(cdc,matches[0].location,matches[0].count);return}
+      // Havendo o mesmo CDC em duas localidades, não se escolhe uma automaticamente.
+      const select=document.getElementById('portalStarLocation'),
+        form=document.getElementById('portalStarForm'),
+        panel=document.getElementById('portalStarLocationChoice');
+      window.__starCdcMatches={cdc,matches};
+      if(select){
+        select.innerHTML='<option value="">Selecione a localidade</option>'+matches.map(m=>{
+          const loc=String(m.location).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]));
+          return '<option value="'+loc+'">'+loc+' ('+m.count+' pendente'+(m.count===1?'':'s')+')</option>';
+        }).join('');
+      }
+      if(form)form.hidden=true;if(panel)panel.hidden=false;
+      if(err)err.textContent='';
     }catch(e){
-      console.warn('Validação do Portal Stars indisponível:',e);
-      if(error)error.textContent='Não foi possível validar o usuário. Confira a conexão e tente novamente.';
-    }finally{busy=false;if(button){button.disabled=false;button.textContent='Acessar Stars'}}
+      console.warn('Verificação do CDC indisponível:',e);
+      if(err)err.textContent='Não foi possível verificar os dados do PINC. Confira sua conexão e tente novamente.';
+    }finally{busy=false;if(button){button.disabled=false;button.textContent='Verificar CDC'}}
   };
-  window.PINC_SHOW_PORTAL_LOGIN=function(role){
-    if(role==='star')window.PINC_SHOW_STAR_LOGIN();
-    else window.PINC_DO_LAUNCH('facilitador');
+  window.PINC_CONFIRM_STAR_LOCATION=async function(){
+    if(busy)return;
+    const pending=window.__starCdcMatches,location=document.getElementById('portalStarLocation')?.value;
+    if(!pending||!pending.matches.some(x=>x.location===location))return;
+    busy=true;
+    try{
+      const matches=await loadPendingForCdc(pending.cdc);
+      const found=matches.find(m=>m.location===location);
+      if(!found){showEmpty(pending.cdc);return}
+      authorize(pending.cdc,location,found.count);
+    }catch(e){
+      const err=document.getElementById('portalStarLocationError');
+      if(err)err.textContent='Não foi possível validar a localidade. Tente novamente.';
+    }finally{busy=false}
   };
-  window.PINC_CLOSE_PORTAL_LOGIN=window.PINC_CLOSE_STAR_LOGIN;
   window.PINC_VALIDATE_PORTAL=async function(role){
     if(role==='star'){
       const session=window.PINC_PORTAL_USER?.star;
-      if(!session)throw new Error('STAR_SESSION_INVALID');
-      const users=await loadStars();
-      const match=users.find(u=>u.id===session.id&&u.username===session.username&&u.location===session.location&&u.name&&u.matricula&&u.cdc);
-      if(!match){window.PINC_PORTAL_USER.star=null;throw new Error('STAR_SESSION_INVALID')}
-      window.PINC_PORTAL_USER.star={...match,profileName:'Star'};
+      if(!session?.cdc||!session.location)throw new Error('STAR_CDC_INVALID');
+      const matches=await loadPendingForCdc(normalizeCdc(session.cdc));
+      const match=matches.find(x=>x.location===session.location);
+      if(!match){window.PINC_PORTAL_USER.star=null;throw new Error('STAR_CDC_NO_PENDING')}
+      window.PINC_PORTAL_USER.star={...session,pendingCount:match.count};
       return window.PINC_PORTAL_USER.star;
     }
     const session=window.PINC_PORTAL_USER?.[role];
@@ -83,6 +119,8 @@
     window.PINC_PORTAL_USER[role]=current;
     return current;
   };
+  window.PINC_SHOW_PORTAL_LOGIN=role=>role==='star'?window.PINC_SHOW_STAR_LOGIN():window.PINC_DO_LAUNCH('facilitador');
+  window.PINC_CLOSE_PORTAL_LOGIN=window.PINC_CLOSE_STAR_LOGIN;
   const direct=new URLSearchParams(window.location.search).get('portal');
   if(direct==='star')window.PINC_SHOW_STAR_LOGIN();
   else if(direct==='host')window.PINC_DO_LAUNCH('facilitador');
