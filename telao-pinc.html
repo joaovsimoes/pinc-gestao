@@ -21,8 +21,8 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
 .brand{display:flex;align-items:center;gap:13px}.brand img{width:54px;height:54px}.brand strong{font-size:28px;color:var(--purple);letter-spacing:.04em}.brand span{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:1px}
 .live-pill{display:flex;align-items:center;gap:9px;padding:10px 15px;border-radius:999px;border:1px solid #dfe4ec;background:rgba(255,255,255,.8);backdrop-filter:blur(12px);font-size:11px;font-weight:850;color:#667085}
 .live-pill i{width:9px;height:9px;border-radius:50%;background:#a2a9b7}.live-pill.running{color:#0d8f69;border-color:#cfede4;background:#effaf6}.live-pill.running i{background:#13b887;box-shadow:0 0 0 6px rgba(19,184,135,.10)}
-.main{min-height:0;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(340px,.72fr);gap:24px}
-.stage-card,.qr-card{background:rgba(255,255,255,.92);border:1px solid rgba(228,231,239,.95);border-radius:30px;box-shadow:0 22px 60px rgba(24,32,55,.08)}
+.main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+.stage-card{background:rgba(255,255,255,.92);border:1px solid rgba(228,231,239,.95);border-radius:30px;box-shadow:0 22px 60px rgba(24,32,55,.08)}
 .stage-card{padding:34px 40px;display:flex;flex-direction:column;min-height:0}
 .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.13em;font-weight:900;color:var(--purple);margin-bottom:10px}
 .stage-title{font-size:clamp(34px,4.2vw,68px);line-height:1.02;letter-spacing:-.045em;margin:0;max-width:1000px}
@@ -34,17 +34,17 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
 .progress-area{margin-top:16px}.progress-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;font-size:11px;font-weight:800;color:#778198}
 .progress-track{height:14px;background:#eceef4;border-radius:999px;overflow:hidden}.progress-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--purple),var(--purple2),var(--pink));transition:width .6s ease}
 .bottom-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:18px}.info-box{padding:13px 15px;border:1px solid var(--line);background:#fafbfe;border-radius:14px}.info-box small{display:block;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:#9aa2b2;font-weight:850;margin-bottom:4px}.info-box strong{font-size:12px}
-.qr-card{padding:30px;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;position:relative;overflow:hidden}
-.qr-card:before{content:"♫";position:absolute;right:-24px;top:-48px;font-size:190px;color:rgba(116,23,255,.045);font-weight:900;transform:rotate(12deg)}
-.qr-kicker{position:relative;z-index:1;display:inline-flex;padding:7px 10px;border-radius:999px;background:#f3ecff;color:var(--purple);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.08em}
-.qr-card h2{position:relative;z-index:1;font-size:31px;line-height:1.05;margin:14px 0 8px;letter-spacing:-.035em}.qr-card p{position:relative;z-index:1;font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 18px;max-width:310px}
-.qr-box{position:relative;z-index:1;width:min(350px,94%);aspect-ratio:1/1;height:auto;padding:10px;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 15px 35px rgba(37,31,76,.10);display:grid;place-items:center;overflow:hidden;margin:0 auto}
-.qr-box img{display:block!important;width:auto!important;height:auto!important;max-width:94%!important;max-height:94%!important;object-fit:contain!important;margin:auto!important}.qr-box canvas{display:none!important}
-.location{position:relative;z-index:1;margin-top:16px;font-size:10px;color:#8b94a7;font-weight:800}.location b{color:var(--ink)}
+
+
+
+
+
+
+
 .waiting .stage-title{color:#7c8598}.waiting .timer{color:#c1c6d0}.waiting .progress-fill{width:0!important;background:#dfe2e9}
 .overtime .timer{color:#df3d57}.overtime .progress-fill{background:linear-gradient(90deg,#ef5570,#d83755)}
-@media(max-width:1100px){.shell{padding:18px;gap:16px}.main{grid-template-columns:minmax(0,1fr) 340px;gap:16px}.stage-card{padding:25px}.qr-card{padding:22px}.qr-box{width:min(320px,94%)}}
-@media(max-width:780px){html,body{overflow:auto}.shell{height:auto;min-height:100vh;padding:14px}.top{gap:12px;align-items:flex-start}.brand strong{font-size:22px}.brand span{font-size:8px}.live-pill{padding:8px 11px;font-size:9px}.main{grid-template-columns:1fr}.stage-card{min-height:560px;border-radius:22px}.qr-card{border-radius:22px;padding:24px 18px}.qr-card h2{font-size:28px}.qr-box{width:min(330px,90vw);margin:0 auto;padding:10px}.bottom-info{grid-template-columns:1fr}.timer{font-size:clamp(66px,18vw,110px)}}
+@media(max-width:1100px){.shell{padding:18px;gap:16px}.main{grid-template-columns:minmax(0,1fr);gap:16px}.stage-card{padding:25px}}
+@media(max-width:780px){html,body{overflow:auto}.shell{height:auto;min-height:100vh;padding:14px}.top{gap:12px;align-items:flex-start}.brand strong{font-size:22px}.brand span{font-size:8px}.live-pill{padding:8px 11px;font-size:9px}.main{grid-template-columns:1fr}.stage-card{min-height:560px;border-radius:22px}.bottom-info{grid-template-columns:1fr}.timer{font-size:clamp(66px,18vw,110px)}}
 </style>
 </head>
 <body>
@@ -75,30 +75,17 @@ body:after{width:620px;height:620px;right:-240px;bottom:-300px;background:radial
         <div class="info-box"><small>Próxima etapa</small><strong id="nextInfo">—</strong></div>
       </div>
     </section>
-    <aside class="qr-card">
-      <div class="qr-kicker">🎵 Você escolhe a trilha</div>
-      <h2>Qual música toca depois?</h2>
-      <p>Escaneie o QR Code, mande seu pedido e ele chega direto para o time PINC.</p>
-      <div class="qr-box" id="qrBox"></div>
-      <div class="location">Pedidos musicais • <b id="qrLocation">—</b></div>
-    </aside>
   </main>
 </div>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 const cfg={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e"};
 const params=new URLSearchParams(location.search),locationName=(params.get('localidade')||'Anápolis').slice(0,80);
 let db=null,currentLock=null,lockUnsub=null,lastActiveAt=0;
 const byId=id=>document.getElementById(id);
-byId('locationInfo').textContent=locationName;byId('qrLocation').textContent=locationName;
-const requestUrl='https://www.gestaopinc.com.br/pedir-musica.html?v=20261002-3&localidade='+encodeURIComponent(locationName);
-let qrResizeTimer=null;
-function renderQr(){const box=byId('qrBox');if(!box||typeof QRCode==='undefined')return;box.innerHTML='';const available=Math.min(box.clientWidth,box.clientHeight);const inner=Math.max(180,Math.floor(available*0.92));new QRCode(box,{text:requestUrl,width:inner,height:inner,colorDark:'#151c2b',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});requestAnimationFrame(()=>{const img=box.querySelector('img'),canvas=box.querySelector('canvas');if(canvas)canvas.style.display='none';if(img){img.style.display='block';img.style.width=inner+'px';img.style.height=inner+'px';img.style.maxWidth='94%';img.style.maxHeight='94%';img.style.objectFit='contain';img.style.margin='auto'}})}
-renderQr();
-window.addEventListener('resize',()=>{clearTimeout(qrResizeTimer);qrResizeTimer=setTimeout(renderQr,120)});
+byId('locationInfo').textContent=locationName;
 function ms(v){return Number(v?.heartbeatAtMillis||v?.heartbeatAt?.toMillis?.()||0)}
 function active(v){return !!(v&&v.status==='active'&&v.running===true&&v.commandLock===true&&Date.now()-ms(v)<90000)}
 function chooseLock(rows){return rows.filter(active).sort((a,b)=>ms(b)-ms(a))[0]||null}
