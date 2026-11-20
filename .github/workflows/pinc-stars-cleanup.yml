@@ -41,8 +41,9 @@ jobs:
             if(targets.length){
               const writer=db.bulkWriter();
               writer.onWriteError(e=>{console.error('Falha ao excluir registro antigo:',e.code);return e.failedAttempts<3});
-              const results=await Promise.allSettled(targets.map(doc=>writer.delete(doc.ref)));
+              const deletions=targets.map(doc=>writer.delete(doc.ref));
               await writer.close();
+              const results=await Promise.allSettled(deletions);
               const errors=results.filter(r=>r.status==='rejected');
               if(errors.length)throw new Error('Falha ao excluir '+errors.length+' registros de Stars antigos');
             }
@@ -50,6 +51,7 @@ jobs:
             const remaining=check.docs.filter(doc=>doc.data().role==='star').length;
             if(remaining)throw new Error(remaining+' Stars antigos ainda existem na base');
             console.log('Limpeza confirmada: nenhum cadastro de Star com código permanece.');
+            console.log('Registros antigos eliminados:',targets.length);
           }
           main().catch(err=>{console.error(err.message);process.exitCode=1});
           NODE
