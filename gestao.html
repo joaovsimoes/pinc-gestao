@@ -144,6 +144,31 @@
 #acolhimento .welcome-empty{text-align:center;padding:34px 16px;color:var(--muted);font-size:11px}
 @media(max-width:850px){#acolhimento .welcome-tools{grid-template-columns:1fr 1fr}#acolhimento .welcome-tools .registry-search{grid-column:1/-1}#acolhimento .welcome-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){#acolhimento .welcome-tools{grid-template-columns:1fr}#acolhimento .welcome-tools .registry-search{grid-column:auto}#acolhimento .welcome-kpis{grid-template-columns:1fr}#acolhimento .welcome-list table{min-width:760px}}
+
+/* Acolhimento agrupado por CDC e identificação do Star responsável */
+#acolhimento .welcome-star-card{margin-bottom:14px;padding:19px 20px}
+#acolhimento .welcome-star-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+#acolhimento .welcome-star-header h3{font-size:13px;margin:0;color:var(--text)}
+#acolhimento .welcome-star-header span{font-size:10px;color:var(--muted)}
+#acolhimento .welcome-star-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.8fr);gap:12px}
+#acolhimento .welcome-star-fields label{display:block;font-weight:750;font-size:10px;color:var(--text);margin-bottom:6px}
+#acolhimento .welcome-star-fields input{width:100%;min-height:43px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;color:var(--text);background:#fff;font:inherit;font-size:12px}
+#acolhimento .welcome-star-fields input:focus{outline:2px solid #cdb1f7;outline-offset:1px}
+#acolhimento .welcome-bulkbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 17px;margin-bottom:14px}
+#acolhimento .welcome-bulkbar small{color:var(--muted);font-size:10px}
+#acolhimento .welcome-bulkbar .btn:disabled,#acolhimento .welcome-cdc-group .btn:disabled{opacity:.45;cursor:not-allowed}
+#acolhimento .welcome-cdc-group td{background:#f7f4fc;border-top:1px solid #eae4f6;border-bottom:1px solid #eae4f6;padding:11px 16px}
+#acolhimento .welcome-cdc-line{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#acolhimento .welcome-cdc-label{display:flex;flex-direction:column;gap:3px}
+#acolhimento .welcome-cdc-label strong{font-size:11px;color:var(--text)}
+#acolhimento .welcome-cdc-label span{font-size:10px;color:var(--muted)}
+#acolhimento .welcome-cdc-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+#acolhimento .welcome-cdc-buttons .btn{font-size:10px;min-height:34px;padding:8px 12px}
+#acolhimento .welcome-check{text-align:center;width:48px}
+#acolhimento .welcome-check input{height:17px;width:17px;accent-color:var(--purple);cursor:pointer}
+#acolhimento .welcome-check input:disabled{cursor:not-allowed;opacity:.4}
+#acolhimento .welcome-star-note{max-width:220px;overflow-wrap:anywhere}
+@media(max-width:650px){#acolhimento .welcome-star-fields{grid-template-columns:1fr}#acolhimento .welcome-star-card{padding:15px}#acolhimento .welcome-cdc-line{align-items:flex-start;flex-direction:column}#acolhimento .welcome-bulkbar .btn{width:100%}}
 </style>
 </head><body>
 <div class="app">
@@ -212,18 +237,29 @@
     <div class="card kpi"><small>Pendentes</small><strong id="welcomePendingCount">0</strong><span>aguardando confirmação</span></div>
   </div>
   <div class="card panel welcome-intro">Esta relação utiliza apenas colaboradores marcados como <strong>Presentes</strong> na aba Registros. A confirmação do acolhimento não altera o status de presença.</div>
+  <div class="card panel welcome-star-card">
+    <div class="welcome-star-header"><h3>Star responsável pelo acolhimento</h3><span>Obrigatório antes de confirmar um ou mais colaboradores</span></div>
+    <div class="welcome-star-fields">
+      <div><label for="welcomeStarName">Nome completo do Star *</label><input id="welcomeStarName" type="text" maxlength="120" autocomplete="name" placeholder="Informe o nome do Star responsável"></div>
+      <div><label for="welcomeStarMatricula">Matrícula do Star *</label><input id="welcomeStarMatricula" type="text" inputmode="numeric" maxlength="30" autocomplete="off" placeholder="Informe a matrícula"></div>
+    </div>
+  </div>
   <div class="card welcome-tools">
     <div class="registry-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg><input id="welcomeSearch" type="search" placeholder="Buscar nome, matrícula, CDC ou empresa..." oninput="renderWelcome()" aria-label="Buscar colaboradores presentes" autocomplete="off"></div>
     <select id="welcomeStatusFilter" onchange="renderWelcome()" aria-label="Filtrar confirmações"><option value="all">Todos os presentes</option><option value="pending">Aguardando acolhimento</option><option value="done">Acolhidos</option></select>
     <span class="registry-result" id="welcomeRowsCount">0 colaboradores</span>
   </div>
+  <div class="card welcome-bulkbar">
+    <div><strong id="welcomeSelectedCount">Nenhum colaborador selecionado</strong><div><small>Selecione colaboradores individualmente ou todos de um mesmo CDC.</small></div></div>
+    <button class="btn primary" id="welcomeConfirmSelected" type="button" onclick="confirmSelectedWelcome()" disabled>Confirmar selecionados</button>
+  </div>
   <div class="card panel table-wrap welcome-list"><table>
-    <thead><tr><th>Colaborador</th><th>Matrícula</th><th>Empresa</th><th>CDC</th><th>Gestor Imediato</th><th>Acolhimento</th><th>Ação</th></tr></thead>
-    <tbody id="welcomeTable"><tr><td colspan="7" class="welcome-empty">Carregando colaboradores presentes...</td></tr></tbody>
+    <thead><tr><th><span class="sr-only">Seleção</span></th><th>Colaborador</th><th>Matrícula</th><th>Empresa</th><th>CDC</th><th>Gestor Imediato</th><th>Acolhimento</th><th>Ação</th></tr></thead>
+    <tbody id="welcomeTable"><tr><td colspan="8" class="welcome-empty">Carregando colaboradores presentes...</td></tr></tbody>
   </table></div>
 </section>
 <section class="view" id="niveis">
-<div class="page-head"><div><h2>Níveis de acesso</h2><p>Cada perfil tem um papel na experiência de integração.</p></div><span class="level-context" id="currentLevelLabel">Seu perfil</span></div><div class="levels-grid"><article class="level-card master"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg></span><span class="level-number">Nível 05</span></div><h3>Master</h3><p class="level-title">Administração global</p><p class="level-description">Controle geral de todo o portal e de todas as localidades. Centraliza a gestão das unidades e dos acessos.</p><div class="level-scope">Abrangência <b>Todas as localidades</b></div></article><article class="level-card hub"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="level-number">Nível 04</span></div><h3>Hub</h3><p class="level-title">Gestão da localidade</p><p class="level-description">Administra e acompanha a operação do PINC na localidade vinculada ao seu acesso.</p><div class="level-scope">Abrangência <b>Localidade vinculada</b></div></article><article class="level-card flow"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18m-13 4 3 3 5-4"/></svg></span><span class="level-number">Nível 03</span></div><h3>Flow</h3><p class="level-title">Coordenação de agendas</p><p class="level-description">Organiza a programação e acompanha o andamento das agendas da sua localidade.</p><div class="level-scope">Abrangência <b>Agendas da localidade</b></div></article><article class="level-card facilitador"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><span class="level-number">Nível 02</span></div><h3>Facilitador</h3><p class="level-title">Condução das etapas</p><p class="level-description">Conduz as atividades do PINC e acompanha a etapa atual e o cronômetro pelo Portal do Facilitador.</p><div class="level-scope">Abrangência <b>Portal do Facilitador</b></div></article><article class="level-card star"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></span><span class="level-number">Nível 01</span></div><h3>Star</h3><p class="level-title">Acolhimento e acompanhamento</p><p class="level-description">Acompanha o andamento da integração e o acolhimento dos novos colaboradores pelo Portal do Star.</p><div class="level-scope">Abrangência <b>Portal do Star</b></div></article></div><p class="levels-footnote">Os acessos de Gestão são cadastrados em Configurações. Os perfis Star e Facilitador são cadastrados na aba Cadastro.</p></section>
+<div class="page-head"><div><h2>Níveis de acesso</h2><p>Cada perfil tem um papel na experiência de integração.</p></div><span class="level-context" id="currentLevelLabel">Seu perfil</span></div><div class="levels-grid"><article class="level-card master"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 12 3 3 5-6"/></svg></span><span class="level-number">Nível 05</span></div><h3>Master</h3><p class="level-title">Administração global</p><p class="level-description">Controle geral de todo o portal e de todas as localidades. Centraliza a gestão das unidades e dos acessos.</p><div class="level-scope">Abrangência <b>Todas as localidades</b></div></article><article class="level-card hub"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="level-number">Nível 04</span></div><h3>Hub</h3><p class="level-title">Gestão da localidade</p><p class="level-description">Administra e acompanha a operação do PINC na localidade vinculada ao seu acesso.</p><div class="level-scope">Abrangência <b>Localidade vinculada</b></div></article><article class="level-card flow"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4M17 3v4M3 11h18m-13 4 3 3 5-4"/></svg></span><span class="level-number">Nível 03</span></div><h3>Flow</h3><p class="level-title">Coordenação de agendas</p><p class="level-description">Organiza a programação e acompanha o andamento das agendas da sua localidade.</p><div class="level-scope">Abrangência <b>Agendas da localidade</b></div></article><article class="level-card facilitador"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><span class="level-number">Nível 02</span></div><h3>Facilitador</h3><p class="level-title">Condução das etapas</p><p class="level-description">Conduz as atividades do PINC e acompanha a etapa atual e o cronômetro pelo Portal do Facilitador.</p><div class="level-scope">Abrangência <b>Portal do Facilitador</b></div></article><article class="level-card star"><div class="level-card-head"><span class="level-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg></span><span class="level-number">Nível 01</span></div><h3>Star</h3><p class="level-title">Acolhimento e acompanhamento</p><p class="level-description">Acompanha o andamento da integração e o acolhimento dos novos colaboradores pelo Portal do Star.</p><div class="level-scope">Abrangência <b>Portal do Star</b></div></article></div><p class="levels-footnote">Os acessos de Gestão são cadastrados em Configurações. Os perfis Star e Facilitador têm acesso próprio ao portal. O acolhimento dos colaboradores é registrado na aba Acolhimento.</p></section>
 <section class="view" id="configuracoes"><div class="page-head"><div><h2>Configurações</h2><p>Organize a operação, as comunicações e os acessos do PINC.</p></div><button class="btn primary" onclick="saveSettings()">Salvar alterações</button></div><div class="settings-grid"><div class="settings-column"><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></span><div><h3>Operação</h3><p>Parâmetros usados na agenda e nos relatórios.</p></div></div></div><div class="form-grid"><div class="field"><label for="tol">Tolerância de horário (min)</label><input id="tol" type="number" value="10"></div><div class="field"><label for="timeEff">Horário dos Efetivos</label><input id="timeEff" value="07:30 às 18:00"></div><div class="field full"><label for="standardObs">Observação padrão</label><textarea id="standardObs" rows="2">Manter comunicação entre Gestão, Facilitador e Stars para reduzir impactos no cronograma.</textarea></div></div></div><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 7 9 6 9-6"/></svg></span><div><h3>Comunicações</h3><p>Destinatários do relatório de ausentes.</p></div></div></div><div class="field"><label for="recipientEmail">Adicionar destinatário</label><div class="recipient-editor"><input id="recipientEmail" type="email" placeholder="nome@empresa.com" onkeydown="if(event.key==='Enter'){event.preventDefault();addRecipientEmail()}"><button type="button" class="btn secondary" onclick="addRecipientEmail()">+ Adicionar</button></div><div class="recipient-list" id="recipientList"></div><div class="recipient-empty" id="recipientEmpty">Nenhum destinatário cadastrado.</div></div></div></div><div class="settings-column"><div class="card panel" id="locationAdminPanel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><div><h3>Localidades</h3><p>Unidades que utilizam o PINC.</p></div></div><button class="btn secondary" onclick="openLocationModal()">+ Localidade</button></div><div class="compact-list" id="locationList"></div></div><div class="card panel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></span><div><h3>Notificações</h3><p>Avisos do PINC neste computador.</p></div></div></div><div class="form-grid"><div class="field"><label for="notificationLead">Antecedência do aviso (min)</label><input id="notificationLead" type="number" min="1" max="60" value="10"></div><div class="field"><label>Status das notificações</label><div class="hint" id="notificationStatus" role="status" style="min-height:42px;display:flex;align-items:center">Não ativada</div></div></div><button class="btn secondary" style="margin-top:16px" onclick="requestDesktopNotifications()" id="notificationBtn">Ativar notificações</button></div></div><div class="card panel" id="managementAccessPanel"><div class="panel-head"><div class="settings-heading"><span class="settings-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 5"/></svg></span><div><h3>Acessos de Gestão</h3><p>Responsáveis com os perfis Master, Hub e Flow.</p></div></div><button class="btn secondary" onclick="openAccessModal()">+ Criar acesso</button></div><div class="compact-list" id="accessList"></div></div></div></section>
 
 </div></main></div>
@@ -584,8 +620,24 @@ function openWelcomeTeamsMessage(group){const message=welcomeTeamsMessage(group)
 function confirmRelease(){const group=window.__pendingRelease;if(!group)return closeModal();S.released[group]=true;const ids={efetivosHypera:'releaseEffHypera',efetivosBrainfarma:'releaseEffBrainfarma',aprendizes:'releaseApp'},b=g(ids[group]);if(b){b.textContent='Liberado';b.disabled=true}if(!persist())return;window.__pendingRelease=null;closeModal();setTimeout(()=>openWelcomeTeamsMessage(group),40)}
 function renderStarsBroadcastStatus(){const btn=g('starsBroadcastBtn'),status=g('starsBroadcastStatus');if(!btn||!status)return;const feed=S.starsBroadcast?.[S.currentLocation],on=!!feed?.enabled;if(on){status.textContent='● Stars em tempo real';status.style.color='var(--green)';btn.textContent='✓ Disponibilizado no Stars';btn.disabled=true}else{status.textContent='Stars não publicado';status.style.color='';btn.textContent='↗ Disponibilizar no Stars';btn.disabled=false}}
 async function enableStarsBroadcast(){const loc=S.currentLocation||S.locations?.[0]?.name||'Anápolis';S.starsBroadcast=S.starsBroadcast&&typeof S.starsBroadcast==='object'?S.starsBroadcast:{};S.starsBroadcast[loc]={...(S.starsBroadcast[loc]||{}),enabled:true,location:loc,enabledAtMillis:Date.now()};refreshEnabledStarsBroadcasts();renderStarsBroadcastStatus();const ok=await publishStarsFeed(loc,true);if(ok){try{S._meta={...(S._meta||{}),updatedAt:Date.now(),source:'gestao'};const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}renderStarsBroadcastStatus()}else{S.starsBroadcast[loc].enabled=false;renderStarsBroadcastStatus()}}
+
+/* A seleção permanece apenas em memória; confirmações usam os mesmos registros de presença. */
+const welcomeSelected=new Set();
+function welcomeCdcKey(p){return String(p?.cdc??'').trim()}
+function welcomePendingHere(){return participantsHere().filter(p=>p.present&&!p.welcomeDone)}
+function welcomeSyncSelection(){
+  const valid=new Set(welcomePendingHere());
+  for(const p of welcomeSelected)if(!valid.has(p))welcomeSelected.delete(p);
+}
+function welcomeStarResponsible(){
+  const name=g('welcomeStarName')?.value.trim()||'',matricula=g('welcomeStarMatricula')?.value.trim()||'';
+  if(!name){toast('Informe o nome completo do Star responsável pelo acolhimento.');g('welcomeStarName')?.focus();return null}
+  if(!matricula){toast('Informe a matrícula do Star responsável pelo acolhimento.');g('welcomeStarMatricula')?.focus();return null}
+  return{name,matricula};
+}
 function renderWelcome(){
   const table=g('welcomeTable');if(!table)return;
+  welcomeSyncSelection();
   const present=participantsHere().filter(p=>p.present),done=present.filter(p=>!!p.welcomeDone).length;
   if(g('welcomeLocation'))g('welcomeLocation').textContent=S.currentLocation;
   if(g('welcomePresentCount'))g('welcomePresentCount').textContent=present.length;
@@ -598,41 +650,110 @@ function renderWelcome(){
     return !query||normalizeHeaderText([p.name,p.matricula,p.cdc,p.company,p.manager].filter(Boolean).join(' ')).includes(query);
   });
   if(g('welcomeRowsCount'))g('welcomeRowsCount').textContent=`${rows.length} de ${present.length} presente${present.length===1?'':'s'}`;
-  table.innerHTML=rows.length?rows.map(p=>{
-    const idx=(S.participants||[]).indexOf(p),confirmed=!!p.welcomeDone;
-    const date=p.welcomeConfirmedAt?new Date(p.welcomeConfirmedAt):null;
-    const time=date&&!Number.isNaN(date.getTime())?date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'';
-    const details=confirmed&&time?`<div class="welcome-meta">Confirmado em ${esc(time)}</div>`:'';
-    return `<tr><td><span class="welcome-person">${esc(p.name||'—')}</span></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.company||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'—')}</td><td><span class="status ${confirmed?'green':'amber'}">${confirmed?'Acolhido':'Pendente'}</span>${details}</td><td><button class="btn ${confirmed?'secondary':'primary'} welcome-action" onclick="${confirmed?'undoWelcome':'confirmWelcome'}(${idx})">${confirmed?'Desfazer':'Confirmar'}</button></td></tr>`;
-  }).join(''):`<tr><td colspan="7" class="welcome-empty">${present.length?'Nenhum colaborador encontrado com estes filtros.':'Nenhum colaborador marcado como presente nesta localidade. Confira a aba Registros.'}</td></tr>`;
+  if(g('welcomeSelectedCount'))g('welcomeSelectedCount').textContent=welcomeSelected.size?`${welcomeSelected.size} colaborador${welcomeSelected.size===1?'':'es'} selecionado${welcomeSelected.size===1?'':'s'}`:'Nenhum colaborador selecionado';
+  const bulkBtn=g('welcomeConfirmSelected');if(bulkBtn){bulkBtn.disabled=!welcomeSelected.size;bulkBtn.textContent=welcomeSelected.size?`Confirmar ${welcomeSelected.size} selecionado${welcomeSelected.size===1?'':'s'}`:'Confirmar selecionados'}
+  const groups=new Map();
+  for(const p of rows){const key=welcomeCdcKey(p);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p)}
+  let output='';
+  for(const [cdc,people] of groups){
+    const allInCdc=present.filter(p=>welcomeCdcKey(p)===cdc);
+    const pending=allInCdc.filter(p=>!p.welcomeDone);
+    const selected=pending.filter(p=>welcomeSelected.has(p)).length;
+    const first=S.participants.indexOf(people[0]);
+    const hasCdc=!!cdc;
+    output+=`<tr class="welcome-cdc-group"><td colspan="8"><div class="welcome-cdc-line"><div class="welcome-cdc-label"><strong>${hasCdc?'CDC '+esc(cdc):'Sem CDC cadastrado'}</strong><span>${allInCdc.length} presente${allInCdc.length===1?'':'s'} · ${allInCdc.length-pending.length} acolhido${allInCdc.length-pending.length===1?'':'s'} · ${pending.length} pendente${pending.length===1?'':'s'}${selected?' · '+selected+' selecionado'+(selected===1?'':'s'):''}</span></div><div class="welcome-cdc-buttons">${hasCdc?`<button type="button" class="btn secondary" onclick="toggleWelcomeCdc(${first})" ${pending.length?'':'disabled'}>${pending.length&&selected===pending.length?'Desmarcar CDC':'Selecionar todos do CDC'}</button><button type="button" class="btn primary" onclick="confirmWelcomeCdc(${first})" ${pending.length?'':'disabled'}>Confirmar CDC (${pending.length})</button>`:''}</div></div></td></tr>`;
+    for(const p of people){
+      const idx=S.participants.indexOf(p),confirmed=!!p.welcomeDone;
+      const date=p.welcomeConfirmedAt?new Date(p.welcomeConfirmedAt):null;
+      const time=date&&!Number.isNaN(date.getTime())?date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'';
+      const star=confirmed&&p.welcomeStarName?`<div class="welcome-meta welcome-star-note">Star: ${esc(p.welcomeStarName)}${p.welcomeStarMatricula?' · Matrícula '+esc(p.welcomeStarMatricula):''}</div>`:'';
+      const details=confirmed&&time?`<div class="welcome-meta">Confirmado em ${esc(time)}</div>`:'';
+      output+=`<tr><td class="welcome-check"><input type="checkbox" aria-label="Selecionar ${esc(p.name||'colaborador')}" ${confirmed?'disabled':welcomeSelected.has(p)?'checked':''} onchange="toggleWelcomeSelected(${idx},this.checked)"></td><td><span class="welcome-person">${esc(p.name||'—')}</span></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.company||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'—')}</td><td><span class="status ${confirmed?'green':'amber'}">${confirmed?'Acolhido':'Pendente'}</span>${details}${star}</td><td><button class="btn ${confirmed?'secondary':'primary'} welcome-action" onclick="${confirmed?'undoWelcome':'confirmWelcome'}(${idx})">${confirmed?'Desfazer':'Confirmar'}</button></td></tr>`;
+    }
+  }
+  table.innerHTML=output||`<tr><td colspan="8" class="welcome-empty">${present.length?'Nenhum colaborador encontrado com estes filtros.':'Nenhum colaborador marcado como presente nesta localidade. Confira a aba Registros.'}</td></tr>`;
+}
+function toggleWelcomeSelected(i,checked){
+  const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return renderWelcome();
+  if(checked)welcomeSelected.add(p);else welcomeSelected.delete(p);
+  renderWelcome();
+}
+function toggleWelcomeCdc(i){
+  const p=S.participants?.[i],cdc=welcomeCdcKey(p);
+  if(!p||p.location!==S.currentLocation||!cdc)return;
+  const eligible=welcomePendingHere().filter(x=>welcomeCdcKey(x)===cdc);
+  const allSelected=eligible.length&&eligible.every(x=>welcomeSelected.has(x));
+  eligible.forEach(x=>allSelected?welcomeSelected.delete(x):welcomeSelected.add(x));
+  renderWelcome();
+}
+function requestWelcomeConfirmation(people,description){
+  const star=welcomeStarResponsible();if(!star)return;
+  const unique=[...new Set(people)];
+  const pending=new Set(welcomePendingHere());
+  if(!unique.length||unique.some(p=>!pending.has(p)))return toast('A lista de presentes foi atualizada. Revise a seleção.');
+  window.__pendingWelcome={
+    location:S.currentLocation,
+    people:unique.map(p=>({ref:p,name:p.name,matricula:String(p.matricula||''),cdc:welcomeCdcKey(p)})),
+    star
+  };
+  const count=unique.length;
+  const title=count===1?'Confirmar acolhimento':'Confirmar acolhimentos';
+  const summary=count===1?`o acolhimento de <strong>${esc(unique[0].name)}</strong>`:`o acolhimento de <strong>${count} colaboradores</strong> (${esc(description)})`;
+  confirmDialog(title,`Deseja confirmar ${summary}?<div class="hint" style="margin-top:12px">Star responsável: <strong>${esc(star.name)}</strong> · Matrícula <strong>${esc(star.matricula)}</strong></div>`,'Confirmar acolhimento','confirmWelcomeNow()',false);
 }
 function confirmWelcome(i){
-  const p=S.participants?.[i];if(!p||!p.present||p.location!==S.currentLocation)return toast('Somente colaboradores presentes podem ser acolhidos.');
-  if(p.welcomeDone)return toast('O acolhimento já foi confirmado.');
-  window.__pendingWelcome={i,location:S.currentLocation,matricula:String(p.matricula||'')};
-  confirmDialog('Confirmar acolhimento',`Confirma que “${esc(p.name)}” participou do acolhimento?`,'Confirmar acolhimento','confirmWelcomeNow()',false);
+  const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return toast('Somente colaboradores presentes e pendentes podem ser confirmados.');
+  requestWelcomeConfirmation([p],welcomeCdcKey(p));
+}
+function confirmWelcomeCdc(i){
+  const p=S.participants?.[i],cdc=welcomeCdcKey(p);
+  if(!p||p.location!==S.currentLocation||!cdc)return toast('É necessário um CDC válido para confirmar em grupo.');
+  const eligible=welcomePendingHere().filter(x=>welcomeCdcKey(x)===cdc);
+  if(!eligible.length)return toast('Nenhum colaborador pendente neste CDC.');
+  requestWelcomeConfirmation(eligible,'CDC '+cdc);
+}
+function confirmSelectedWelcome(){
+  welcomeSyncSelection();
+  if(!welcomeSelected.size)return toast('Selecione os colaboradores que serão confirmados.');
+  const people=[...welcomeSelected];
+  const cdcs=[...new Set(people.map(welcomeCdcKey))].filter(Boolean);
+  requestWelcomeConfirmation(people,cdcs.length===1?'CDC '+cdcs[0]:cdcs.length+' CDCs');
+}
+function restoreWelcomeSnapshots(snapshots){
+  for(const {person,data} of snapshots){Object.keys(person).forEach(k=>delete person[k]);Object.assign(person,data)}
 }
 function confirmWelcomeNow(){
-  const x=window.__pendingWelcome,p=S.participants?.[x?.i];
-  if(!x||!p||x.location!==S.currentLocation||p.location!==x.location||String(p.matricula||'')!==x.matricula||!p.present||p.welcomeDone){window.__pendingWelcome=null;closeModal();return toast('Os dados do colaborador mudaram. Atualize a relação.')}
-  const before={welcomeDone:p.welcomeDone,welcomeConfirmedAt:p.welcomeConfirmedAt,welcomeConfirmedBy:p.welcomeConfirmedBy};
-  p.welcomeDone=true;p.welcomeConfirmedAt=new Date().toISOString();
-  const auth=managementAuth();p.welcomeConfirmedBy=auth.name||auth.username||auth.profileName||'Gestão PINC';
-  if(!persist()){Object.assign(p,before);renderWelcome();return toast('Não foi possível salvar o acolhimento.')}
+  const pending=window.__pendingWelcome;
+  if(!pending||pending.location!==S.currentLocation)return closeModal();
+  const eligible=new Set(welcomePendingHere());
+  const same=pending.people.length&&pending.people.every(x=>eligible.has(x.ref)&&x.ref.name===x.name&&String(x.ref.matricula||'')===x.matricula&&welcomeCdcKey(x.ref)===x.cdc);
+  if(!same){window.__pendingWelcome=null;closeModal();renderWelcome();return toast('Os registros mudaram. Revise a lista antes de confirmar.')}
+  const snapshots=pending.people.map(x=>({person:x.ref,data:{...x.ref}}));
+  const now=new Date().toISOString(),auth=managementAuth();
+  pending.people.forEach(x=>{
+    const p=x.ref;
+    p.welcomeDone=true;p.welcomeConfirmedAt=now;p.welcomeConfirmedBy=auth.name||auth.username||auth.profileName||'Gestão PINC';
+    p.welcomeStarName=pending.star.name;p.welcomeStarMatricula=pending.star.matricula;
+  });
+  if(!persist()){restoreWelcomeSnapshots(snapshots);renderWelcome();return toast('Não foi possível salvar as confirmações.')}
+  pending.people.forEach(x=>welcomeSelected.delete(x.ref));
   window.__pendingWelcome=null;closeModal();renderWelcome();
-  successDialog('Acolhimento confirmado',`${esc(p.name)} foi marcado como acolhido.`);
+  const count=snapshots.length;
+  successDialog('Acolhimento confirmado',count===1?'O colaborador foi marcado como acolhido.':`${count} colaboradores foram marcados como acolhidos.`);
 }
 function undoWelcome(i){
   const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||!p.welcomeDone)return;
-  window.__pendingWelcomeUndo={i,location:S.currentLocation,matricula:String(p.matricula||'')};
+  window.__pendingWelcomeUndo={ref:p,location:S.currentLocation,matricula:String(p.matricula||'')};
   confirmDialog('Desfazer acolhimento',`Deseja voltar o acolhimento de “${esc(p.name)}” para Pendente?`,'Desfazer confirmação','confirmUndoWelcome()',false);
 }
 function confirmUndoWelcome(){
-  const x=window.__pendingWelcomeUndo,p=S.participants?.[x?.i];
-  if(!x||!p||p.location!==x.location||x.location!==S.currentLocation||String(p.matricula||'')!==x.matricula||!p.present||!p.welcomeDone){window.__pendingWelcomeUndo=null;closeModal();return toast('Os dados do colaborador mudaram. Atualize a relação.')}
-  const before={welcomeDone:p.welcomeDone,welcomeConfirmedAt:p.welcomeConfirmedAt,welcomeConfirmedBy:p.welcomeConfirmedBy};
-  p.welcomeDone=false;delete p.welcomeConfirmedAt;delete p.welcomeConfirmedBy;
-  if(!persist()){Object.assign(p,before);renderWelcome();return toast('Não foi possível atualizar o acolhimento.')}
+  const x=window.__pendingWelcomeUndo,p=x?.ref;
+  if(!x||!p||!S.participants.includes(p)||p.location!==x.location||x.location!==S.currentLocation||String(p.matricula||'')!==x.matricula||!p.present||!p.welcomeDone){window.__pendingWelcomeUndo=null;closeModal();return toast('Os dados do colaborador mudaram. Atualize a relação.')}
+  const snapshots=[{person:p,data:{...p}}];
+  p.welcomeDone=false;
+  delete p.welcomeConfirmedAt;delete p.welcomeConfirmedBy;
+  delete p.welcomeStarName;delete p.welcomeStarMatricula;
+  if(!persist()){restoreWelcomeSnapshots(snapshots);renderWelcome();return toast('Não foi possível atualizar o acolhimento.')}
   window.__pendingWelcomeUndo=null;closeModal();renderWelcome();
   successDialog('Confirmação desfeita',`${esc(p.name)} voltou para Pendente.`);
 }
