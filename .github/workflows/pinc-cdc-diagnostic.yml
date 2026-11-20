@@ -1,0 +1,48 @@
+name: Diagnóstico único CDC 50155 (somente contagens)
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/pinc-cdc-diagnostic.yml
+permissions:
+  contents: read
+jobs:
+  verificar_registros:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm install --silent --no-audit --no-fund --prefix /tmp/pinc-cdc-diagnostic firebase-admin@13
+      - name: Verificar fonte e formato de presenças do PINC
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PINC_GESTAO }}
+          NODE_PATH: /tmp/pinc-cdc-diagnostic/node_modules
+        run: |
+          node <<'NODE'
+          const admin=require('firebase-admin');
+          async function main(){
+            admin.initializeApp({credential:admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)),projectId:'pinc-gestao'});
+            const db=admin.firestore();
+            const core=await db.doc('pincShared/core').get();
+            console.log('coreExists:',core.exists);
+            if(core.exists){
+              const raw=core.data()||{},people=Array.isArray(raw.participants)?raw.participants:[];
+              const byCDC=people.filter(p=>String(p.cdc??'').trim()==='50155');
+              console.log('coreFields:',Object.keys(raw).join(','));
+              console.log('coreHasParticipants:',Array.isArray(raw.participants));
+              console.log('coreTotalParticipants:',people.length);
+              console.log('coreCdc50155Count:',byCDC.length);
+              console.log('coreCdc50155Present:',byCDC.filter(p=>p.present===true).length);
+              console.log('coreCdc50155Pending:',byCDC.filter(p=>p.present===true&&!p.welcomeDone).length);
+              console.log('coreCdc50155AttendancePresent:',byCDC.filter(p=>p.attendance&&Object.values(p.attendance).includes('present')).length);
+              console.log('coreCdc50155Locations:',JSON.stringify([...new Set(byCDC.map(p=>p.location||''))]));
+              console.log('coreCdc50155PresenceTypes:',JSON.stringify([...new Set(byCDC.map(p=>typeof p.present))]));
+            }
+            const feeds=await db.collection('pincLocks').where('type','==','starsFeed').get();
+            console.log('starsFeeds:',feeds.size);
+            for(const feed of feeds.docs){
+              const d=feed.data(),arr=Array.isArray(d.participants)?d.participants:[];
+              const sub=arr.filter(p=>String(p.cdc??'').trim()==='50155');
+              console.log('starsFeedSummary:',JSON.stringify({location:d.location,count:arr.length,cdc50155:sub.length,present:sub.filter(p=>p.present===true).length,pending:sub.filter(p=>p.present===true&&!p.welcomeDone).length}));
+            }
+          }
+          main().catch(e=>{console.error('Diagnostic error:',e.message);process.exitCode=1});
+          NODE
