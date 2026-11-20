@@ -20,11 +20,11 @@
     const map=new Map();
     for(const d of docs){
       if(d.type===KIND&&d.id&&d.location){
-        map.set(d.id,{id:d.id,name:String(d.name||''),matricula:String(d.matricula||''),cdc:String(d.cdc||''),username:String(d.username||'').trim().toLowerCase(),location:String(d.location)});
+        map.set(d.id,{id:d.id,name:String(d.name||''),matricula:String(d.matricula||''),cdc:String(d.cdc||''),location:String(d.location)});
       }else if(d.type===EVENT&&map.has(d.targetId)){
         if(d.deleted){map.delete(d.targetId);continue}
         const old=map.get(d.targetId),patch=d.patch||{};
-        map.set(d.targetId,{...old,...Object.fromEntries(['name','matricula','cdc','username'].filter(k=>typeof patch[k]==='string').map(k=>[k,patch[k]]))});
+        map.set(d.targetId,{...old,...Object.fromEntries(['name','matricula','cdc'].filter(k=>typeof patch[k]==='string').map(k=>[k,patch[k]]))});
       }
     }
     return [...map.values()];
@@ -42,11 +42,11 @@
   window.renderPortalRegistrations=function(){
     const table=g('portalRegistrationTable');if(!table)return;
     const query=normalizeHeaderText(g('portalRegistrationSearch')?.value||'');
-    const rows=here().filter(x=>normalizeHeaderText([x.name,x.matricula,x.cdc,x.username,x.location].join(' ')).includes(query))
+    const rows=here().filter(x=>normalizeHeaderText([x.name,x.matricula,x.cdc,x.location].join(' ')).includes(query))
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
     if(g('portalRegistrationLocation'))g('portalRegistrationLocation').textContent=location();
     if(g('portalRegistrationCount'))g('portalRegistrationCount').textContent=rows.length+' Star(s)';
-    table.innerHTML=rows.length?rows.map(u=>'<tr><td><strong>'+esc(u.name)+'</strong></td><td>'+esc(u.matricula)+'</td><td>'+esc(u.cdc)+'</td><td><code>'+esc(u.username||'Não cadastrado')+'</code></td><td>'+esc(u.location)+'</td><td><div class="star-actions"><button class="btn secondary" onclick="openPortalRegistration(\''+esc(u.id)+'\')">Editar</button><button class="btn secondary" onclick="removeStarRegistration(\''+esc(u.id)+'\')">Excluir</button></div></td></tr>').join(''):'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">Nenhum Star cadastrado nesta localidade. Utilize + Cadastrar Star.</td></tr>';
+    table.innerHTML=rows.length?rows.map(u=>'<tr><td><strong>'+esc(u.name)+'</strong></td><td>'+esc(u.matricula)+'</td><td>'+esc(u.cdc)+'</td><td>'+esc(u.location)+'</td><td><div class="star-actions"><button class="btn secondary" onclick="openPortalRegistration(\''+esc(u.id)+'\')">Editar</button><button class="btn secondary" onclick="removeStarRegistration(\''+esc(u.id)+'\')">Excluir</button></div></td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Nenhum Star cadastrado nesta localidade. Utilize + Cadastrar Star.</td></tr>';
   };
   window.initPortalRegistration=async function(){
     if(unsubscribe){renderPortalRegistrations();return}
@@ -74,7 +74,6 @@
       '<div class="field full"><label for="starName">Nome completo *</label><input id="starName" maxlength="120" autocomplete="off" value="'+esc(current?.name||'')+'" placeholder="Nome do Star"></div>'+
       '<div class="field"><label for="starMatricula">Matrícula *</label><input id="starMatricula" maxlength="30" inputmode="numeric" autocomplete="off" value="'+esc(current?.matricula||'')+'" placeholder="Ex.: 000123"></div>'+
       '<div class="field"><label for="starCdc">CDC *</label><input id="starCdc" maxlength="30" inputmode="numeric" autocomplete="off" value="'+esc(current?.cdc||'')+'" placeholder="Ex.: 0200"></div>'+
-      '<div class="field full"><label for="starUsername">Usuário para acessar o portal Stars *</label><input id="starUsername" maxlength="40" autocapitalize="off" spellcheck="false" autocomplete="off" value="'+esc(current?.username||'')+'" placeholder="Ex.: maria.silva"></div>'+ 
       '<div class="field full"><label for="starLocation">Localidade vinculada *</label><input id="starLocation" readonly value="'+esc(location())+'"></div>'+
       '</div>','<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" id="starSaveButton" onclick="savePortalRegistration()">Salvar Star</button>');
   };
@@ -82,33 +81,30 @@
     if(busy||managementLevel()<4)return;
     const draft=window.__starDraft;
     if(!draft||draft.location!==location())return toast('A localidade mudou. Abra o cadastro novamente.');
-    const name=g('starName')?.value.trim()||'',matricula=g('starMatricula')?.value.trim()||'',cdc=g('starCdc')?.value.trim()||'',username=(g('starUsername')?.value||'').trim().toLowerCase();
-    if(!name||!matricula||!cdc||!username)return toast('Preencha nome, matrícula, CDC e usuário.');
-    if(!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username))return toast('Use um usuário de 3 a 40 caracteres com letras minúsculas, números, ponto, hífen ou sublinhado.');
+    const name=g('starName')?.value.trim()||'',matricula=g('starMatricula')?.value.trim()||'',cdc=g('starCdc')?.value.trim()||'';
+    if(!name||!matricula||!cdc)return toast('Preencha nome, matrícula e CDC.');
     if(!/^\d+$/.test(cdc))return toast('O CDC deve conter apenas números.');
     if(here().some(x=>x.matricula===matricula&&x.id!==draft.id))return toast('Já existe um Star com essa matrícula na localidade.');
-    if(entries.some(x=>x.username===username&&x.id!==draft.id))return toast('Este nome de usuário já está cadastrado. Escolha outro.');
     busy=true;const button=g('starSaveButton');if(button){button.disabled=true;button.textContent='Salvando...'}
     try{
       const conn=await database();
-      // Confere novamente a base antes de gravar, inclusive usuários de outras localidades.
+      // Confere a matrícula na base online antes de gravar.
       const latest=decode(await feed(conn).get({source:'server'}));
-      if(latest.some(x=>x.username===username&&x.id!==draft.id))throw new Error('Este usuário já existe. Escolha outro nome de usuário.');
       if(latest.some(x=>x.location===draft.location&&x.matricula===matricula&&x.id!==draft.id))throw new Error('Esta matrícula já existe nesta localidade.');
       if(draft.id){
         await conn.collection('pincLocks').add({
           type:EVENT,ownerUid:firebase.auth().currentUser.uid,targetId:draft.id,
-          location:draft.location,patch:{name,matricula,cdc,username},updatedAtMillis:Date.now()
+          location:draft.location,patch:{name,matricula,cdc},updatedAtMillis:Date.now()
         });
       }else{
         const ref=conn.collection('pincLocks').doc();
         await ref.set({
           type:KIND,ownerUid:firebase.auth().currentUser.uid,id:ref.id,
-          name,matricula,cdc,username,location:draft.location,updatedAtMillis:Date.now()
+          name,matricula,cdc,location:draft.location,updatedAtMillis:Date.now()
         });
       }
       await refresh();closeModal();window.__starDraft=null;
-      successDialog(draft.id?'Star atualizado':'Star cadastrado','Usuário '+username+' vinculado ao Star, sem senha. Localidade: '+draft.location+'.');
+      successDialog(draft.id?'Star atualizado':'Star cadastrado','Star vinculado à localidade '+draft.location+' e ao CDC '+cdc+'.');
     }catch(e){toast(firebaseMessage(e))}
     finally{busy=false;if(button){button.disabled=false;button.textContent='Salvar Star'}}
   };
