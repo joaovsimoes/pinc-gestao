@@ -635,14 +635,8 @@ function renderStarsBroadcastStatus(){const btn=g('starsBroadcastBtn'),status=g(
 async function enableStarsBroadcast(){const loc=S.currentLocation||S.locations?.[0]?.name||'Anápolis';S.starsBroadcast=S.starsBroadcast&&typeof S.starsBroadcast==='object'?S.starsBroadcast:{};S.starsBroadcast[loc]={...(S.starsBroadcast[loc]||{}),enabled:true,location:loc,enabledAtMillis:Date.now()};refreshEnabledStarsBroadcasts();renderStarsBroadcastStatus();const ok=await publishStarsFeed(loc,true);if(ok){try{S._meta={...(S._meta||{}),updatedAt:Date.now(),source:'gestao'};const payload=JSON.stringify(S);localStorage.setItem(STORAGE,payload);localStorage.setItem(BACKUP_STORAGE,payload)}catch(e){}renderStarsBroadcastStatus()}else{S.starsBroadcast[loc].enabled=false;renderStarsBroadcastStatus()}}
 
 /* A seleção permanece apenas em memória; confirmações usam os mesmos registros de presença. */
-const welcomeSelected=new Set();
 function welcomeCdcKey(p){return String(p?.cdc??'').trim()}
 function welcomePendingHere(){return participantsHere().filter(p=>p.present&&!p.welcomeDone)}
-function welcomeSyncSelection(){
-  const valid=new Set(welcomePendingHere());
-  for(const p of welcomeSelected)if(!valid.has(p))welcomeSelected.delete(p);
-}
-
 /* Relatório de acolhimento por CDC: somente colaboradores presentes, incluindo pendentes. */
 function welcomeReportCdcs(){
   return [...new Set(participantsHere().filter(p=>p.present).map(welcomeCdcKey).filter(Boolean))]
@@ -785,7 +779,6 @@ function welcomeStarResponsible(){
 }
 function renderWelcome(){
   const table=g('welcomeTable');if(!table)return;
-  welcomeSyncSelection();
   const present=participantsHere().filter(p=>p.present),done=present.filter(p=>!!p.welcomeDone).length;
   if(g('welcomeLocation'))g('welcomeLocation').textContent=S.currentLocation;
   if(g('welcomePresentCount'))g('welcomePresentCount').textContent=present.length;
@@ -798,15 +791,12 @@ function renderWelcome(){
     return !query||normalizeHeaderText([p.name,p.matricula,p.cdc,p.company,p.manager].filter(Boolean).join(' ')).includes(query);
   });
   if(g('welcomeRowsCount'))g('welcomeRowsCount').textContent=`${rows.length} de ${present.length} presente${present.length===1?'':'s'}`;
-  if(g('welcomeSelectedCount'))g('welcomeSelectedCount').textContent=welcomeSelected.size?`${welcomeSelected.size} colaborador${welcomeSelected.size===1?'':'es'} selecionado${welcomeSelected.size===1?'':'s'}`:'Nenhum colaborador selecionado';
-  const bulkBtn=g('welcomeConfirmSelected');if(bulkBtn){bulkBtn.disabled=!welcomeSelected.size;bulkBtn.textContent=welcomeSelected.size?`Confirmar ${welcomeSelected.size} selecionado${welcomeSelected.size===1?'':'s'}`:'Confirmar selecionados'}
   const groups=new Map();
   for(const p of rows){const key=welcomeCdcKey(p);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p)}
   let output='';
   for(const [cdc,people] of groups){
     const allInCdc=present.filter(p=>welcomeCdcKey(p)===cdc);
     const pending=allInCdc.filter(p=>!p.welcomeDone);
-    const selected=pending.filter(p=>welcomeSelected.has(p)).length;
     const first=S.participants.indexOf(people[0]);
     const hasCdc=!!cdc;
     output+=`<tr class="welcome-cdc-group"><td colspan="6"><div class="welcome-cdc-line"><div class="welcome-cdc-label"><strong>${hasCdc?'CDC '+esc(cdc):'Sem CDC cadastrado'}</strong><span>${allInCdc.length} presente${allInCdc.length===1?'':'s'} · ${allInCdc.length-pending.length} acolhido${allInCdc.length-pending.length===1?'':'s'} · ${pending.length} pendente${pending.length===1?'':'s'}</span></div><div class="welcome-cdc-buttons">${hasCdc?`<button type="button" class="btn primary" onclick="confirmWelcomeCdc(${first})" ${pending.length?'':'disabled'}>Confirmar CDC (${pending.length})</button>`:''}</div></div></td></tr>`;
@@ -820,19 +810,6 @@ function renderWelcome(){
     }
   }
   table.innerHTML=output||`<tr><td colspan="6" class="welcome-empty">${present.length?'Nenhum colaborador encontrado com estes filtros.':'Nenhum colaborador marcado como presente nesta localidade. Confira a aba Registros.'}</td></tr>`;
-}
-function toggleWelcomeSelected(i,checked){
-  const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return renderWelcome();
-  if(checked)welcomeSelected.add(p);else welcomeSelected.delete(p);
-  renderWelcome();
-}
-function toggleWelcomeCdc(i){
-  const p=S.participants?.[i],cdc=welcomeCdcKey(p);
-  if(!p||p.location!==S.currentLocation||!cdc)return;
-  const eligible=welcomePendingHere().filter(x=>welcomeCdcKey(x)===cdc);
-  const allSelected=eligible.length&&eligible.every(x=>welcomeSelected.has(x));
-  eligible.forEach(x=>allSelected?welcomeSelected.delete(x):welcomeSelected.add(x));
-  renderWelcome();
 }
 function requestWelcomeConfirmation(people,description){
   const star=welcomeStarResponsible();if(!star)return;
@@ -849,23 +826,12 @@ function requestWelcomeConfirmation(people,description){
   const summary=count===1?`o acolhimento de “${unique[0].name}”`:`o acolhimento de ${count} colaboradores (${description})`;
   confirmDialog(title,`Deseja confirmar ${summary}? Star responsável: ${star.name} · Matrícula: ${star.matricula}.`,'Confirmar acolhimento','confirmWelcomeNow()',false);
 }
-function confirmWelcome(i){
-  const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return toast('Somente colaboradores presentes e pendentes podem ser confirmados.');
-  requestWelcomeConfirmation([p],welcomeCdcKey(p));
-}
 function confirmWelcomeCdc(i){
   const p=S.participants?.[i],cdc=welcomeCdcKey(p);
   if(!p||p.location!==S.currentLocation||!cdc)return toast('É necessário um CDC válido para confirmar em grupo.');
   const eligible=welcomePendingHere().filter(x=>welcomeCdcKey(x)===cdc);
   if(!eligible.length)return toast('Nenhum colaborador pendente neste CDC.');
   requestWelcomeConfirmation(eligible,'CDC '+cdc);
-}
-function confirmSelectedWelcome(){
-  welcomeSyncSelection();
-  if(!welcomeSelected.size)return toast('Selecione os colaboradores que serão confirmados.');
-  const people=[...welcomeSelected];
-  const cdcs=[...new Set(people.map(welcomeCdcKey))].filter(Boolean);
-  requestWelcomeConfirmation(people,cdcs.length===1?'CDC '+cdcs[0]:cdcs.length+' CDCs');
 }
 function restoreWelcomeSnapshots(snapshots){
   for(const {person,data} of snapshots){Object.keys(person).forEach(k=>delete person[k]);Object.assign(person,data)}
@@ -888,26 +854,9 @@ function confirmWelcomeNow(){
     p.welcomeStarName=pending.star.name;p.welcomeStarMatricula=pending.star.matricula;
   });
   if(!persist()){restoreWelcomeSnapshots(snapshots);renderWelcome();return toast('Não foi possível salvar as confirmações.')}
-  pending.people.forEach(x=>welcomeSelected.delete(x.ref));
   window.__pendingWelcome=null;closeModal();renderWelcome();
   const count=snapshots.length;
   successDialog('Acolhimento confirmado',count===1?'O colaborador foi marcado como acolhido.':`${count} colaboradores foram marcados como acolhidos.`);
-}
-function undoWelcome(i){
-  const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||!p.welcomeDone)return;
-  window.__pendingWelcomeUndo={ref:p,location:S.currentLocation,matricula:String(p.matricula||'')};
-  confirmDialog('Desfazer acolhimento',`Deseja voltar o acolhimento de “${esc(p.name)}” para Pendente?`,'Desfazer confirmação','confirmUndoWelcome()',false);
-}
-function confirmUndoWelcome(){
-  const x=window.__pendingWelcomeUndo,p=x?.ref;
-  if(!x||!p||!S.participants.includes(p)||p.location!==x.location||x.location!==S.currentLocation||String(p.matricula||'')!==x.matricula||!p.present||!p.welcomeDone){window.__pendingWelcomeUndo=null;closeModal();return toast('Os dados do colaborador mudaram. Atualize a relação.')}
-  const snapshots=[{person:p,data:{...p}}];
-  p.welcomeDone=false;
-  delete p.welcomeConfirmedAt;delete p.welcomeConfirmedBy;
-  delete p.welcomeStarName;delete p.welcomeStarMatricula;
-  if(!persist()){restoreWelcomeSnapshots(snapshots);renderWelcome();return toast('Não foi possível atualizar o acolhimento.')}
-  window.__pendingWelcomeUndo=null;closeModal();renderWelcome();
-  successDialog('Confirmação desfeita',`${esc(p.name)} voltou para Pendente.`);
 }
 function renderLocationSelect(){const auth=managementAuth(),master=isMaster();const locs=master?S.locations:S.locations.filter(l=>l.name===auth.location);if(!master&&auth.location)S.currentLocation=auth.location;if(master&&!locs.some(l=>l.name===S.currentLocation))S.currentLocation=auth.location&&locs.some(l=>l.name===auth.location)?auth.location:(locs[0]?.name||'');topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!master;applyManagementAccessProfile()}
 async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();if(previous!==v)toast('Localidade alterada para '+v+'.')}
