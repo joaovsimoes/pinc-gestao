@@ -1,99 +1,130 @@
 (function () {
   'use strict';
-  let entries = [], selectedRole = 'star', busy = false, stopWatching = null;
-  const api = window.PINC_PORTAL_ACCESS;
-  const location = () => Number(window.parent.PINC_AUTH_USER?.level||4) >= 5 ? S.currentLocation : (window.parent.PINC_AUTH_USER?.location || S.currentLocation);
-  const here = () => entries.filter(u => u.location === location());
-  window.PINC_STAR_REGISTRY = { active: () => here().filter(u => u.role === 'star' && u.active && u.matricula && u.name), find: id => here().find(u => u.role === 'star' && u.id === id) || null };
-  window.renderPortalRegistrations = function () {
-    const search = normalizeHeaderText(g('portalRegistrationSearch')?.value || '');
-    const rows = here().filter(u => u.role === selectedRole && normalizeHeaderText([u.name, u.matricula, u.building, u.code].join(' ')).includes(search));
-    g('portalRegisterButton').textContent = selectedRole === 'star' ? '+ Cadastrar Star' : '+ Cadastrar Facilitador';
-    g('portalBuildingHeader').style.display = '';
-    g('portalBuildingHeader').textContent = selectedRole === 'star' ? 'Prédio' : 'Área';
-    g('portalRegistrationLocation').textContent = location();
-    g('portalRegistrationCount').textContent = rows.length + ' cadastro(s)';
-    // O cadastro desta aba é exclusivo de Stars. Os acessos de Facilitador existentes são preservados.
-    g('portalRegistrationTable').innerHTML = rows.length ? rows.sort((a, b) => a.code.localeCompare(b.code)).map(u => `<tr>
-      <td><strong>${esc(u.name)}</strong></td><td>${u.matricula ? esc(u.matricula) : '<span class="status amber">Cadastrar matrícula</span>'}</td><td>${esc(u.building || '—')}</td>
-      <td>${esc(u.location)}</td><td><code>${esc(u.code)}</code>${u.role === 'host' && !u.area ? '<div style="font-size:9px;color:var(--muted);margin-top:5px">Edite para definir a área e atualizar o código.</div>' : ''}</td>
-      <td><span class="status ${u.active ? 'green' : 'red'}">${u.active ? 'Ativo' : 'Inativo'}</span></td>
-      <td><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn secondary" onclick="copyPortalCode('${u.id}')">Copiar</button>
-      <button class="btn secondary" onclick="openPortalRegistration('${u.id}')">Editar</button>
-      <button class="btn secondary" onclick="togglePortalRegistration('${u.id}')">${u.active ? 'Desativar' : 'Ativar'}</button></div></td></tr>`).join('') :
-      `<tr><td colspan="7" style="text-align:center;padding:28px">Nenhum Star cadastrado nesta localidade.</td></tr>`;
+  // Novo cadastro de Stars. Intencionalmente NÃO importa os acessos legados com código.
+  // Os antigos documentos portalAccess não participam desta base reiniciada.
+  const KIND='pincStarCadastroV2',EVENT='pincStarCadastroEventV2';
+  let entries=[],unsubscribe=null,loading=null,busy=false,db=null;
+  const location=()=>S.currentLocation;
+  const here=()=>entries.filter(x=>x.location===location());
+  const firebaseMessage=e=>({permission_denied:'Sem permissão para alterar a base online.',unavailable:'Sem conexão com a base de Stars.'}[e?.code]||e?.message||'Não foi possível salvar o cadastro online.');
+  async function database(){
+    if(db)return db;
+    if(!firebase.apps.length)firebase.initializeApp(window.PINC_MANAGEMENT_CONFIG);
+    const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();
+    db=firebase.firestore();return db;
+  }
+  const feed=d=>d.collection('pincLocks').where('type','in',[KIND,EVENT]);
+  function decode(snap){
+    const docs=snap.docs.map(x=>({...x.data(),_doc:x.id}));
+    docs.sort((a,b)=>Number(a.updatedAtMillis||0)-Number(b.updatedAtMillis||0)||a._doc.localeCompare(b._doc));
+    const map=new Map();
+    for(const d of docs){
+      if(d.type===KIND&&d.id&&d.location){
+        map.set(d.id,{id:d.id,name:String(d.name||''),matricula:String(d.matricula||''),cdc:String(d.cdc||''),location:String(d.location)});
+      }else if(d.type===EVENT&&map.has(d.targetId)){
+        if(d.deleted){map.delete(d.targetId);continue}
+        const old=map.get(d.targetId),patch=d.patch||{};
+        map.set(d.targetId,{...old,...Object.fromEntries(['name','matricula','cdc'].filter(k=>typeof patch[k]==='string').map(k=>[k,patch[k]]))});
+      }
+    }
+    return [...map.values()];
+  }
+  async function refresh(){
+    const snap=await (await database()).collection('pincLocks').where('type','in',[KIND,EVENT]).get();
+    entries=decode(snap);renderPortalRegistrations();window.renderWelcomeStarOptions?.();
+  }
+  window.PINC_STAR_REGISTRY={
+    active:()=>here().filter(x=>x.name&&x.matricula&&x.cdc),
+    find:id=>here().find(x=>x.id===id)||null,
+    all:here,
+    refresh
   };
-  window.selectPortalRegistrationRole = function () { selectedRole = 'star'; renderPortalRegistrations(); };
-  window.initPortalRegistration = async function () {
-    if (stopWatching) { renderPortalRegistrations(); return; }
-    g('portalRegistryStatus').textContent = 'Carregando cadastros online...';
-    try {
-      entries = await api.load(); renderPortalRegistrations(); window.renderWelcomeStarOptions?.();
-      stopWatching = await api.watch(records => {
-        entries = records; renderPortalRegistrations(); window.renderWelcomeStarOptions?.(); g('portalRegistryStatus').textContent = 'Cadastros atualizados online';
-      }, error => { g('portalRegistryStatus').textContent = api.message(error); });
-    } catch (error) { g('portalRegistryStatus').textContent = api.message(error); }
+  window.renderPortalRegistrations=function(){
+    const table=g('portalRegistrationTable');if(!table)return;
+    const query=normalizeHeaderText(g('portalRegistrationSearch')?.value||'');
+    const rows=here().filter(x=>normalizeHeaderText([x.name,x.matricula,x.cdc,x.location].join(' ')).includes(query))
+      .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    if(g('portalRegistrationLocation'))g('portalRegistrationLocation').textContent=location();
+    if(g('portalRegistrationCount'))g('portalRegistrationCount').textContent=rows.length+' Star(s)';
+    table.innerHTML=rows.length?rows.map(u=>'<tr><td><strong>'+esc(u.name)+'</strong></td><td>'+esc(u.matricula)+'</td><td>'+esc(u.cdc)+'</td><td>'+esc(u.location)+'</td><td><div class="star-actions"><button class="btn secondary" onclick="openPortalRegistration(\''+esc(u.id)+'\')">Editar</button><button class="btn secondary" onclick="removeStarRegistration(\''+esc(u.id)+'\')">Excluir</button></div></td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Nenhum Star cadastrado nesta localidade. Utilize + Cadastrar Star.</td></tr>';
   };
-  window.openPortalRegistration = function (id) {
-    const current = id ? here().find(u => u.id === id) : null;
-    if (id && !current) return toast('Cadastro não encontrado nesta localidade.');
-    const role = 'star';
-    window.__portalRegistrationDraft = { id: current?.id, role, location: location(), sequence: current?.sequence, code: current?.code };
-    openDialog(current ? 'Editar cadastro' : role === 'star' ? 'Cadastrar Star' : 'Cadastrar Facilitador', `<div class="form-grid" style="grid-template-columns:1fr 1fr">
-      <div class="field full"><label for="portalPersonName">Nome da pessoa</label><input id="portalPersonName" maxlength="120" value="${esc(current?.name || '')}" autocomplete="off"></div>
-      ${role === 'star' ? `<div class="field"><label for="portalPersonMatricula">Matrícula do Star *</label><input id="portalPersonMatricula" maxlength="30" inputmode="numeric" value="${esc(current?.matricula || '')}" autocomplete="off" placeholder="Ex.: 001234"></div><div class="field"><label for="portalPersonBuilding">Prédio *</label><input id="portalPersonBuilding" maxlength="80" value="${esc(current?.building || '')}" ${current ? 'readonly' : ''} placeholder="Ex.: Goiás" autocomplete="off"></div>` : `<div class="field"><label for="portalPersonArea">Área do Facilitador</label><input id="portalPersonArea" maxlength="80" list="portalAreaOptions" value="${esc(current?.area || '')}" placeholder="Informe a área" autocomplete="off" oninput="updatePortalHostCodePreview(true)"><datalist id="portalAreaOptions">${[...new Set(entries.filter(u => u.role === 'host' && u.area).map(u => u.area))].map(area => `<option value="${esc(area)}"></option>`).join('')}</datalist></div><div class="field"><label for="portalPersonAreaLetter">Letra da área</label><input id="portalPersonAreaLetter" maxlength="1" pattern="[A-Za-z]" value="${esc(current?.areaLetter || '')}" placeholder="Ex.: A" autocomplete="off" oninput="this.value=this.value.toUpperCase();updatePortalHostCodePreview()"></div>`}
-      <div class="field full"><label>Localidade vinculada</label><input readonly value="${esc(location())}"></div>
-      <div class="field full"><label>Código de acesso</label><input id="portalPersonCode" readonly value="${esc(current?.code || (role === 'host' ? 'G&G.000.A • sequência + letra da área' : 'STAR-NOME-DO-PREDIO + número sequencial (001, 002...)'))}"></div>
-      <div class="hint full">${role === 'host' ? 'G&G. + número sequencial + letra da área. A sequência e a localidade são preservadas; ao informar ou mudar a letra, o código é atualizado.' : current ? 'O código e a localidade permanecem vinculados a este cadastro.' : 'O código será gerado automaticamente e confirmado online ao salvar.'}</div>
-      </div>`, `<button class="btn secondary" onclick="closeModal()">Cancelar</button><button id="portalRegistrationSave" class="btn primary" onclick="savePortalRegistration()">Salvar cadastro</button>`);
+  window.initPortalRegistration=async function(){
+    if(unsubscribe){renderPortalRegistrations();return}
+    if(loading)return loading;
+    if(g('portalRegistryStatus'))g('portalRegistryStatus').textContent='Carregando cadastro de Stars...';
+    loading=(async()=>{
+      try{
+        await refresh();
+        unsubscribe=(await database())&&db.collection('pincLocks').where('type','in',[KIND,EVENT]).onSnapshot(snap=>{
+          if(snap.metadata?.hasPendingWrites||snap.metadata?.fromCache)return;
+          entries=decode(snap);renderPortalRegistrations();window.renderWelcomeStarOptions?.();
+          if(g('portalRegistryStatus'))g('portalRegistryStatus').textContent='Cadastros sincronizados online';
+        },err=>{if(g('portalRegistryStatus'))g('portalRegistryStatus').textContent=firebaseMessage(err)});
+      }catch(e){if(g('portalRegistryStatus'))g('portalRegistryStatus').textContent=firebaseMessage(e)}
+      finally{loading=null}
+    })();
+    return loading;
   };
-  window.updatePortalHostCodePreview = function (areaChanged) {
-    const draft = window.__portalRegistrationDraft;
-    if (draft?.role !== 'host') return;
-    const areaInput = g('portalPersonArea'), letterInput = g('portalPersonAreaLetter'), codeInput = g('portalPersonCode');
-    const area = normalizeHeaderText(areaInput?.value || '');
-    const known = area ? entries.find(u => u.role === 'host' && u.areaLetter && normalizeHeaderText(u.area || '') === area) : null;
-    if (areaChanged && letterInput) letterInput.value = known?.areaLetter || '';
-    const letter = String(letterInput?.value || '').trim().toUpperCase();
-    if (codeInput) codeInput.value = /^[A-Z]$/.test(letter)
-      ? api.codeFor('host', '', draft.sequence ?? 0, letter)
-      : 'G&G.000. + letra da área';
+  window.openPortalRegistration=function(id){
+    if(managementLevel()<4)return toast('Seu perfil não possui permissão para cadastrar Stars.');
+    const current=id?here().find(x=>x.id===id):null;
+    if(id&&!current)return toast('Star não encontrado nesta localidade.');
+    window.__starDraft={id:current?.id||null,location:location(),matricula:current?.matricula||''};
+    openDialog(current?'Editar Star':'Cadastrar Star','<div class="form-grid" style="grid-template-columns:1fr 1fr">'+
+      '<div class="field full"><label for="starName">Nome completo *</label><input id="starName" maxlength="120" autocomplete="off" value="'+esc(current?.name||'')+'" placeholder="Nome do Star"></div>'+
+      '<div class="field"><label for="starMatricula">Matrícula *</label><input id="starMatricula" maxlength="30" inputmode="numeric" autocomplete="off" value="'+esc(current?.matricula||'')+'" placeholder="Ex.: 000123"></div>'+
+      '<div class="field"><label for="starCdc">CDC *</label><input id="starCdc" maxlength="30" inputmode="numeric" autocomplete="off" value="'+esc(current?.cdc||'')+'" placeholder="Ex.: 0200"></div>'+
+      '<div class="field full"><label for="starLocation">Localidade vinculada *</label><input id="starLocation" readonly value="'+esc(location())+'"></div>'+
+      '</div>','<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" id="starSaveButton" onclick="savePortalRegistration()">Salvar Star</button>');
   };
-  window.savePortalRegistration = async function () {
-    if (busy) return;
-    const draft = window.__portalRegistrationDraft, name = g('portalPersonName')?.value.trim(), building = g('portalPersonBuilding')?.value.trim() || '', matricula = g('portalPersonMatricula')?.value.trim() || '';
-    if (!draft || draft.location !== location()) return toast('Atualize a localidade antes de cadastrar.');
-    if (!name) return toast('Informe o nome da pessoa.');
-    if (!matricula) return toast('Informe a matrícula do Star.');
-    if (draft.role === 'star' && !building) return toast('Informe o prédio.');
-    const area = g('portalPersonArea')?.value.trim() || '', areaLetter = (g('portalPersonAreaLetter')?.value || '').trim().toUpperCase();
-    if (draft.role === 'host' && !area) return toast('Informe a área do Facilitador.');
-    if (draft.role === 'host' && !/^[A-Z]$/.test(areaLetter)) return toast('Informe uma única letra de A a Z para identificar a área.');
-    const changes = draft.role === 'host' ? { name, area, areaLetter } : { name, matricula };
-    busy = true; const button = g('portalRegistrationSave'); if (button) { button.disabled = true; button.textContent = 'Salvando online...'; }
-    try {
-      const saved = draft.id ? await api.update(draft.id, changes) : await api.create({ role: draft.role, name, matricula, building, area, areaLetter, location: draft.location });
-      entries = entries.filter(record => record.id !== saved.id).concat(saved); renderPortalRegistrations(); window.renderWelcomeStarOptions?.(saved.id); closeModal();
-      openDialog(draft.id ? 'Cadastro atualizado' : 'Cadastro criado', `<div class="hint">${esc(saved.name)}<br>Localidade: <strong>${esc(saved.location)}</strong>${saved.building ? `<br>Prédio: <strong>${esc(saved.building)}</strong>` : ''}${saved.area ? `<br>Área: <strong>${esc(saved.area)}</strong> • ${esc(saved.areaLetter)}` : ''}</div>
-        <p style="margin-top:16px">Código confirmado online:</p><div style="padding:16px;background:var(--purpleSoft);border-radius:12px;font-size:20px;font-weight:850;overflow-wrap:anywhere">${esc(saved.code)}</div>
-        <p>Use este código ao acessar ${saved.role === 'host' ? 'Facilitador' : 'Star'} na página inicial.</p>`, `<button class="btn secondary" onclick="copyPortalCode('${saved.id}')">Copiar código</button><button class="btn primary" onclick="closeModal()">Concluir</button>`);
-    } catch (error) { toast(api.message(error)); } finally { busy = false; if (button) { button.disabled = false; button.textContent = 'Salvar cadastro'; } }
+  window.savePortalRegistration=async function(){
+    if(busy||managementLevel()<4)return;
+    const draft=window.__starDraft;
+    if(!draft||draft.location!==location())return toast('A localidade mudou. Abra o cadastro novamente.');
+    const name=g('starName')?.value.trim()||'',matricula=g('starMatricula')?.value.trim()||'',cdc=g('starCdc')?.value.trim()||'';
+    if(!name||!matricula||!cdc)return toast('Preencha nome, matrícula e CDC.');
+    if(!/^\d+$/.test(cdc))return toast('O CDC deve conter apenas números.');
+    if(here().some(x=>x.matricula===matricula&&x.id!==draft.id))return toast('Já existe um Star com essa matrícula na localidade.');
+    busy=true;const button=g('starSaveButton');if(button){button.disabled=true;button.textContent='Salvando...'}
+    try{
+      const conn=await database();
+      if(draft.id){
+        await conn.collection('pincLocks').add({
+          type:EVENT,ownerUid:firebase.auth().currentUser.uid,targetId:draft.id,
+          location:draft.location,patch:{name,matricula,cdc},updatedAtMillis:Date.now()
+        });
+      }else{
+        const ref=conn.collection('pincLocks').doc();
+        await ref.set({
+          type:KIND,ownerUid:firebase.auth().currentUser.uid,id:ref.id,
+          name,matricula,cdc,location:draft.location,updatedAtMillis:Date.now()
+        });
+      }
+      await refresh();closeModal();window.__starDraft=null;
+      successDialog(draft.id?'Star atualizado':'Star cadastrado','Nome, matrícula e CDC salvos na base online da localidade '+draft.location+'.');
+    }catch(e){toast(firebaseMessage(e))}
+    finally{busy=false;if(button){button.disabled=false;button.textContent='Salvar Star'}}
   };
-  window.copyPortalCode = async function (id) {
-    const record = here().find(u => u.id === id);
-    if (!record) return;
-    try { await navigator.clipboard.writeText(record.code); toast('Código copiado.'); } catch (_) { toast('Código: ' + record.code); }
+  window.removeStarRegistration=function(id){
+    if(managementLevel()<4)return;
+    const star=here().find(x=>x.id===id);if(!star)return;
+    window.__pendingStarDelete={id,location:star.location};
+    confirmDialog('Excluir Star','Deseja excluir o cadastro de "'+star.name+'"? Os acolhimentos já confirmados serão mantidos.','Excluir Star','confirmRemoveStarRegistration()',false);
   };
-  window.togglePortalRegistration = function (id) {
-    const record = here().find(u => u.id === id); if (!record) return;
-    window.__portalStatusChange = { id, active: !record.active };
-    confirmDialog(record.active ? 'Desativar acesso' : 'Ativar acesso', `${record.active ? 'Desativar' : 'Ativar'} o código ${record.code} de ${record.name}?`, 'Confirmar', 'confirmPortalStatus()', false);
-  };
-  window.confirmPortalStatus = async function () {
-    if (busy) return;
-    const change = window.__portalStatusChange; if (!change || !here().some(u => u.id === change.id)) return;
-    busy = true;
-    try { const saved = await api.update(change.id, { active: change.active }); entries = entries.map(record => record.id === saved.id ? saved : record); renderPortalRegistrations(); window.renderWelcomeStarOptions?.(); closeModal(); successDialog('Acesso atualizado', 'A situação do código foi confirmada online.'); }
-    catch (error) { toast(api.message(error)); } finally { busy = false; }
+  window.confirmRemoveStarRegistration=async function(){
+    if(busy||managementLevel()<4)return;
+    const pending=window.__pendingStarDelete;
+    if(!pending||pending.location!==location()||!here().some(x=>x.id===pending.id))return;
+    busy=true;
+    try{
+      const conn=await database();
+      await conn.collection('pincLocks').add({
+        type:EVENT,ownerUid:firebase.auth().currentUser.uid,targetId:pending.id,
+        location:pending.location,deleted:true,updatedAtMillis:Date.now()
+      });
+      window.__pendingStarDelete=null;await refresh();closeModal();
+      successDialog('Star excluído','O cadastro deixou de aparecer na lista e na seleção do acolhimento.');
+    }catch(e){toast(firebaseMessage(e))}
+    finally{busy=false}
   };
 })();
