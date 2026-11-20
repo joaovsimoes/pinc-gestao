@@ -698,8 +698,8 @@ function requestWelcomeConfirmation(people,description){
   };
   const count=unique.length;
   const title=count===1?'Confirmar acolhimento':'Confirmar acolhimentos';
-  const summary=count===1?`o acolhimento de <strong>${esc(unique[0].name)}</strong>`:`o acolhimento de <strong>${count} colaboradores</strong> (${esc(description)})`;
-  confirmDialog(title,`Deseja confirmar ${summary}?<div class="hint" style="margin-top:12px">Star responsável: <strong>${esc(star.name)}</strong> · Matrícula <strong>${esc(star.matricula)}</strong></div>`,'Confirmar acolhimento','confirmWelcomeNow()',false);
+  const summary=count===1?`o acolhimento de “${unique[0].name}”`:`o acolhimento de ${count} colaboradores (${description})`;
+  confirmDialog(title,`Deseja confirmar ${summary}? Star responsável: ${star.name} · Matrícula: ${star.matricula}.`,'Confirmar acolhimento','confirmWelcomeNow()',false);
 }
 function confirmWelcome(i){
   const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return toast('Somente colaboradores presentes e pendentes podem ser confirmados.');
