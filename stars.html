@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<script>if(window.parent===window||!window.parent.PINC_PORTAL_USER?.star)window.location.replace("/index.html?portal=star");</script>
+<script>if(window.parent===window)window.location.replace("/index.html?portal=star");</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Programa de Integração de Novos Colaboradores</title><!-- PINC APP META -->
 <meta name="application-name" content="Programa de Integração de Novos Colaboradores">
@@ -96,8 +96,6 @@
 const STORAGE='pinc-gestao-v6', BACKUP_STORAGE='pinc-gestao-backup-v1', PREVIOUS='pinc-gestao-v4';
 const FALLBACK={locations:[{name:'Anápolis',code:'ANP'},{name:'Goiânia',code:'GYN'}],settings:{tolerance:10},agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}}},participants:[],absents:[],reports:[],welcomeSchedule:{}};
 let S=load(), selected={location:S.currentLocation||S.locations?.[0]?.name||'Anápolis',audience:'efetivos',day:1,shift:'matutino'};
-const PORTAL_ACCESS_USER=window.parent.PINC_PORTAL_USER?.star;
-if(PORTAL_ACCESS_USER){selected.location=PORTAL_ACCESS_USER.location;S.currentLocation=selected.location}
 const channel='BroadcastChannel' in window?new BroadcastChannel('pinc-live-sync'):null;
 const PINC_FIREBASE_CONFIG={apiKey:"AIzaSyDU85_q3JbswuboNofXkM-O_I6iRkf89uM",authDomain:"pinc-gestao.firebaseapp.com",projectId:"pinc-gestao",storageBucket:"pinc-gestao.firebasestorage.app",messagingSenderId:"30866642235",appId:"1:30866642235:web:0b8d703f03b4a53f29931e",measurementId:"G-PN2S2K265E"};
 let starsDb=null,starsSharedUnsub=null,starsRealtimeUnsub=null,starsRemoteLock=null,starsPublishedFeed=null,starsAgendaAt=0,starsCoreParticipantsReady=false,starsCoreWelcomeReady=false;
@@ -183,12 +181,22 @@ function starsLocationKey(v){return String(v||'').normalize('NFD').replace(/[\u0
 function starsIsGoiania(v=selected.location){return ['goiania','gyn'].includes(starsLocationKey(v))}
 function applyStarsLocationPolicy(){const gyn=starsIsGoiania();if(gyn){selected.audience='efetivos';selected.day=1;selected.shift='matutino'}if(appChoice)appChoice.style.display=gyn?'none':'';const dayButtons=document.querySelectorAll('#effSegment .option');if(dayButtons[1])dayButtons[1].style.display=gyn?'none':'';effChoice.classList.toggle('active',selected.audience==='efetivos');appChoice.classList.toggle('active',selected.audience==='aprendizes');effSegment.classList.toggle('hidden',selected.audience!=='efetivos');appSegment.classList.toggle('hidden',gyn||selected.audience!=='aprendizes');if(window.periodLabel)periodLabel.textContent=selected.audience==='efetivos'?'3 • Dia':'3 • Turno';dayButtons.forEach((b,i)=>b.classList.toggle('active',i===selected.day-1))}
 
-function renderLocations(){const authorizedLocation=PORTAL_ACCESS_USER?.location||'';selected.location=authorizedLocation;S.currentLocation=authorizedLocation;locationSelect.innerHTML=authorizedLocation?`<option value="${esc(authorizedLocation)}">${esc(authorizedLocation)}</option>`:'';locationSelect.value=authorizedLocation;locationSelect.disabled=true;const identity=document.getElementById('portalIdentity');if(identity)identity.textContent=PORTAL_ACCESS_USER?[PORTAL_ACCESS_USER.profileName||'Star',PORTAL_ACCESS_USER.name,PORTAL_ACCESS_USER.building,PORTAL_ACCESS_USER.code].filter(Boolean).join(' • '):'';applyStarsLocationPolicy()}
+function renderLocations(){
+  const available=S.locations?.length?S.locations:FALLBACK.locations;
+  if(!available.some(x=>x.name===selected.location))selected.location=available[0]?.name||'Anápolis';
+  S.currentLocation=selected.location;
+  locationSelect.innerHTML=available.map(x=>`<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
+  locationSelect.value=selected.location;
+  locationSelect.disabled=false;
+  const identity=document.getElementById('portalIdentity');
+  if(identity)identity.textContent='Portal Stars • Consulta sem código';
+  applyStarsLocationPolicy();
+}
 
 function chooseAudience(v){if(starsIsGoiania()&&v!=='efetivos')return starsNotifyToast('Em Goiânia o PINC está disponível somente para Efetivos.');selected.audience=v;applyStarsLocationPolicy()}
 function chooseDay(v){if(starsIsGoiania()&&Number(v)!==1)return starsNotifyToast('Em Goiânia o PINC acontece em um único dia.');selected.day=v;applyStarsLocationPolicy()}
 function chooseShift(v){if(starsIsGoiania())return starsNotifyToast('Em Goiânia não há agenda de Aprendizes.');selected.shift=v;document.querySelectorAll('#appSegment .option').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='matutino')||(i===1&&v==='vespertino')))}
-async function enterStars(){try{const access=await parent.PINC_VALIDATE_PORTAL('star');selected.location=access.location}catch(e){starsNotifyToast(parent.PINC_PORTAL_ACCESS.message(e));return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
+async function enterStars(){if(!selected.location)return starsNotifyToast('Selecione uma localidade.');applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
 function backToSelection(){dashboardView.classList.add('hidden');selectionView.classList.remove('hidden');if(starsRealtimeUnsub){starsRealtimeUnsub();starsRealtimeUnsub=null}starsRemoteLock=null;starsPublishedFeed=null;starsRows=[];setStarsSyncStatus(false);S=load();renderLocations()}
 function list(){return selected.audience==='efetivos'?(S.agenda?.efetivos?.[selected.day]||[]):(S.agenda?.aprendizes?.[selected.shift]||[])}
 function contextRows(audience,period){return starsRows.filter(d=>d.location===selected.location&&d.audience===audience&&String(d.period)===String(period)&&window.PINC_RESET.freshFeed(d,starsResets))}
@@ -283,6 +291,6 @@ function notificationPermissionLocal(){try{return parent&&parent.PINC_NOTIFICATI
 function updateNotificationBell(){const b=document.getElementById('notificationBell');if(!b)return;const p=notificationPermissionLocal(),enabled=localStorage.getItem('pinc-notifications-local')==='true';b.classList.toggle('active',p==='granted'&&enabled);b.classList.toggle('blocked',p==='denied');b.title=p==='granted'&&enabled?'Notificações ativas':p==='denied'?'Notificações bloqueadas no navegador':'Ativar notificações no computador'}
 async function requestLocalNotifications(){let p='unsupported';try{if(parent&&parent.PINC_REQUEST_NOTIFICATIONS)p=await parent.PINC_REQUEST_NOTIFICATIONS();else if('Notification'in window)p=Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){p='blocked'}if(p==='granted'){localStorage.setItem('pinc-notifications-local','true');try{if(parent&&parent.PINC_NOTIFY)parent.PINC_NOTIFY('PINC • Notificações ativadas','Você receberá avisos do Programa de Integração de Novos Colaboradores neste computador.','notifications-enabled')}catch(e){}starsNotifyToast('Notificações ativadas neste computador.')}else if(p==='denied'){localStorage.removeItem('pinc-notifications-local');starsNotifyToast('As notificações estão bloqueadas nas permissões do navegador.')}else{starsNotifyToast('Este navegador não oferece notificações para esta página.')}updateNotificationBell()}
 
-renderLocations();chooseAudience('efetivos');updateNotificationBell();initSharedCoreStars().then(()=>fetchLatestAgendaStars(locationSelect.value));locationSelect.addEventListener('change',()=>{selected.location=PORTAL_ACCESS_USER?.location||'';starsAgendaAt=0;fetchLatestAgendaStars(selected.location)});
+renderLocations();chooseAudience('efetivos');updateNotificationBell();initSharedCoreStars().then(()=>fetchLatestAgendaStars(locationSelect.value));locationSelect.addEventListener('change',()=>{selected.location=locationSelect.value;S.currentLocation=selected.location;applyStarsLocationPolicy();starsAgendaAt=0;fetchLatestAgendaStars(selected.location)});
 </script>
 </body></html>
