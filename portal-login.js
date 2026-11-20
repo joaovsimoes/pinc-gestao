@@ -4,23 +4,60 @@
   let busy=false;
   const normalizeCdc=value=>String(value??'').trim();
   const NO_PENDING_MESSAGE='Neste PINC não temos colaboradores para serem acolhidos no CDC informado.';
+  // Usa o mesmo feed atualizado pela Gestão que alimenta o Portal Stars.
+  // O documento pincShared/core é opcional neste PINC e pode não existir.
+  function countPendingByLocation(people,cdc,sourceLocation,locations){
+    const counts=new Map();
+    for(const p of people){
+      if(normalizeCdc(p.cdc)!==cdc||p.present!==true||p.welcomeDone===true)continue;
+      const location=String(p.location||sourceLocation||'').trim()||
+        (Array.isArray(locations)&&locations.length===1?String(locations[0].name||'').trim():'');
+      if(!location)continue;
+      counts.set(location,(counts.get(location)||0)+1);
+    }
+    return [...counts].map(([location,count])=>({location,count}))
+      .sort((a,b)=>a.location.localeCompare(b.location,'pt-BR'));
+  }
   async function loadPendingForCdc(cdc){
     if(!window.firebase?.firestore||!window.firebase?.auth)throw new Error('FIREBASE_UNAVAILABLE');
     if(!firebase.apps.length)firebase.initializeApp(window.PINC_FIREBASE_CONFIG||window.PINC_MANAGEMENT_CONFIG);
     const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();
-    const snap=await firebase.firestore().collection('pincShared').doc('core').get({source:'server'});
-    if(!snap.exists)throw new Error('PINC_DATA_UNAVAILABLE');
-    const data=snap.data()||{};
-    if(!Array.isArray(data.participants))throw new Error('PINC_DATA_UNAVAILABLE');
-    const locations=new Map();
-    for(const p of data.participants){
-      if(normalizeCdc(p.cdc)!==cdc||p.present!==true||p.welcomeDone===true)continue;
-      const loc=String(p.location||'').trim()||(Array.isArray(data.locations)&&data.locations.length===1?String(data.locations[0].name||'').trim():'');
-      if(!loc)continue;
-      locations.set(loc,(locations.get(loc)||0)+1);
+    const db=firebase.firestore();
+    let feedError=null;
+    try{
+      const snap=await db.collection('pincLocks').where('type','==','starsFeed').get({source:'server'});
+      // Em caso de mais de uma publicação da mesma unidade, usa somente a mais recente.
+      const byLocation=new Map();
+      for(const doc of snap.docs){
+        const feed=doc.data()||{},location=String(feed.location||'').trim();
+        if(!location||feed.enabled===false||feed.status==='disabled'||!Array.isArray(feed.participants))continue;
+        const current=byLocation.get(location),stamp=Number(feed.updatedAtMillis||0);
+        if(!current||stamp>=current.stamp)byLocation.set(location,{stamp,people:feed.participants});
+      }
+      if(byLocation.size){
+        const counts=new Map();
+        for(const [location,feed] of byLocation){
+          for(const row of countPendingByLocation(feed.people,cdc,location))
+            counts.set(row.location,(counts.get(row.location)||0)+row.count);
+        }
+        return [...counts].map(([location,count])=>({location,count}))
+          .sort((a,b)=>a.location.localeCompare(b.location,'pt-BR'));
+      }
+    }catch(e){feedError=e;console.warn('Consulta do feed Stars indisponível:',e.code||e.message)}
+    // Compatibilidade com ambientes que usam o documento compartilhado clássico.
+    try{
+      const snap=await db.collection('pincShared').doc('core').get({source:'server'});
+      if(snap.exists&&Array.isArray(snap.data()?.participants)){
+        const data=snap.data();
+        return countPendingByLocation(data.participants,cdc,'',data.locations);
+      }
+    }catch(e){
+      console.warn('Consulta do núcleo PINC indisponível:',e.code||e.message);
+      if(feedError)throw feedError;
+      throw e;
     }
-    return [...locations].map(([location,count])=>({location,count}))
-      .sort((a,b)=>a.location.localeCompare(b.location,'pt-BR'));
+    // A ausência de fonte de dados NÃO significa que o CDC esteja sem pendências.
+    throw feedError||new Error('PINC_DATA_UNAVAILABLE');
   }
   window.PINC_SHOW_STAR_LOGIN=function(){
     window.PINC_PORTAL_USER.star=null;
