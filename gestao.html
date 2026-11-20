@@ -262,12 +262,12 @@
   </table></div>
 </section>
 <section class="view" id="stars-cadastro">
-  <div class="page-head"><div><h2>Cadastro de Stars</h2><p>Cadastre e gerencie os Stars responsáveis pelo acolhimento.</p></div><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Star</button></div>
-  <div class="card panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>Stars da localidade</h3><p>Stars cadastrados nesta localidade aparecem na seleção do Acolhimento.</p></div><span class="chip" id="portalRegistrationLocation">—</span></div>
-    <div class="hint">Cadastro reiniciado do zero. Os cadastros antigos de Stars com código não aparecem mais. Os acolhimentos já confirmados foram preservados.</div>
+  <div class="page-head"><div><h2>Cadastro de Stars</h2><p>Cadastre os Stars e crie o usuário que eles utilizarão para entrar no portal, sem senha.</p></div><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Star</button></div>
+  <div class="card panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>Stars da localidade</h3><p>Cada Star tem nome, matrícula, CDC, localidade vinculada e usuário de acesso, sem senha.</p></div><span class="chip" id="portalRegistrationLocation">—</span></div>
+    <div class="hint">Os usuários são criados aqui na Gestão. A identificação por usuário não substitui uma autenticação segura.</div>
   </div>
-  <div class="card registry-tools"><div class="registry-search"><input id="portalRegistrationSearch" type="search" placeholder="Pesquisar nome, matrícula, CDC ou localidade..." oninput="renderPortalRegistrations()" autocomplete="off"></div><div class="registry-result" id="portalRegistrationCount">0 cadastros</div></div>
-  <div class="card panel table-wrap" style="margin-top:14px"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>CDC</th><th>Localidade vinculada</th><th>Ações</th></tr></thead><tbody id="portalRegistrationTable"><tr><td colspan="5" style="text-align:center;padding:28px">Carregando Stars...</td></tr></tbody></table></div>
+  <div class="card registry-tools"><div class="registry-search"><input id="portalRegistrationSearch" type="search" placeholder="Pesquisar nome, matrícula, CDC ou usuário..." oninput="renderPortalRegistrations()" autocomplete="off"></div><div class="registry-result" id="portalRegistrationCount">0 cadastros</div></div>
+  <div class="card panel table-wrap" style="margin-top:14px"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>CDC</th><th>Usuário de acesso</th><th>Localidade vinculada</th><th>Ações</th></tr></thead><tbody id="portalRegistrationTable"><tr><td colspan="6" style="text-align:center;padding:28px">Carregando Stars...</td></tr></tbody></table></div>
   <p class="hint" id="portalRegistryStatus" aria-live="polite">Sincronizando cadastros online.</p>
 </section>
 <section class="view" id="niveis">
@@ -284,7 +284,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="management-access.js?v=20261008-2"></script>
-<script src="portal-registration.js?v=20261120-star-1"></script>
+<script src="portal-registration.js?v=20261120-star-username-1"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
