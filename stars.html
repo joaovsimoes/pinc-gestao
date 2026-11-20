@@ -131,12 +131,11 @@ function applySharedCoreStars(data){
   if(!data)return;starsSharedCore=data;
   if(Array.isArray(data.locations)&&data.locations.length)S.locations=structuredClone(data.locations);
   if(Array.isArray(data.reports))mergeStarsReports(data.reports);
-  const scoped=data.location===selected.location||(!data.location&&starsLocationKey(selected.location)==='anapolis');
-  if(scoped){
-    if(data.welcomeSchedule)S.welcomeSchedule=structuredClone(data.welcomeSchedule);
-    if(Array.isArray(data.participants))S.participants=structuredClone(data.participants);
-    if(Array.isArray(data.absents))S.absents=structuredClone(data.absents);
-  }
+  // A lista compartilhada de participantes reúne todas as localidades.
+  // A visualização filtra pela localidade e pelo CDC validado na entrada.
+  if(Array.isArray(data.participants))S.participants=structuredClone(data.participants);
+  if(Array.isArray(data.absents))S.absents=structuredClone(data.absents);
+  if(data.welcomeSchedule)S.welcomeSchedule=structuredClone(data.welcomeSchedule);
   acceptStarsAgenda(window.PINC_AGENDA.latest(starsRows,selected.location,data));
   saveStarsSnapshot();renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard();
 }
@@ -190,13 +189,13 @@ function renderLocations(){
   locationSelect.innerHTML=loc?`<option value="${esc(loc)}">${esc(loc)}</option>`:'';
   locationSelect.value=loc;locationSelect.disabled=true;
   const identity=document.getElementById('portalIdentity');
-  if(identity)identity.textContent=user?[user.name,'Usuário: '+user.username,'CDC: '+user.cdc].join(' • '):'';
+  if(identity)identity.textContent=user?'CDC '+user.cdc+' • '+user.location+' • Acompanhamento dos colaboradores do CDC informado':'';
   applyStarsLocationPolicy();
 }
 function chooseAudience(v){if(starsIsGoiania()&&v!=='efetivos')return starsNotifyToast('Em Goiânia o PINC está disponível somente para Efetivos.');selected.audience=v;applyStarsLocationPolicy()}
 function chooseDay(v){if(starsIsGoiania()&&Number(v)!==1)return starsNotifyToast('Em Goiânia o PINC acontece em um único dia.');selected.day=v;applyStarsLocationPolicy()}
 function chooseShift(v){if(starsIsGoiania())return starsNotifyToast('Em Goiânia não há agenda de Aprendizes.');selected.shift=v;document.querySelectorAll('#appSegment .option').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='matutino')||(i===1&&v==='vespertino')))}
-async function enterStars(){try{const account=await parent.PINC_VALIDATE_PORTAL('star');selected.location=account.location;S.currentLocation=account.location;renderLocations()}catch(e){starsNotifyToast('Usuário não autorizado. Entre novamente pelo Portal PINC.');parent.PINC_NAV('home');return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
+async function enterStars(){try{const account=await parent.PINC_VALIDATE_PORTAL('star');selected.location=account.location;S.currentLocation=account.location;renderLocations()}catch(e){starsNotifyToast('Neste PINC não há colaboradores pendentes para esse CDC. Consulte outro CDC.');parent.PINC_NAV('home');parent.PINC_SHOW_STAR_LOGIN();return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
 function backToSelection(){dashboardView.classList.add('hidden');selectionView.classList.remove('hidden');if(starsRealtimeUnsub){starsRealtimeUnsub();starsRealtimeUnsub=null}starsRemoteLock=null;starsPublishedFeed=null;starsRows=[];setStarsSyncStatus(false);S=load();renderLocations()}
 function list(){return selected.audience==='efetivos'?(S.agenda?.efetivos?.[selected.day]||[]):(S.agenda?.aprendizes?.[selected.shift]||[])}
 function contextRows(audience,period){return starsRows.filter(d=>d.location===selected.location&&d.audience===audience&&String(d.period)===String(period)&&window.PINC_RESET.freshFeed(d,starsResets))}
@@ -264,7 +263,8 @@ function renderWelcome(){
 }
 function peopleRows(){
   const feed=activeStarsFeed(),sourceParticipants=feed?.participants||S.participants||[],sourceAbsents=feed?.absents||S.absents||[];
-  const matches=p=>(!p.location||p.location===selected.location)&&(!p.audience||(selected.audience==='aprendizes'?/aprendiz/i.test(p.audience):/efetiv/i.test(p.audience)));
+  const authorizedCdc=String((window.parent.PINC_PORTAL_USER?.star||PORTAL_ACCESS_USER)?.cdc||'').trim();
+  const matches=p=>authorizedCdc&&String(p.cdc||'').trim()===authorizedCdc&&p.location===selected.location&&(!p.audience||(selected.audience==='aprendizes'?/aprendiz/i.test(p.audience):/efetiv/i.test(p.audience)));
   const base=sourceParticipants.filter(matches).map(p=>{const attendance=selected.audience==='efetivos'?p.attendance?.['day'+selected.day]:null;return{...p,name:p.name||'',matricula:String(p.matricula||''),company:p.company||'—',cdc:p.cdc||'—',present:attendance==='present'?true:attendance==='absent'?false:p.present!==false}});
   for(const p of sourceAbsents.filter(matches)){if(!base.some(x=>(p.matricula&&x.matricula===String(p.matricula))||x.name===p.name))base.push({...p,matricula:String(p.matricula||''),present:false})}
   return base;
