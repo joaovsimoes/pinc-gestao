@@ -809,17 +809,17 @@ function renderWelcome(){
     const selected=pending.filter(p=>welcomeSelected.has(p)).length;
     const first=S.participants.indexOf(people[0]);
     const hasCdc=!!cdc;
-    output+=`<tr class="welcome-cdc-group"><td colspan="8"><div class="welcome-cdc-line"><div class="welcome-cdc-label"><strong>${hasCdc?'CDC '+esc(cdc):'Sem CDC cadastrado'}</strong><span>${allInCdc.length} presente${allInCdc.length===1?'':'s'} · ${allInCdc.length-pending.length} acolhido${allInCdc.length-pending.length===1?'':'s'} · ${pending.length} pendente${pending.length===1?'':'s'}${selected?' · '+selected+' selecionado'+(selected===1?'':'s'):''}</span></div><div class="welcome-cdc-buttons">${hasCdc?`<button type="button" class="btn secondary" onclick="toggleWelcomeCdc(${first})" ${pending.length?'':'disabled'}>${pending.length&&selected===pending.length?'Desmarcar CDC':'Selecionar todos do CDC'}</button><button type="button" class="btn primary" onclick="confirmWelcomeCdc(${first})" ${pending.length?'':'disabled'}>Confirmar CDC (${pending.length})</button>`:''}</div></div></td></tr>`;
+    output+=`<tr class="welcome-cdc-group"><td colspan="6"><div class="welcome-cdc-line"><div class="welcome-cdc-label"><strong>${hasCdc?'CDC '+esc(cdc):'Sem CDC cadastrado'}</strong><span>${allInCdc.length} presente${allInCdc.length===1?'':'s'} · ${allInCdc.length-pending.length} acolhido${allInCdc.length-pending.length===1?'':'s'} · ${pending.length} pendente${pending.length===1?'':'s'}</span></div><div class="welcome-cdc-buttons">${hasCdc?`<button type="button" class="btn primary" onclick="confirmWelcomeCdc(${first})" ${pending.length?'':'disabled'}>Confirmar CDC (${pending.length})</button>`:''}</div></div></td></tr>`;
     for(const p of people){
       const idx=S.participants.indexOf(p),confirmed=!!p.welcomeDone;
       const date=p.welcomeConfirmedAt?new Date(p.welcomeConfirmedAt):null;
       const time=date&&!Number.isNaN(date.getTime())?date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'';
       const star=confirmed&&p.welcomeStarName?`<div class="welcome-meta welcome-star-note">Star: ${esc(p.welcomeStarName)}${p.welcomeStarMatricula?' · Matrícula '+esc(p.welcomeStarMatricula):''}</div>`:'';
       const details=confirmed&&time?`<div class="welcome-meta">Confirmado em ${esc(time)}</div>`:'';
-      output+=`<tr><td class="welcome-check"><input type="checkbox" aria-label="Selecionar ${esc(p.name||'colaborador')}" ${confirmed?'disabled':welcomeSelected.has(p)?'checked':''} onchange="toggleWelcomeSelected(${idx},this.checked)"></td><td><span class="welcome-person">${esc(p.name||'—')}</span></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.company||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'—')}</td><td><span class="status ${confirmed?'green':'amber'}">${confirmed?'Acolhido':'Pendente'}</span>${details}${star}</td><td><button class="btn ${confirmed?'secondary':'primary'} welcome-action" onclick="${confirmed?'undoWelcome':'confirmWelcome'}(${idx})">${confirmed?'Desfazer':'Confirmar'}</button></td></tr>`;
+      output+=`<tr><td><span class="welcome-person">${esc(p.name||'—')}</span></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.company||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'—')}</td><td><span class="status ${confirmed?'green':'amber'}">${confirmed?'Acolhido':'Pendente'}</span>${details}${star}</td></tr>`;
     }
   }
-  table.innerHTML=output||`<tr><td colspan="8" class="welcome-empty">${present.length?'Nenhum colaborador encontrado com estes filtros.':'Nenhum colaborador marcado como presente nesta localidade. Confira a aba Registros.'}</td></tr>`;
+  table.innerHTML=output||`<tr><td colspan="6" class="welcome-empty">${present.length?'Nenhum colaborador encontrado com estes filtros.':'Nenhum colaborador marcado como presente nesta localidade. Confira a aba Registros.'}</td></tr>`;
 }
 function toggleWelcomeSelected(i,checked){
   const p=S.participants?.[i];if(!p||p.location!==S.currentLocation||!p.present||p.welcomeDone)return renderWelcome();
