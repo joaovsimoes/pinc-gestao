@@ -1,0 +1,55 @@
+name: Limpeza única dos antigos Stars com código
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/pinc-stars-cleanup.yml
+
+permissions:
+  contents: read
+
+jobs:
+  limpar_stars_legados:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar cliente administrativo do Firebase
+        run: npm install --silent --no-audit --no-fund --prefix /tmp/pinc-stars-cleanup firebase-admin@13
+
+      - name: Apagar apenas Stars legados e seus eventos, preservando Facilitadores e acolhimentos
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PINC_GESTAO }}
+          NODE_PATH: /tmp/pinc-stars-cleanup/node_modules
+        run: |
+          node <<'NODE'
+          const admin=require('firebase-admin');
+          async function main(){
+            const json=process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+            if(!json)throw new Error('Credencial Firebase indisponível');
+            const credential=JSON.parse(json);
+            admin.initializeApp({credential:admin.credential.cert(credential),projectId:'pinc-gestao'});
+            const db=admin.firestore();
+            const ref=db.collection('pincLocks');
+            const snapshot=await ref.where('type','in',['portalAccess','portalAccessEvent']).get();
+            const legacy=snapshot.docs.filter(doc=>{const d=doc.data();return d.type==='portalAccess'&&d.role==='star'});
+            const codes=new Set(legacy.map(doc=>doc.data().code));
+            const events=snapshot.docs.filter(doc=>{const d=doc.data();return d.type==='portalAccessEvent'&&codes.has(d.targetId)});
+            const targets=[...legacy,...events];
+            console.log('Stars antigos encontrados:',legacy.length);
+            console.log('Eventos antigos de Stars:',events.length);
+            console.log('Cadastros de Facilitadores mantidos sem alterações.');
+            if(targets.length){
+              const writer=db.bulkWriter();
+              writer.onWriteError(e=>{console.error('Falha ao excluir registro antigo:',e.code);return e.failedAttempts<3});
+              const results=await Promise.allSettled(targets.map(doc=>writer.delete(doc.ref)));
+              await writer.close();
+              const errors=results.filter(r=>r.status==='rejected');
+              if(errors.length)throw new Error('Falha ao excluir '+errors.length+' registros de Stars antigos');
+            }
+            const check=await ref.where('type','==','portalAccess').get();
+            const remaining=check.docs.filter(doc=>doc.data().role==='star').length;
+            if(remaining)throw new Error(remaining+' Stars antigos ainda existem na base');
+            console.log('Limpeza confirmada: nenhum cadastro de Star com código permanece.');
+          }
+          main().catch(err=>{console.error(err.message);process.exitCode=1});
+          NODE
