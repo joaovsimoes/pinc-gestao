@@ -47,7 +47,7 @@
     const rows=here().filter(x=>normalizeHeaderText([x.name,x.matricula,x.cdc,x.location].join(' ')).includes(query))
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
     if(g('portalRegistrationLocation'))g('portalRegistrationLocation').textContent=location();
-    if(g('portalRegistrationCount'))g('portalRegistrationCount').textContent=rows.length+' integrante(s) do Acolhe+';
+    if(g('portalRegistrationCount'))g('portalRegistrationCount').textContent=rows.length+(rows.length===1?' integrante do Acolhe+':' integrantes do Acolhe+');
     table.innerHTML=rows.length?rows.map(u=>'<tr><td><strong>'+esc(u.name)+'</strong></td><td>'+esc(u.matricula)+'</td><td>'+esc(u.cdc)+'</td><td>'+esc(u.location)+'</td><td><div class="star-actions"><button class="btn secondary" onclick="openPortalRegistration(\''+esc(u.id)+'\')">Editar</button><button class="btn secondary" onclick="removeStarRegistration(\''+esc(u.id)+'\')">Excluir</button></div></td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:28px">Nenhum integrante do Acolhe+ cadastrado nesta localidade. Utilize + Cadastrar integrante.</td></tr>';
   };
   window.initPortalRegistration=async function(){
@@ -68,7 +68,7 @@
     return loading;
   };
   window.openPortalRegistration=function(id){
-    if(managementLevel()<4)return toast('Seu perfil não possui permissão para cadastrar Acolhe+.');
+    if(managementLevel()<4)return toast('Seu perfil não possui permissão para cadastrar integrantes do Acolhe+.');
     const current=id?here().find(x=>x.id===id):null;
     if(id&&!current)return toast('Integrante não encontrado nesta localidade.');
     window.__starDraft={id:current?.id||null,location:location(),matricula:current?.matricula||''};
@@ -115,8 +115,8 @@
   async function importBulk(items){
     if(busy)throw new Error('Outra operação de cadastro está em andamento.');
     if(managementLevel()<4)throw new Error('Seu perfil não possui permissão para importar Acolhe+.');
-    if(!Array.isArray(items)||!items.length)throw new Error('Não existem Acolhe+ válidos para importar.');
-    if(items.length>2000)throw new Error('Limite de 2.000 Acolhe+ por importação. Divida a planilha em partes.');
+    if(!Array.isArray(items)||!items.length)throw new Error('Não existem integrantes do Acolhe+ válidos para importar.');
+    if(items.length>2000)throw new Error('Limite de 2.000 integrantes do Acolhe+ por importação. Divida a planilha em partes.');
     busy=true;
     let total=0,skipped=0;
     try{
@@ -131,7 +131,7 @@
         if(!name||name.length>120||!matricula||matricula.length>30||!cdc||cdc.length>30||!/^\d+$/.test(cdc))
           throw new Error('Há dados inválidos na planilha. Revise a prévia e importe novamente.');
         if(!permitted.includes(loc))throw new Error('Localidade não cadastrada: '+loc);
-        if(!isMaster()&&loc!==location())throw new Error('Seu perfil só pode importar Acolhe+ da própria localidade.');
+        if(!isMaster()&&loc!==location())throw new Error('Seu perfil só pode importar integrantes do Acolhe+ da própria localidade.');
         const key=loc+'|'+matricula;
         if(keys.has(key)){skipped++;continue}
         keys.add(key);
@@ -152,7 +152,7 @@
         catch(error){
           const message=firebaseMessage(error);
           throw new Error(total
-            ?'Importação parcialmente concluída: '+total+' integrante(s) do Acolhe+ gravado(s) antes da falha. Atualize a lista e reimporte a planilha; matrículas já existentes serão ignoradas. Detalhe: '+message
+            ?'Importação parcialmente concluída: '+total+' cadastro(s) do Acolhe+ gravado(s) antes da falha. Atualize a lista e reimporte a planilha; matrículas já existentes serão ignoradas. Detalhe: '+message
             :message);
         }
       }
