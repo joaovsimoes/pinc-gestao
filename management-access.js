@@ -73,7 +73,8 @@
     const profile = normalizeProfile(u), meta = PROFILES[profile];
     return { id, name: String(u.name || ''), email: String(u.email || '').trim(), username,
       location: String(u.location), profile, level: meta.level, profileName: meta.name,
-      active: u.active !== false, salt, passwordHash };
+      active: u.active !== false, salt, passwordHash,
+      photo: typeof u.photo === 'string' && u.photo.length < 60000 && /^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(u.photo) ? u.photo : '' };
   }
   async function connect() {
     if (db && root.firebase.auth().currentUser) return db;
