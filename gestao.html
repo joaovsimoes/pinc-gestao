@@ -174,6 +174,56 @@
 #acolhimento .welcome-star-fields input[readonly]{background:#f3f5fa;color:var(--muted)}
 #stars-cadastro .table-wrap{overflow-x:auto}#stars-cadastro .table-wrap table{min-width:800px}
 #stars-cadastro .table-wrap .btn{padding:8px 11px;font-size:10px}
+
+/* Calendário PINC: layout compacto e agrupamento por período */
+#calendario .pinc-cal-head{align-items:center;margin-bottom:17px}
+#calendario .pinc-cal-context,#calendario .pinc-cal-filters,#calendario .pinc-cal-buttons{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+#calendario .pinc-cal-location,#calendario .pinc-cal-today,#calendario .pinc-cal-location-note{border:1px solid #e7eaf2;border-radius:999px;padding:8px 12px;background:#fff;color:#55627a;font-size:10px;font-weight:800}
+#calendario .pinc-cal-today.is-open{background:#eaf8f0;color:#118661;border-color:#d9efe3}
+#calendario .pinc-cal-today.is-closed{background:#fff6e4;color:#a87719;border-color:#f9ecd3}
+#calendario .pinc-cal-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+#calendario .pinc-cal-stats>div{background:#fff;border:1px solid #e7eaf2;border-radius:14px;padding:15px 18px;display:flex;flex-direction:column;gap:5px;min-width:0}
+#calendario .pinc-cal-stats span{font-size:10px;color:#7b879b;font-weight:750}
+#calendario .pinc-cal-stats strong{font-size:20px;color:#202b3f;letter-spacing:-.035em}
+#calendario .pinc-cal-stats small{font-size:10px;color:#7b879b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#calendario .pinc-cal-panel{box-shadow:none;border-radius:16px;padding:20px;margin-bottom:14px}
+#calendario .pinc-cal-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+#calendario .pinc-cal-panel-head h3{font-size:14px;margin:0}
+#calendario .pinc-cal-panel-head p{font-size:11px;color:#7d879a;margin:5px 0 0;line-height:1.5}
+#calendario .pinc-cal-location-note{border-radius:9px;background:#f9faff}
+#calendario .pinc-cal-fields{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}
+#calendario .pinc-cal-fields .field{min-width:0}
+#calendario .pinc-cal-fields label{font-size:11px;font-weight:800;color:#57637a;display:block;margin-bottom:7px}
+#calendario .pinc-cal-fields input,#calendario .pinc-cal-fields select,#calendario .pinc-cal-filters select{border:1px solid #e3e7f1;border-radius:10px;background:#fff;width:100%;height:42px;padding:0 12px;font-size:12px;color:#27334a;outline:none}
+#calendario .pinc-cal-fields input:focus,#calendario .pinc-cal-fields select:focus{border-color:#925aff;box-shadow:0 0 0 3px #7417ff15}
+#calendario .pinc-cal-form-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid #eff0f5;margin-top:16px;padding-top:14px}
+#calendario .pinc-cal-form-footer span{font-size:11px;color:#7d879a;line-height:1.5}
+#calendario .pinc-cal-form-footer .btn{padding:10px 16px}
+#calendario .pinc-cal-filters select{width:auto;min-width:143px;height:36px;background:#fafbfe;font-size:11px}
+#calendario .pinc-cal-table-wrap{overflow-x:auto}
+#calendario .pinc-cal-table{width:100%;min-width:710px;border-collapse:collapse}
+#calendario .pinc-cal-table th{padding:13px 14px;background:#f8f9fc;border-bottom:1px solid #e9edf3;color:#8994a6;text-align:left;font-size:10px;letter-spacing:.035em;text-transform:uppercase}
+#calendario .pinc-cal-table td{padding:13px 14px;border-bottom:1px solid #eff1f6;font-size:12px;color:#3b475e;vertical-align:middle}
+#calendario .pinc-cal-table tbody tr:last-child td{border-bottom:0}
+#calendario .pinc-cal-table tbody tr:hover{background:#fcfbff}
+#calendario .pinc-cal-period{font-size:12px;font-weight:850;color:#273147}
+#calendario .pinc-cal-sub{display:block;font-size:10px;font-weight:500;color:#8d96a8;margin-top:4px}
+#calendario .pinc-cal-type,#calendario .pinc-cal-status{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:850;white-space:nowrap}
+#calendario .pinc-cal-type.efetivos{background:#f1ecff;color:#7124d9}
+#calendario .pinc-cal-type.aprendizes{background:#e8f3ff;color:#2068b6}
+#calendario .pinc-cal-type.estagiarios{background:#eaf8f1;color:#16835f}
+#calendario .pinc-cal-type.unknown{background:#fff6e5;color:#a77719}
+#calendario .pinc-cal-status.today{background:#eaf8f0;color:#0e845e}
+#calendario .pinc-cal-status.future{background:#fff5e4;color:#a57514}
+#calendario .pinc-cal-status.past{background:#f1f3f7;color:#718098}
+#calendario .pinc-cal-actions{display:flex;align-items:center;gap:7px}
+#calendario .pinc-cal-actions .btn{padding:8px 11px;font-size:10px}
+#calendario .pinc-cal-actions .btn.danger{background:#fff0f2;color:#d3445b}
+#calendario .pinc-cal-empty{padding:30px!important;text-align:center;color:#8994a6!important}
+#calendario .pinc-cal-sync{margin-top:10px;background:#f9fafe;padding:10px 12px;border-radius:10px;display:flex;gap:8px;align-items:center;font-size:10px;color:#79869b}
+#calendario .pinc-cal-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#20b987}
+@media(max-width:900px){#calendario .pinc-cal-fields{grid-template-columns:1fr 1fr}#calendario .pinc-cal-fields .field:first-child{grid-column:span 2}}
+@media(max-width:650px){#calendario .pinc-cal-stats{grid-template-columns:1fr 1fr}#calendario .pinc-cal-stats>div:last-child{grid-column:span 2}#calendario .pinc-cal-panel{padding:14px}#calendario .pinc-cal-fields{grid-template-columns:1fr}#calendario .pinc-cal-fields .field:first-child{grid-column:auto}#calendario .pinc-cal-filters{width:100%}#calendario .pinc-cal-filters select{flex:1;min-width:120px}#calendario .pinc-cal-buttons{width:100%}#calendario .pinc-cal-buttons .btn{flex:1}}
 </style>
 </head><body>
 <div class="app">
@@ -199,23 +249,14 @@
   <div class="agenda-layout"><div class="card agenda-table"><div id="agendaList"></div></div></div>
 </section>
 <section class="view" id="calendario">
-  <div class="page-head"><div><h2>Calendário de PINCs</h2><p>Cadastre os dias que liberam o acesso dos Facilitadores e Stars na localidade.</p></div><span class="chip" id="pincDaysLocation">Anápolis</span></div>
-  <div class="card panel" style="margin-bottom:14px">
-    <div class="panel-head"><div><h3>Cadastrar dias de PINC</h3><p>Para um PINC de dois dias, selecione a primeira e a última data. Para apenas um dia, use a mesma data nos dois campos.</p></div><span class="status" id="pincDaysTodayStatus">Verificando hoje...</span></div>
-    <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));align-items:end">
-      <div class="field"><label for="pincDayFrom">Data inicial *</label><input type="date" id="pincDayFrom"></div>
-      <div class="field"><label for="pincDayUntil">Data final *</label><input type="date" id="pincDayUntil"></div>
-      <div class="field full" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <span class="hint">Localidade: <strong id="pincDaySelectedLocation">Anápolis</strong>. O acesso vale das 00h às 23h59, no horário de Brasília.</span>
-        <button class="btn primary" type="button" id="pincDaysSave" onclick="registerPincDays()">+ Cadastrar dias</button>
-      </div>
-    </div>
-  </div>
-  <div class="card panel">
-    <div class="panel-head"><div><h3>Dias cadastrados</h3><p>Fora destas datas, a entrada em Facilitador e Stars fica bloqueada.</p></div><span class="chip" id="pincDaysTotal">0 datas</span></div>
-    <div class="table-wrap"><table style="width:100%"><thead><tr><th>Data</th><th>Localidade</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="pincDaysList"><tr><td colspan="4" style="text-align:center;padding:25px">Carregando calendário online...</td></tr></tbody></table></div>
-    <p class="hint" id="pincDaysSyncStatus" aria-live="polite" style="margin:12px 0 0">Consultando datas no Firebase.</p>
-  </div>
+ <div class="page-head pinc-cal-head"><div><h2>Calendário de PINCs</h2><p>Organize os períodos de integração e controle os dias de acesso aos portais.</p></div><div class="pinc-cal-context"><span class="pinc-cal-location" id="pincDaysLocation">Anápolis</span><span class="pinc-cal-today" id="pincDaysTodayStatus">Consultando...</span></div></div>
+ <div class="pinc-cal-stats"><div><span>PINCs cadastrados</span><strong id="pincDaysTotal">—</strong><small>Na localidade selecionada</small></div><div><span>Próximo PINC</span><strong id="pincDaysNext">—</strong><small id="pincDaysNextType">Nenhum evento futuro</small></div><div><span>Acesso aos portais</span><strong id="pincDaysAccess">Verificando</strong><small>Conforme as datas cadastradas</small></div></div>
+ <div class="card pinc-cal-panel" id="pincCalendarEditor"><div class="pinc-cal-panel-head"><div><h3 id="pincCalendarFormTitle">Cadastrar PINC</h3><p>Defina o público e o período de realização. Cada integração será um único registro.</p></div><span class="pinc-cal-location-note">Localidade: <b id="pincDaySelectedLocation">Anápolis</b></span></div>
+ <div class="pinc-cal-fields"><div class="field"><label for="pincDayAudience">Tipo de PINC *</label><select id="pincDayAudience"><option value="">Selecione o público</option><option value="efetivos">Efetivos</option><option value="aprendizes">Aprendizes</option><option value="estagiarios">Estagiários</option></select></div><div class="field"><label for="pincDayFrom">Data inicial *</label><input type="date" id="pincDayFrom" onchange="syncPincDayRange()"></div><div class="field"><label for="pincDayUntil">Data final *</label><input type="date" id="pincDayUntil"></div></div>
+ <div class="pinc-cal-form-footer"><span id="pincDaysPreview">O acesso ficará disponível nas datas cadastradas, no horário de Brasília.</span><div class="pinc-cal-buttons"><button type="button" class="btn secondary" id="pincDaysCancelEdit" onclick="cancelEditPincEvent()" style="display:none">Cancelar edição</button><button type="button" class="btn primary" id="pincDaysSave" onclick="registerPincDays()">+ Cadastrar PINC</button></div></div></div>
+ <div class="card pinc-cal-panel"><div class="pinc-cal-panel-head"><div><h3>PINCs cadastrados</h3><p>Um registro por evento, mesmo quando ele acontece em dois ou mais dias.</p></div><div class="pinc-cal-filters"><select id="pincDaysFilter" aria-label="Filtrar por situação" onchange="renderPincDays()"><option value="all">Todos os períodos</option><option value="future">Hoje e próximos</option><option value="past">Concluídos</option></select><select id="pincDaysFilterAudience" aria-label="Filtrar por público" onchange="renderPincDays()"><option value="all">Todos os públicos</option><option value="efetivos">Efetivos</option><option value="aprendizes">Aprendizes</option><option value="estagiarios">Estagiários</option><option value="unknown">Não informado</option></select></div></div>
+ <div class="pinc-cal-table-wrap"><table class="pinc-cal-table"><thead><tr><th>Período</th><th>Tipo de PINC</th><th>Duração</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="pincDaysList"><tr><td colspan="5" class="pinc-cal-empty">Consultando calendário online...</td></tr></tbody></table></div>
+ <div class="pinc-cal-sync"><span class="pinc-cal-dot"></span><span id="pincDaysSyncStatus" aria-live="polite">Consultando datas no Firebase.</span></div></div>
 </section>
 <section class="view" id="registros">
   <div class="page-head">
@@ -305,7 +346,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="management-access.js?v=20261008-2"></script>
 <script src="portal-registration.js?v=20261120-star-cdc-1"></script>
-<script src="pinc-calendar.js?v=20261123-1"></script>
+<script src="pinc-calendar.js?v=20261123-events-2"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
