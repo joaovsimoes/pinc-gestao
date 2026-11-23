@@ -5,7 +5,7 @@
   const normalizeCode = value => String(value || '').trim().toUpperCase().replace(/\s+/g, '');
   const profileForRole = role => role === 'host'
     ? { profile: 'guide', level: 2, profileName: 'Facilitador' }
-    : { profile: 'welcome', level: 1, profileName: 'Star' };
+    : { profile: 'welcome', level: 1, profileName: 'Acolhe+' };
   const buildingSlug = value => String(value || '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60).replace(/-+$/g, '');
   function prefix(role, building) {
@@ -171,7 +171,7 @@
   function message(error) {
     const messages = {
       FIELDS_REQUIRED: 'Informe o nome e a localidade.', BUILDING_REQUIRED: 'Informe o nome do prédio.',
-      MATRICULA_REQUIRED: 'Informe a matrícula do Star.', MATRICULA_DUPLICATE: 'Já existe um Star com esta matrícula nesta localidade.',
+      MATRICULA_REQUIRED: 'Informe a matrícula do integrante do Acolhe+.', MATRICULA_DUPLICATE: 'Já existe um Acolhe+ com esta matrícula nesta localidade.',
       AREA_REQUIRED: 'Informe a área do Facilitador.', AREA_LETTER_REQUIRED: 'Informe uma única letra de A a Z para identificar a área.',
       CODE_REQUIRED: 'Informe seu código de acesso.', CODE_INVALID: 'Código inválido, inativo ou de outro tipo de acesso.',
       ACCESS_NOT_FOUND: 'Este cadastro não foi encontrado. Atualize a lista.',
