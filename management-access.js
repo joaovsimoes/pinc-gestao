@@ -195,6 +195,28 @@
     mutationQueue = work.catch(() => {});
     return work;
   }
+  // Persist profile photos independently, avoiding rewrites of user credentials.
+  function upsertPhoto(id, photo) {
+    const work = mutationQueue.then(async () => {
+      const key = String(id || '');
+      const valid = photo === '' || (
+        typeof photo === 'string' && photo.length < 60000 &&
+        /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(photo)
+      );
+      if (!key || !valid) throw new Error('PHOTO_INVALID');
+      const database = await timeout(connect());
+      const existing = await read(database);
+      if (!existing.records.some(account => String(account.id) === key))
+        throw new Error('ACCESS_NOT_FOUND');
+      await append(database, { kind: 'photo', id: key }, [{ id: key, photo }]);
+      const verified = await read(database);
+      const saved = verified.records.find(account => String(account.id) === key);
+      if (!saved || (saved.photo || '') !== photo) throw new Error('PHOTO_NOT_CONFIRMED');
+      return cache(verified.records);
+    });
+    mutationQueue = work.catch(() => {});
+    return work;
+  }
   function watch(onChange, onError) {
     if (unsubscribe) unsubscribe();
     return connect().then(database => {
@@ -212,7 +234,9 @@
   function message(error) {
     if (error?.message === 'ACCESS_DUPLICATE') return 'Este usuário ou e-mail já está cadastrado.';
     if (error?.message === 'ACCESS_NOT_FOUND') return 'O acesso foi alterado em outro computador. Atualize a lista e tente novamente.';
+    if (error?.message === 'PHOTO_NOT_CONFIRMED') return 'Não foi possível confirmar a foto gravada. Tente novamente.';
+    if (error?.message === 'PHOTO_INVALID') return 'A imagem enviada não é válida.';
     return 'Não foi possível confirmar o acesso na base online. Verifique a conexão e tente novamente.';
   }
-  root.PINC_ACCESS = { load, upsert: account => mutate('upsert', account), remove: account => mutate('delete', account), watch, matches, message, normalize, profiles: PROFILES, normalizeProfile, enrich };
+  root.PINC_ACCESS = { load, upsert: account => mutate('upsert', account), upsertPhoto, remove: account => mutate('delete', account), watch, matches, message, normalize, profiles: PROFILES, normalizeProfile, enrich };
 })(window);
