@@ -1,0 +1,65 @@
+/* Agenda da Gestão PINC: melhoria visual isolada, sem alterar dados nem fluxos. */
+#agenda .page-head{align-items:center;margin-bottom:18px;gap:20px}
+#agenda .page-head h2{font-size:27px;line-height:1.15;font-weight:850;letter-spacing:-.04em}
+#agenda .page-head p{font-size:12px;line-height:1.5;margin-top:7px}
+#agenda .head-actions{gap:10px;justify-content:flex-end}
+#agenda .head-actions>.btn{min-height:40px;padding:10px 15px;font-size:11px;border-radius:11px}
+#agenda .head-actions>.btn.primary{box-shadow:none}
+#agenda .head-actions>.btn.secondary{background:#fff;border-color:#e7eaf3}
+#agenda .head-actions>.btn:focus-visible,
+#agenda .pinc-agenda-search input:focus-visible,
+#agenda .icon-btn:focus-visible,
+#agenda .segment button:focus-visible{outline:3px solid #b994ff;outline-offset:2px}
+#agenda .pinc-agenda-toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:17px 18px;margin-bottom:14px;background:#fff;border:1px solid #e8eaf2;border-radius:16px}
+#agenda .pinc-agenda-selectors{display:flex;flex-wrap:wrap;align-items:flex-end;gap:17px}
+#agenda .pinc-agenda-control{display:flex;flex-direction:column;gap:7px}
+#agenda .pinc-agenda-control>label{font-size:10px;font-weight:850;color:#68738a;letter-spacing:.015em}
+#agenda .pinc-agenda-control[hidden]{display:none!important}
+#agenda .segment{padding:4px;background:#f4f2f9;border-radius:10px;gap:3px}
+#agenda .segment button{font-size:11px;min-height:35px;padding:8px 15px;border-radius:8px;color:#626b7e;transition:background-color .15s ease,color .15s ease}
+#agenda .segment button.active{background:var(--purple);color:#fff;box-shadow:0 2px 7px rgba(116,23,255,.14)}
+#agenda .segment button:not(.active):hover{background:#ece6fa;color:#5323a7}
+#agenda .pinc-agenda-search{display:flex;flex-direction:column;gap:7px;min-width:220px;max-width:300px;flex:1 1 225px}
+#agenda .pinc-agenda-search label{font-size:10px;font-weight:850;color:#68738a}
+#agenda .pinc-agenda-search-field{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid #e2e5ee;border-radius:11px;background:#fcfcfe;color:#7c8394}
+#agenda .pinc-agenda-search-field:focus-within{border-color:#b899ff;box-shadow:0 0 0 3px rgba(116,23,255,.08)}
+#agenda .pinc-agenda-search-field svg{width:17px;height:17px;flex:0 0 17px;stroke:currentColor;stroke-width:1.8;fill:none}
+#agenda .pinc-agenda-search input{font-size:11px;min-width:0;width:100%;border:0!important;background:transparent!important;outline:0!important;box-shadow:none!important;color:#263047}
+#agenda .pinc-agenda-search input::placeholder{color:#9a9faf}
+#agenda .pinc-agenda-context{display:flex;align-items:center;gap:7px;margin:0 0 12px;color:#778198;font-size:11px;font-weight:650}
+#agenda .pinc-agenda-context:before{content:"";width:7px;height:7px;background:var(--purple);border-radius:50%}
+#agenda .pinc-agenda-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+#agenda .pinc-agenda-stat{background:#fff;border:1px solid #e8eaf2;border-radius:15px;padding:16px 18px;min-width:0}
+#agenda .pinc-agenda-stat>span{display:block;color:#747e91;font-size:10px;font-weight:750;margin-bottom:10px}
+#agenda .pinc-agenda-stat>strong{display:block;font-size:24px;line-height:1.1;letter-spacing:-.045em;color:#263047;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#agenda .pinc-agenda-stat>small{display:block;font-size:9px;color:#949bad;margin-top:8px}
+#agenda .pinc-agenda-stat:first-child{background:#f7f2ff;border-color:#eee3ff}
+#agenda .pinc-agenda-stat:first-child>strong{color:var(--purple)}
+#agenda .agenda-table{border-radius:16px;border:1px solid #e7eaf2;box-shadow:none;overflow:hidden}
+#agenda .pinc-agenda-columns{display:grid;grid-template-columns:38px minmax(220px,1fr) 135px 120px 136px;gap:12px;padding:13px 20px;background:#fafbfe;border-bottom:1px solid #e8eaf2;align-items:center;color:#7a8397;text-transform:uppercase;font-size:9px;font-weight:850;letter-spacing:.055em}
+#agenda .pinc-agenda-columns span:last-child{text-align:right}
+#agenda .agenda-row{grid-template-columns:38px minmax(220px,1fr) 135px 120px 136px;gap:12px;padding:15px 20px;min-height:80px;transition:background-color .15s ease;border-bottom-color:#edf0f5}
+#agenda .agenda-row:hover{background:#fbfaff}
+#agenda .agenda-row.pinc-agenda-break{background:#fcfdff}
+#agenda .agenda-row.pinc-agenda-break:hover{background:#f7f8ff}
+#agenda .agenda-row .num{width:34px;height:34px;border-radius:11px;background:#f1e8ff;color:#7417ff;font-size:12px}
+#agenda .agenda-row.pinc-agenda-break .num{background:#edf1fc;color:#6378ad}
+#agenda .stage-name strong{font-size:13px;line-height:1.4;font-weight:800;color:#263047;white-space:normal}
+#agenda .stage-name>span:not(.pinc-stage-status){font-size:10px;line-height:1.45;margin-top:5px;color:#788297;white-space:normal}
+#agenda .cell strong{font-size:13px;color:#27344d}
+#agenda .cell>span{font-size:10px;color:#9099aa;line-height:1.5;margin-top:4px;white-space:normal}
+#agenda .pinc-stage-status{display:inline-flex!important;align-items:center;gap:5px;margin-top:7px;padding:4px 7px;border:1px solid #e8eaf1;background:#f7f8fb;border-radius:999px;font-size:9px!important;font-weight:750;color:#788197!important;white-space:nowrap}
+#agenda .pinc-stage-status:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+#agenda .pinc-stage-status.started{color:#956411!important;background:#fff9ec;border-color:#f6e5c2}
+#agenda .pinc-stage-status.done{color:#0b8663!important;background:#eefaf5;border-color:#d2efe1}
+#agenda .row-actions{gap:7px;min-width:0;justify-content:flex-end}
+#agenda .icon-btn{width:36px;height:36px;flex:0 0 36px;border-radius:10px;border-color:#e8eaf2;color:#5d6b86;font-size:15px;transition:background-color .15s ease,border-color .15s ease}
+#agenda .icon-btn:not(.delete):hover{color:var(--purple);border-color:#d9c3ff;background:#f7f2ff}
+#agenda .icon-btn.delete:hover{background:#fff0f3;border-color:#f2bfc8}
+#agenda .pinc-agenda-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 20px;background:#fafbfe;color:#7a8498;font-size:10px;border-top:1px solid #e8eaf2}
+#agenda .pinc-agenda-footer strong{color:#485572}
+#agenda .pinc-agenda-no-results{padding:36px 20px;text-align:center;color:#8893a6;font-size:12px}
+#agenda .pinc-agenda-no-results strong{display:block;color:#37435b;font-size:13px;margin-bottom:5px}
+@media(max-width:1180px){#agenda .page-head{align-items:flex-start;flex-wrap:wrap}#agenda .agenda-row,#agenda .pinc-agenda-columns{grid-template-columns:36px minmax(160px,1fr) 100px 92px 124px;gap:9px;padding-left:15px;padding-right:15px}#agenda .pinc-agenda-toolbar{flex-wrap:wrap}#agenda .pinc-agenda-search{max-width:none}}
+@media(max-width:760px){#agenda .page-head{gap:12px}#agenda .page-head h2{font-size:24px}#agenda .head-actions{width:100%;justify-content:stretch}#agenda .head-actions>.btn{flex:1 1 auto;padding:10px 9px;font-size:10px}#agenda .pinc-agenda-toolbar{padding:13px;gap:14px}#agenda .pinc-agenda-selectors{width:100%;gap:12px}#agenda .pinc-agenda-search{max-width:none;width:100%}#agenda .pinc-agenda-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#agenda .pinc-agenda-stat{padding:14px}#agenda .pinc-agenda-stat>strong{font-size:22px}#agenda .pinc-agenda-columns{display:none}#agenda .agenda-row{grid-template-columns:34px minmax(0,1fr) 40px;grid-template-areas:"num name actions" "num time actions" "num duration actions";gap:5px 11px;padding:14px 12px;min-height:0}#agenda .agenda-row>.num{grid-area:num}#agenda .agenda-row>.stage-name{grid-area:name}#agenda .agenda-row>.cell:nth-child(3){grid-area:time}#agenda .agenda-row>.cell:nth-child(4){grid-area:duration}#agenda .agenda-row>.row-actions{grid-area:actions;flex-direction:column;gap:5px}#agenda .cell strong{font-size:11px}#agenda .cell>span{display:inline;font-size:10px;margin-left:4px}#agenda .stage-name>span:not(.pinc-stage-status){display:block}#agenda .icon-btn{width:32px;height:32px;flex:0 0 32px}#agenda .pinc-agenda-footer{padding:12px;flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){#agenda .agenda-row,#agenda .icon-btn,#agenda .segment button{transition:none}}
