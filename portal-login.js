@@ -4,7 +4,7 @@
   let busy=false;
   const normalizeCdc=value=>String(value??'').trim();
   const NO_PENDING_MESSAGE='Neste PINC não temos colaboradores para serem acolhidos no CDC informado.';
-  // Usa o mesmo feed atualizado pela Gestão que alimenta o Portal Stars.
+  // Usa o mesmo feed atualizado pela Gestão que alimenta o Portal Acolhe+.
   // O documento pincShared/core é opcional neste PINC e pode não existir.
   function countPendingByLocation(people,cdc,sourceLocation,locations){
     const counts=new Map();
@@ -43,7 +43,7 @@
         return [...counts].map(([location,count])=>({location,count}))
           .sort((a,b)=>a.location.localeCompare(b.location,'pt-BR'));
       }
-    }catch(e){feedError=e;console.warn('Consulta do feed Stars indisponível:',e.code||e.message)}
+    }catch(e){feedError=e;console.warn('Consulta do feed Acolhe+ indisponível:',e.code||e.message)}
     // Compatibilidade com ambientes que usam o documento compartilhado clássico.
     try{
       const snap=await db.collection('pincShared').doc('core').get({source:'server'});
@@ -87,7 +87,7 @@
     if(msg)msg.textContent=NO_PENDING_MESSAGE;
   }
   function authorize(cdc,location,count){
-    window.PINC_PORTAL_USER.star={role:'star',profileName:'Star',cdc,location,pendingCount:count};
+    window.PINC_PORTAL_USER.star={role:'star',profileName:'Acolhe+',cdc,location,pendingCount:count};
     window.PINC_CLOSE_STAR_LOGIN();
     window.PINC_DO_LAUNCH('stars');
   }
