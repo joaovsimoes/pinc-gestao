@@ -1,0 +1,117 @@
+/* PINC 2026 — apresentação do calendário e importação de Stars. */
+#calendario .page-head h2{font-size:27px;letter-spacing:-.035em}
+#calendario .page-head p{font-size:12px;margin-top:7px;line-height:1.45}
+#calendario .pinc-cal-context{gap:10px}
+#calendario .pinc-cal-header-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+#calendario .pinc-cal-header-actions .btn{min-height:40px;padding:10px 15px;font-size:11px}
+#calendario .pinc-cal-location{color:#593298;background:#f7f1ff;border-color:#ebe0ff}
+#calendario .pinc-cal-today{padding:9px 13px;font-size:11px}
+#calendario .pinc-cal-stats{gap:14px;margin-bottom:17px}
+#calendario .pinc-cal-stats>div{padding:20px 21px;border-radius:16px;min-height:115px;gap:9px;position:relative;overflow:hidden}
+#calendario .pinc-cal-stats>div::after{content:"";position:absolute;right:18px;top:20px;width:8px;height:8px;border-radius:50%;background:#b99af7}
+#calendario .pinc-cal-stats>div:nth-child(2)::after{background:#64a5fa}
+#calendario .pinc-cal-stats>div:nth-child(3)::after{background:#4dc49a}
+#calendario .pinc-cal-stats span{font-size:11px;color:#66738d}
+#calendario .pinc-cal-stats strong{font-size:24px;letter-spacing:-.04em;line-height:1.15}
+#calendario .pinc-cal-stats small{font-size:10px}
+#calendario .pinc-month-layout{grid-template-columns:minmax(0,1.72fr) minmax(300px,.78fr);align-items:start;gap:15px}
+#calendario .pinc-month-board,#calendario .pinc-month-detail{padding:22px;border-color:#e6e8f1;border-radius:17px}
+#calendario .pinc-month-header{margin-bottom:16px;align-items:center;gap:14px}
+#calendario .pinc-month-header h3{font-size:16px;font-weight:850}
+#calendario .pinc-month-header p{font-size:11px;line-height:1.4;margin-top:5px}
+#calendario .pinc-month-nav{flex-wrap:wrap;justify-content:flex-end;gap:8px}
+#calendario .pinc-month-nav strong{font-size:14px;min-width:149px;text-transform:none;color:#252c44}
+#calendario .pinc-month-nav-btn{width:40px;height:40px;font-size:24px;border-radius:11px}
+#calendario .pinc-month-today{height:40px;font-size:11px;border-radius:11px;padding:0 14px}
+#calendario .pinc-month-jump{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:750;color:#67738b}
+#calendario .pinc-month-jump input{width:146px;max-width:100%;min-height:40px;font:700 11px Inter,system-ui,sans-serif;border:1px solid #e4e7ef;padding:0 8px;border-radius:11px;color:#45526a;background:#fff}
+#calendario .pinc-month-weekdays,#calendario .pinc-month-grid{gap:7px}
+#calendario .pinc-month-weekdays span{font-size:10px;font-weight:850;padding:9px 0;letter-spacing:.045em}
+#calendario .pinc-month-day{min-height:94px;border-radius:12px;padding:9px;gap:5px;border-color:#e8eaf3;background:#fff;transition:background-color .14s ease,border-color .14s ease}
+#calendario .pinc-month-day:nth-child(7n),#calendario .pinc-month-day:nth-child(7n - 1){background:#fbfcff}
+#calendario .pinc-month-day.is-outside{background:#f9fafc;color:#a7b0c1;opacity:.78}
+#calendario .pinc-month-day.is-today{border-color:#be91ff;background:#fdfaff}
+#calendario .pinc-month-day.is-today .pinc-month-day-number{background:#7417ff;color:#fff}
+#calendario .pinc-month-day.is-selected{border-color:#853dff;background:#f7f1ff;box-shadow:inset 0 0 0 1px #853dff}
+#calendario .pinc-month-day:focus-visible,#calendario .pinc-month-nav button:focus-visible,#calendario .pinc-month-jump input:focus-visible{outline:3px solid #c6a0ff;outline-offset:2px}
+#calendario .pinc-month-day-number{font-size:13px;line-height:18px;padding:5px 8px;min-width:31px;text-align:center;border-radius:8px}
+#calendario .pinc-month-entry{font-size:10px;padding:5px 6px;border-radius:7px;line-height:1.2}
+#calendario .pinc-month-more{font-size:9px}
+#calendario .pinc-month-summary{margin:13px 0 3px;font-size:11px;color:#6d587f;display:flex;gap:8px;align-items:center;font-weight:700}
+#calendario .pinc-month-summary::before{content:"";width:7px;height:7px;border-radius:50%;background:#7417ff}
+#calendario .pinc-month-legend{padding-top:14px;margin-top:13px;gap:18px}
+#calendario .pinc-month-legend span{font-size:11px}
+#calendario .pinc-month-detail h3{font-size:21px;line-height:1.35;margin:10px 0 7px;text-transform:none;overflow-wrap:anywhere}
+#calendario .pinc-month-detail-label{color:#6e2fd2;font-size:10px}
+#calendario .pinc-month-detail>p{font-size:12px}
+#calendario .pinc-month-detail-event{padding:15px;border-radius:13px;border-color:#e8e5f2;background:#faf8ff;display:flex;flex-direction:column;align-items:flex-start}
+#calendario .pinc-month-detail-event strong{font-size:14px;color:#37215b}
+#calendario .pinc-month-detail-event span{font-size:11px}
+#calendario .pinc-month-detail-event .btn{margin-top:12px;min-height:35px;font-size:11px}
+#calendario .pinc-month-detail-events{flex:none;min-height:0}
+#calendario .pinc-month-empty{border:1px dashed #dcd8e8;background:#fcfbff;border-radius:12px;padding:18px;color:#8190a3}
+#calendario .pinc-month-new{margin-top:15px;min-height:41px;font-size:11px}
+#calendario .pinc-cal-upcoming{margin-top:18px;border-top:1px solid #eceaf2;padding-top:17px}
+#calendario .pinc-cal-upcoming h4{font-size:12px;color:#2b3450;margin:0 0 10px;font-weight:850}
+#calendario .pinc-cal-upcoming-list{display:grid;gap:7px}
+#calendario .pinc-cal-next{display:flex;align-items:center;gap:10px;justify-content:space-between;text-align:left;border:1px solid #e8eaf2;background:#fff;border-radius:10px;padding:10px 11px;color:#3d4660;cursor:pointer;font:inherit}
+#calendario .pinc-cal-next:hover{border-color:#c8a8ff;background:#faf7ff}
+#calendario .pinc-cal-next .pinc-cal-next-text{display:flex;flex-direction:column;gap:3px;min-width:0}
+#calendario .pinc-cal-next strong{font-size:11px}
+#calendario .pinc-cal-next small{font-size:10px;color:#8290a4}
+#calendario .pinc-cal-next .pinc-cal-next-arrow{color:#7831d4;font-size:18px}
+#calendario .pinc-cal-no-next{font-size:11px;color:#8893a6}
+#calendario .pinc-cal-panel{padding:21px;border-color:#e6e8f1}
+#calendario .pinc-cal-panel-head h3{font-size:15px}
+#calendario .pinc-cal-panel-head p{font-size:11px}
+#calendario .pinc-cal-table td{font-size:11px}
+#calendario .pinc-cal-period{font-size:12px}
+#stars-cadastro .page-head h2{font-size:26px}
+#stars-cadastro .page-head p{font-size:12px}
+#stars-cadastro .pinc-star-head-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+#stars-cadastro .pinc-star-head-actions .btn{min-height:40px;font-size:11px;padding:10px 15px}
+#stars-cadastro #portalRegistrationCount{font-size:12px;font-weight:800;color:#5429a1}
+#stars-cadastro .table-wrap{border:1px solid #e8eaf1;border-radius:16px;padding:0;background:#fff;box-shadow:none}
+#stars-cadastro .table-wrap th{padding:15px;background:#fafbfe;font-size:10px}
+#stars-cadastro .table-wrap td{padding:14px;font-size:11px}
+#stars-cadastro .table-wrap td strong{font-size:11px}
+#stars-cadastro .star-actions{display:flex;gap:7px}
+#stars-cadastro .star-actions .btn{font-size:10px}
+#stars-cadastro .pinc-star-import{padding:20px;border:1px solid #e5d9f5;border-radius:16px;background:#fdfbff;margin-bottom:15px;box-shadow:none}
+#stars-cadastro .pinc-star-import[hidden],#stars-cadastro .pinc-star-import-results[hidden],#stars-cadastro .pinc-star-import-status[hidden]{display:none!important}
+#stars-cadastro .pinc-star-import-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:14px}
+#stars-cadastro .pinc-star-import-heading h3{font-size:16px;margin:0;color:#342349}
+#stars-cadastro .pinc-star-import-heading p{font-size:11px;color:#768094;line-height:1.5;margin:7px 0 0}
+#stars-cadastro .pinc-star-import-close{border:1px solid #dedee9;background:#fff;color:#617085;border-radius:9px;width:33px;height:33px;font-size:18px;cursor:pointer;flex:0 0 33px}
+#stars-cadastro .pinc-star-import-actions{display:flex;flex-wrap:wrap;align-items:center;gap:11px}
+#stars-cadastro .pinc-star-import-actions .btn{padding:11px 14px;font-size:11px;min-height:39px}
+#stars-cadastro .pinc-star-import-upload{flex:1 1 300px;display:flex;align-items:center;gap:11px;border:1px dashed #c8b0e9;background:#fff;border-radius:11px;padding:10px 12px;min-width:0}
+#stars-cadastro .pinc-star-import-upload label{font-weight:850;color:#6c33b6;font-size:11px;white-space:nowrap;cursor:pointer}
+#stars-cadastro .pinc-star-import-upload input{font-size:11px;min-width:0;max-width:100%;color:#697287}
+#stars-cadastro .pinc-star-import-status{font-size:11px;color:#728099;margin:13px 0 0;line-height:1.5}
+#stars-cadastro .pinc-star-import-status.is-error{color:#b53754}
+#stars-cadastro .pinc-star-import-results{margin-top:16px}
+#stars-cadastro .pinc-star-import-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#stars-cadastro .pinc-star-import-kpis>div{border-radius:11px;padding:12px;background:#fff;border:1px solid #e8e9f0}
+#stars-cadastro .pinc-star-import-kpis span{font-size:10px;color:#728099;display:block;margin-bottom:7px}
+#stars-cadastro .pinc-star-import-kpis strong{font-size:21px;color:#26334b}
+#stars-cadastro .pinc-star-import-kpis .valid{background:#effaf5;border-color:#d9f2e6}
+#stars-cadastro .pinc-star-import-kpis .skip{background:#f9f6ff;border-color:#eae2fa}
+#stars-cadastro .pinc-star-import-kpis .error{background:#fff4f4;border-color:#f4dcdc}
+#stars-cadastro .pinc-star-import-file{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#3f4c63;margin-bottom:12px}
+#stars-cadastro .pinc-star-import-file span{font-size:10px;color:#7a8699}
+#stars-cadastro .pinc-star-import-issues h4{font-size:12px;margin:16px 0 8px}
+#stars-cadastro .pinc-star-import-table{overflow:auto;max-height:240px;border:1px solid #e6e9f0;border-radius:9px;background:#fff}
+#stars-cadastro .pinc-star-import-table table{width:100%;border-collapse:collapse;min-width:500px}
+#stars-cadastro .pinc-star-import-table th,#stars-cadastro .pinc-star-import-table td{padding:9px 12px;text-align:left;font-size:10px;border-bottom:1px solid #eef0f5;white-space:normal}
+#stars-cadastro .pinc-star-import-table th{color:#7e899c;background:#f8f9fc;font-weight:850}
+#stars-cadastro .pinc-star-import-warning{font-size:11px;color:#aa405a;margin:12px 0 0;line-height:1.5}
+#stars-cadastro .pinc-star-import-help,#stars-cadastro .pinc-star-import-clear{font-size:11px;color:#68758c;line-height:1.5;margin:12px 0 0}
+#stars-cadastro .pinc-star-import-clear{color:#07835c}
+#stars-cadastro .pinc-star-import-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #ece8f2}
+#stars-cadastro .pinc-star-import-footer span{font-size:10px;color:#8390a3;flex:1 1 250px}
+#stars-cadastro .pinc-star-import-footer .btn{font-size:11px;padding:10px 16px}
+@media(max-width:1150px){#calendario .pinc-month-layout{grid-template-columns:1fr}#calendario .pinc-month-day{min-height:83px}#calendario .pinc-cal-upcoming-list{grid-template-columns:repeat(3,minmax(0,1fr))}#calendario .pinc-cal-next{min-width:0}}
+@media(max-width:800px){#calendario .pinc-cal-head{align-items:flex-start}#calendario .pinc-month-header{flex-wrap:wrap}#calendario .pinc-month-nav{justify-content:flex-start}#calendario .pinc-month-board,#calendario .pinc-month-detail{padding:15px}#calendario .pinc-month-scroller{overflow-x:auto}#calendario .pinc-month-weekdays,#calendario .pinc-month-grid{min-width:570px}#calendario .pinc-cal-upcoming-list{grid-template-columns:1fr}#stars-cadastro .pinc-star-head-actions{width:100%}}
+@media(max-width:570px){#calendario .pinc-cal-stats{grid-template-columns:1fr 1fr}#calendario .pinc-cal-stats>div:last-child{grid-column:span 2}#calendario .pinc-cal-stats>div{padding:14px;min-height:96px}#calendario .pinc-cal-stats strong{font-size:20px}#calendario .pinc-month-jump{width:100%}#calendario .pinc-month-nav strong{min-width:125px}#calendario .pinc-cal-header-actions{width:100%;justify-content:space-between}#calendario .pinc-cal-header-actions .btn{flex:1}#stars-cadastro .pinc-star-import-kpis{grid-template-columns:1fr}#stars-cadastro .pinc-star-import{padding:14px}#stars-cadastro .pinc-star-import-upload{flex-wrap:wrap}#stars-cadastro .pinc-star-import-footer .btn{width:100%}}
+@media(prefers-reduced-motion:reduce){#calendario .pinc-month-day{transition:none}}
