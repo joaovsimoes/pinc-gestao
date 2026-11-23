@@ -80,15 +80,18 @@
 .pinc-window-home:focus-visible{outline:2px solid #c99cff;outline-offset:2px}
 .pinc-window-logo{display:block;width:34px;height:34px;max-width:100%;max-height:100%;object-fit:contain}
 @media(display-mode:window-controls-overlay){
-  .pinc-window-bar{display:block}
+  /* Evita que o iframe da Gestão fique atrás da faixa preta e deixe uma
+     faixa vazia na parte inferior da janela do aplicativo. */
+  :root{--pinc-titlebar-safe-height:max(42px,env(titlebar-area-height, 0px))}
+  .pinc-window-bar{display:block;height:var(--pinc-titlebar-safe-height)}
+  .pinc-window-home{height:34px}
   #homeView,#moduleView{
-    margin-top:env(titlebar-area-height, 42px);
-    height:calc(100dvh - env(titlebar-area-height, 42px))
+    position:fixed;top:var(--pinc-titlebar-safe-height);bottom:0;left:0;right:0;
+    width:100%;height:auto!important;max-height:none;margin:0!important;overflow:hidden
   }
   #homeView .home-shell{
-    min-height:0;height:100%;
-    grid-template-rows:minmax(0,1fr) 46px
+    height:100%;min-height:0;grid-template-rows:minmax(0,1fr) 46px
   }
   #homeView .home-top{display:none}
-  #moduleFrame{height:100%}
+  #moduleFrame{display:block;width:100%;height:100%!important}
 }
