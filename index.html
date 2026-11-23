@@ -27,6 +27,13 @@
 #portalStarEmpty .star-empty-illustration{height:54px;width:54px;margin:4px auto 10px;border-radius:17px;display:grid;place-items:center;background:#eef9f4;color:#15815f;font-size:26px;font-weight:800}
 #portalStarEmpty .star-empty-chip{display:inline-block;background:#f2edff;color:#7417ff;border-radius:999px;padding:6px 11px;font-weight:800;font-size:11px}
 #portalStarLocationChoice .login-note{margin-bottom:15px}
+#pincCalendarClosed{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(246,247,251,.9);backdrop-filter:blur(14px);z-index:10075}
+#pincCalendarClosed.show{display:flex}
+.pinc-calendar-gate-card{width:min(460px,100%);background:#fff;border:1px solid #e7e8f0;border-radius:22px;box-shadow:0 25px 70px #1a12301f;padding:30px}
+.pinc-calendar-gate-icon{width:54px;height:54px;border-radius:16px;background:#f3ecff;color:#7417ff;display:grid;place-items:center;font-size:26px;margin-bottom:18px}
+.pinc-calendar-gate-card h2{font-size:21px;letter-spacing:-.03em;margin:0 0 11px;color:#191c2b}
+.pinc-calendar-gate-card p{font-size:13px;line-height:1.7;color:#6d778b;margin:0 0 11px}
+.pinc-calendar-gate-card .btn-close{width:100%;height:44px;margin-top:16px;border:0;border-radius:12px;background:linear-gradient(110deg,#7417ff,#9b4eff);color:#fff;font-weight:800}
 </style>
 <link rel="stylesheet" href="/pinc-home.css?v=20261123-icon-transparent-2">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -45,11 +52,21 @@ window.PINC_FIREBASE_CONFIG={
 };
 try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)firebase.analytics();}catch(e){console.warn('Firebase init:',e)}
 </script>
+<script src="pinc-calendar.js?v=20261123-1"></script>
 </head>
 <body>
 <header id="pincWindowBar" class="pinc-window-bar" aria-label="Barra superior do PINC">
   <button type="button" class="pinc-window-home" id="pincWindowHome" onclick="PINC_NAV('home')" aria-label="Voltar para a página inicial do PINC" title="PINC"></button>
 </header>
+<section id="pincCalendarClosed" role="dialog" aria-modal="true" aria-labelledby="pincCalendarClosedTitle" aria-hidden="true">
+  <div class="pinc-calendar-gate-card">
+    <div class="pinc-calendar-gate-icon" aria-hidden="true">▣</div>
+    <h2 id="pincCalendarClosedTitle">PINC não programado para hoje</h2>
+    <p id="pincCalendarClosedText">O acesso aos portais Facilitador e Stars só fica disponível nos dias de PINC cadastrados pela Gestão.</p>
+    <p id="pincCalendarClosedDate"></p>
+    <button type="button" class="btn-close" onclick="PINC_CLOSE_CALENDAR_CLOSED()">Voltar à página inicial</button>
+  </div>
+</section>
 <section id="homeView">
   <main class="home-shell">
     <header class="home-top">
@@ -117,7 +134,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
 <script src="management-access.js?v=20261008-2"></script>
 <script src="portal-access.js?v=20261120-matricula-1"></script>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261009-registros-1',facilitador:'facilitador.html?v=20261104-anp-live-1',stars:'stars.html?v=20261120-star-cdc-1'};
+const PINC_MODULES={gestao:'gestao.html?v=20261009-registros-1',facilitador:'facilitador.html?v=20261123-date-1',stars:'stars.html?v=20261123-date-1'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
@@ -163,14 +180,44 @@ window.PINC_LOGIN_GESTAO=async function(){
     window.PINC_CLOSE_LOGIN();window.PINC_DO_LAUNCH('gestao');
   }catch(e){if(err)err.textContent=window.PINC_ACCESS.message(e)}finally{pincLoginBusy=false}
 };
-window.PINC_NAV=function(target){
+
+window.PINC_SHOW_CALENDAR_CLOSED=function(target,location,failed){
+  const box=document.getElementById('pincCalendarClosed');
+  const label=target==='facilitador'?'Facilitador':'Stars';
+  const title=document.getElementById('pincCalendarClosedTitle'),copy=document.getElementById('pincCalendarClosedText'),detail=document.getElementById('pincCalendarClosedDate');
+  if(title)title.textContent=failed?'Não foi possível verificar o calendário':'PINC não programado para hoje';
+  if(copy)copy.textContent=failed?'O sistema não conseguiu confirmar as datas do PINC no servidor. Por segurança, o acesso ao Portal '+label+' permanece bloqueado. Tente novamente após restabelecer a conexão.':'O Portal '+label+' só pode ser acessado nos dias de PINC cadastrados na Gestão'+(location?' para '+location:'')+'.';
+  if(detail)detail.textContent='Data de hoje: '+window.PINC_DATES.label(window.PINC_DATES.today())+' • Horário de Brasília';
+  if(box){box.classList.add('show');box.setAttribute('aria-hidden','false')}
+  const overlay=document.getElementById('routeTransition');if(overlay)overlay.classList.remove('show');
+  document.querySelector('.home-shell')?.classList.remove('home-leaving');
+};
+window.PINC_CLOSE_CALENDAR_CLOSED=function(){
+  const box=document.getElementById('pincCalendarClosed');
+  if(box){box.classList.remove('show');box.setAttribute('aria-hidden','true')}
+};
+window.PINC_GATE_ACCESS=async function(target,location){
+  if(target!=='facilitador'&&target!=='stars')return true;
+  const scoped=target==='facilitador'?'Anápolis':String(location||'').trim();
+  try{
+    const allowed=scoped?await window.PINC_DATES.allowed(scoped):(await window.PINC_DATES.openLocations()).length>0;
+    if(!allowed)window.PINC_SHOW_CALENDAR_CLOSED(target,scoped,false);
+    return allowed;
+  }catch(e){
+    console.warn('PINC calendário - acesso',e);
+    window.PINC_SHOW_CALENDAR_CLOSED(target,scoped,true);
+    return false;
+  }
+};
+window.PINC_NAV=async function(target){
   const home=document.getElementById('homeView'), mod=document.getElementById('moduleView'), frame=document.getElementById('moduleFrame'), shell=document.querySelector('.home-shell');
   if(target==='home'){window.PINC_PORTAL_USER={star:null,host:null};if(!localStorage.getItem(PINC_REMEMBER_KEY))window.PINC_AUTH_USER=null;frame.src='about:blank';mod.style.display='none';home.style.display='grid';document.body.style.overflow='hidden';if(shell){shell.classList.remove('home-leaving');shell.classList.add('home-entering');setTimeout(()=>shell.classList.remove('home-entering'),500)}return;}
   if(!PINC_MODULES[target])return;
-  if(target==='stars'&&!window.PINC_PORTAL_USER?.star){window.PINC_SHOW_STAR_LOGIN();return}
+  if(target==='stars'&&!window.PINC_PORTAL_USER?.star){if(await window.PINC_GATE_ACCESS('stars'))window.PINC_SHOW_STAR_LOGIN();return}
+  if((target==='facilitador'||target==='stars')&&!await window.PINC_GATE_ACCESS(target,target==='stars'?window.PINC_PORTAL_USER?.star?.location:'Anápolis'))return;
   home.style.display='none';mod.style.display='block';document.body.style.overflow='hidden';frame.src=PINC_MODULES[target];
 };
-window.PINC_DO_LAUNCH=function(target){const overlay=document.getElementById('routeTransition'),shell=document.querySelector('.home-shell'),label=document.getElementById('routeTransitionText');const labels={gestao:'Carregando Gestão do PINC',facilitador:'Carregando Portal Facilitador',stars:"Carregando Portal Star's"};if(label)label.textContent=labels[target]||'Carregando Portal PINC';if(shell)shell.classList.add('home-leaving');if(overlay)overlay.classList.add('show');setTimeout(()=>{window.PINC_NAV(target);setTimeout(()=>{if(overlay)overlay.classList.remove('show');if(shell)shell.classList.remove('home-leaving')},180)},1180)};window.PINC_LAUNCH=async function(target){if(target==='gestao'&&!window.PINC_AUTH_USER){window.PINC_SHOW_LOGIN();return}if(target==='stars'){window.PINC_SHOW_STAR_LOGIN();return}window.PINC_DO_LAUNCH(target)};
+window.PINC_DO_LAUNCH=function(target){const overlay=document.getElementById('routeTransition'),shell=document.querySelector('.home-shell'),label=document.getElementById('routeTransitionText');const labels={gestao:'Carregando Gestão do PINC',facilitador:'Carregando Portal Facilitador',stars:"Carregando Portal Star's"};if(label)label.textContent=labels[target]||'Carregando Portal PINC';if(shell)shell.classList.add('home-leaving');if(overlay)overlay.classList.add('show');setTimeout(()=>{window.PINC_NAV(target);setTimeout(()=>{if(overlay)overlay.classList.remove('show');if(shell)shell.classList.remove('home-leaving')},180)},1180)};window.PINC_LAUNCH=async function(target){if(target==='gestao'&&!window.PINC_AUTH_USER){window.PINC_SHOW_LOGIN();return}if(target==='stars'){if(await window.PINC_GATE_ACCESS('stars'))window.PINC_SHOW_STAR_LOGIN();return}if(target==='facilitador'&&!await window.PINC_GATE_ACCESS('facilitador','Anápolis'))return;window.PINC_DO_LAUNCH(target)};
 async function pincRestoreRememberedAccess(){let saved=null;try{saved=JSON.parse(localStorage.getItem(PINC_REMEMBER_KEY)||'null')}catch(e){}if(!saved)return;const accesses=await pincLoadAccessesFromCloud();const access=accesses.find(u=>u.active!==false&&((saved.id&&u.id===saved.id)||String(u.username||'').toLowerCase()===String(saved.username||'').toLowerCase()));if(!access){localStorage.removeItem(PINC_REMEMBER_KEY);return}window.PINC_AUTH_USER={id:access.id,name:access.name,username:access.username,location:access.location,profile:access.profile||'hub',level:Number(access.level||4),profileName:access.profileName||(access.profile==='master'?'Master':access.profile==='flow'?'Flow':'Hub')};let S=pincGetState()||{};S.currentLocation=access.location||S.currentLocation;S.accesses=accesses;localStorage.setItem(PINC_STATE_KEY,JSON.stringify(S))}
 pincLoadAccessesFromCloud().then(()=>pincRestoreRememberedAccess()).catch(e=>console.warn('PINC access synchronization unavailable',e.code||e.message));
 </script>
@@ -186,4 +233,4 @@ pincLoadAccessesFromCloud().then(()=>pincRestoreRememberedAccess()).catch(e=>con
     titlebarLogo.appendChild(logo);
   }
 })();
-</script><script src="portal-login.js?v=20261120-cdc-feed-2"></script><script src="pinc-home.js?v=20261003-slides"></script></body></html>
+</script><script src="portal-login.js?v=20261123-date-1"></script><script src="pinc-home.js?v=20261003-slides"></script></body></html>
