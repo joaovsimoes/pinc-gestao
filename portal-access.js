@@ -171,7 +171,7 @@
   function message(error) {
     const messages = {
       FIELDS_REQUIRED: 'Informe o nome e a localidade.', BUILDING_REQUIRED: 'Informe o nome do prédio.',
-      MATRICULA_REQUIRED: 'Informe a matrícula do integrante do Acolhe+.', MATRICULA_DUPLICATE: 'Já existe um Acolhe+ com esta matrícula nesta localidade.',
+      MATRICULA_REQUIRED: 'Informe a matrícula do integrante do Acolhe+.', MATRICULA_DUPLICATE: 'Já existe um integrante do Acolhe+ com esta matrícula nesta localidade.',
       AREA_REQUIRED: 'Informe a área do Facilitador.', AREA_LETTER_REQUIRED: 'Informe uma única letra de A a Z para identificar a área.',
       CODE_REQUIRED: 'Informe seu código de acesso.', CODE_INVALID: 'Código inválido, inativo ou de outro tipo de acesso.',
       ACCESS_NOT_FOUND: 'Este cadastro não foi encontrado. Atualize a lista.',
