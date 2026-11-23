@@ -34,6 +34,26 @@
 .pinc-calendar-gate-card h2{font-size:21px;letter-spacing:-.03em;margin:0 0 11px;color:#191c2b}
 .pinc-calendar-gate-card p{font-size:13px;line-height:1.7;color:#6d778b;margin:0 0 11px}
 .pinc-calendar-gate-card .btn-close{width:100%;height:44px;margin-top:16px;border:0;border-radius:12px;background:linear-gradient(110deg,#7417ff,#9b4eff);color:#fff;font-weight:800}
+
+/* Avisos de início/conclusão: histórico visível mesmo sem permissão do Windows. */
+#pincNotificationPanel[hidden],#pincFacilitatorNotice[hidden]{display:none!important}
+.pinc-event-panel{position:fixed;right:16px;top:calc(42px + 12px);width:min(390px,calc(100vw - 30px));max-height:calc(100dvh - 74px);display:flex;flex-direction:column;border-radius:17px;background:#fff;color:#222b40;border:1px solid #ece8f5;box-shadow:0 22px 65px #1d143036;z-index:25000;overflow:hidden}
+.pinc-event-panel header{padding:16px 18px;border-bottom:1px solid #f0edf7;display:flex;align-items:start;justify-content:space-between;gap:10px}
+.pinc-event-panel header strong{font-size:14px}.pinc-event-panel header p{font-size:10px;color:#8190a6;margin:5px 0 0;line-height:1.4}
+.pinc-event-panel header button{border:0;background:#f5f2fb;color:#5b637b;border-radius:9px;font-size:23px;width:31px;height:31px;line-height:1}
+.pinc-event-items{overflow-y:auto;min-height:0;max-height:330px;padding:4px 12px}
+.pinc-event-item{padding:13px 6px;border-bottom:1px solid #f1eff6}
+.pinc-event-item:last-child{border:0}.pinc-event-head{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.pinc-event-head strong{font-size:11px}.pinc-event-head span{color:#9da4b3;font-size:9px;white-space:nowrap}
+.pinc-event-item p{font-size:11px;line-height:1.6;color:#59657b;margin:6px 0}.pinc-event-item small{color:#8b92a4;font-size:9px}
+.pinc-event-empty{padding:20px;text-align:center;color:#8790a0;font-size:11px}
+.pinc-event-panel footer{border-top:1px solid #f0edf7;padding:12px 17px;display:grid;gap:6px}
+.pinc-event-panel footer button{border:1px solid #ded3f5;color:#7417ff;background:#fbf8ff;border-radius:9px;padding:10px;font-size:11px;font-weight:750}
+.pinc-event-panel footer span{font-size:10px;color:#7f879a;line-height:1.4}
+.pinc-event-toast{position:fixed;z-index:22000;top:calc(42px + 12px);right:16px;display:flex;align-items:flex-start;gap:12px;width:min(390px,calc(100vw - 32px));padding:15px;border:1px solid #e7dbfc;border-radius:15px;background:#fff;color:#242c42;box-shadow:0 14px 45px #25153a2a}
+.pinc-event-toast-symbol{flex:0 0 33px;width:33px;height:33px;background:#ecf9f1;border-radius:10px;color:#169c69;font-size:20px;font-weight:800;display:grid;place-items:center}
+.pinc-event-toast-copy strong{display:block;font-size:12px;margin:2px 0 5px}.pinc-event-toast-copy p{font-size:11px;line-height:1.6;color:#68748b;margin:0 0 8px}
+.pinc-event-toast-copy button{background:none;border:0;padding:0;color:#7417ff;font-size:10px;font-weight:800}
 </style>
 <link rel="stylesheet" href="/pinc-home.css?v=20261123-window-fit-3">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -94,6 +114,11 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
     <footer class="home-foot"><span>PINC&nbsp; • &nbsp;Programa de Integração de Novos Colaboradores</span><span>Gestão&nbsp; • &nbsp;Facilitador&nbsp; • &nbsp;Star's</span></footer>
   </main>
 </section>
+<aside id="pincNotificationPanel" class="pinc-event-panel" hidden aria-label="Histórico de avisos do PINC">
+  <header><div><strong>Avisos do PINC</strong><p id="pincNotificationStatus">Inícios e conclusões das etapas</p></div><button type="button" onclick="PINC_TOGGLE_NOTIFICATIONS(false)" aria-label="Fechar avisos">×</button></header>
+  <div id="pincNotificationItems" class="pinc-event-items"></div><p id="pincNotificationEmpty" class="pinc-event-empty">Nenhuma notificação recente de etapas.</p>
+  <footer><button type="button" onclick="pincEnableDesktopNotices()">Ativar avisos do Windows</button><span id="pincNotificationPermission"></span></footer>
+</aside>
 <section id="moduleView"><iframe id="moduleFrame" title="Módulo PINC" allow="autoplay; encrypted-media"></iframe></section><div id="routeTransition" aria-hidden="true"><div class="route-pulse"></div><div class="route-copy"><strong id="routeTransitionText">Carregando...</strong><span>Preparando seu ambiente PINC</span></div></div>
 <div id="managementLogin" aria-hidden="true">
   <div class="login-card">
@@ -138,10 +163,90 @@ const PINC_MODULES={gestao:'gestao.html?v=20261123-calendar-month-1',facilitador
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
-let pincFacEventsUnsub=null;
-function pincShowFacilitatorNotice(title,body,eventId){let el=document.getElementById('pincFacilitatorNotice');if(!el){el=document.createElement('div');el.id='pincFacilitatorNotice';el.style.cssText='position:fixed;z-index:99999;right:22px;top:22px;width:min(390px,calc(100vw - 32px));padding:16px 18px;border:1px solid #d8c8f4;border-radius:16px;background:#fff;color:#25203c;box-shadow:0 16px 48px #24143a24;font:13px/1.5 Inter,system-ui,sans-serif;transition:opacity .2s';document.body.appendChild(el)}el.innerHTML='<strong style="display:block;margin-bottom:4px">'+String(title).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</strong><span>'+String(body).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))+'</span>';el.style.opacity='1';clearTimeout(window.pincFacNoticeTimer);window.pincFacNoticeTimer=setTimeout(()=>{el.style.opacity='0'},6500);try{window.PINC_NOTIFY(title,body,eventId)}catch(e){} }
-async function initPincFacilitatorEvents(){try{if(!window.firebase||!firebase.firestore||!firebase.auth)return;const auth=firebase.auth();if(!auth.currentUser)await auth.signInAnonymously();const db=firebase.firestore(),startedAt=Date.now();if(pincFacEventsUnsub)pincFacEventsUnsub();pincFacEventsUnsub=db.collection('pincLocks').where('location','==','Anápolis').onSnapshot(snap=>{snap.docChanges().forEach(change=>{if(change.type!=='added')return;const d=change.doc.data()||{};if(d.type!=='facilitatorEvent'||Number(d.createdAtMillis||0)<startedAt)return;const title=d.action==='started'?'PINC • Etapa iniciada':'PINC • Etapa concluída',body=d.body||('Etapa: '+(d.stageName||'PINC'));pincShowFacilitatorNotice(title,body,change.doc.id)})},e=>console.warn('PINC facilitator notifications',e))}catch(e){console.warn('PINC facilitator event listener',e)}}
+let pincFacEventsUnsub=null,pincFacEventsConnecting=false,pincFacEventsReady=false;
+let pincFacHistory=[],pincFacUnread=0;
+const PINC_FAC_SEEN_KEY='pinc-stage-events-seen-v2';
+function pincFacSeen(){
+  try{return new Set(JSON.parse(sessionStorage.getItem(PINC_FAC_SEEN_KEY)||'[]'))}catch(e){return new Set()}
+}
+function pincFacRemember(id){
+  try{const ids=pincFacSeen();ids.add(id);sessionStorage.setItem(PINC_FAC_SEEN_KEY,JSON.stringify([...ids].slice(-150)))}catch(e){}
+}
+function pincFacEsc(x){return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;'}[c]))}
+function pincFacTitle(event){return event.action==='started'?'PINC • Etapa iniciada':'PINC • Etapa concluída'}
+function pincFacDate(ms){
+  return Number.isFinite(ms)&&ms>0?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Agora';
+}
+function pincRenderNotifications(){
+  const list=document.getElementById('pincNotificationItems'),empty=document.getElementById('pincNotificationEmpty'),count=document.getElementById('pincNotificationCount');
+  if(count)count.textContent=pincFacUnread?String(Math.min(99,pincFacUnread)):'';
+  if(empty)empty.hidden=pincFacHistory.length>0;
+  if(list)list.innerHTML=pincFacHistory.map(({id,event})=>
+    '<article class="pinc-event-item"><div class="pinc-event-head"><strong>'+pincFacEsc(pincFacTitle(event))+'</strong><span>'+pincFacEsc(pincFacDate(Number(event.createdAtMillis||0)))+'</span></div>'+
+    '<p>'+pincFacEsc(event.body||event.stageName||'Etapa do PINC')+'</p><small>'+pincFacEsc(event.location||'Anápolis')+' · '+pincFacEsc(event.period||'')+'</small></article>'
+  ).join('');
+  try{document.getElementById('moduleFrame')?.contentWindow?.PINC_REFRESH_NOTIFICATION_BADGE?.(pincFacUnread)}catch(e){}
+}
+window.PINC_TOGGLE_NOTIFICATIONS=function(force){
+  const panel=document.getElementById('pincNotificationPanel');if(!panel)return;
+  const opening=typeof force==='boolean'?force:panel.hidden;
+  panel.hidden=!opening;
+  if(opening){pincFacUnread=0;pincRenderNotifications()}
+};
+window.PINC_NOTIFICATION_COUNT=function(){return pincFacUnread};
+async function pincEnableDesktopNotices(){
+  const result=await window.PINC_REQUEST_NOTIFICATIONS();
+  const message=document.getElementById('pincNotificationPermission');
+  if(message)message.textContent=result==='granted'?'Notificações do Windows habilitadas.':
+    result==='denied'?'As notificações estão bloqueadas nas configurações do navegador.':
+    'Este navegador não permite avisos do Windows. Os avisos do PINC continuarão na tela.';
+}
+function pincShowFacilitatorNotice(title,body,eventId){
+  let el=document.getElementById('pincFacilitatorNotice');
+  if(!el){el=document.createElement('div');el.id='pincFacilitatorNotice';el.className='pinc-event-toast';document.body.appendChild(el)}
+  el.innerHTML='<div class="pinc-event-toast-symbol">✓</div><div class="pinc-event-toast-copy"><strong>'+
+    pincFacEsc(title)+'</strong><p>'+pincFacEsc(body)+'</p><button type="button" onclick="PINC_TOGGLE_NOTIFICATIONS(true)">Ver histórico de avisos</button></div>';
+  el.hidden=false;
+  clearTimeout(window.pincFacNoticeTimer);
+  window.pincFacNoticeTimer=setTimeout(()=>{el.hidden=true},9000);
+  try{window.PINC_NOTIFY(title,body,eventId)}catch(e){}
+}
+async function initPincFacilitatorEvents(){
+  if(pincFacEventsUnsub||pincFacEventsConnecting)return;
+  pincFacEventsConnecting=true;
+  try{
+    if(!window.firebase?.firestore||!window.firebase?.auth)throw Error('Firebase não inicializado');
+    const auth=firebase.auth();
+    if(!auth.currentUser)await auth.signInAnonymously();
+    const db=firebase.firestore(),listenSince=Date.now();
+    let firstSnapshot=true;
+    pincFacEventsUnsub=db.collection('pincLocks').where('type','==','facilitatorEvent').onSnapshot(snapshot=>{
+      const recent=snapshot.docs.map(doc=>({id:doc.id,event:doc.data()||{}}))
+        .filter(x=>x.event.location==='Anápolis'&&Number(x.event.createdAtMillis||0)>Date.now()-14*86400000)
+        .sort((a,b)=>Number(b.event.createdAtMillis||0)-Number(a.event.createdAtMillis||0));
+      pincFacHistory=recent.slice(0,45);
+      for(const item of recent.slice().reverse()){
+        const ts=Number(item.event.createdAtMillis||0),isNew=ts>=listenSince-1500;
+        if(!isNew||pincFacSeen().has(item.id))continue;
+        pincFacRemember(item.id);
+        if(item.event.action!=='started'&&item.event.action!=='finished')continue;
+        pincFacUnread++;
+        pincShowFacilitatorNotice(pincFacTitle(item.event),item.event.body||('Etapa: '+(item.event.stageName||'PINC')),item.id);
+      }
+      pincFacEventsReady=true;firstSnapshot=false;
+      pincRenderNotifications();
+    },err=>{
+      console.warn('Avisos do Facilitador - conexão',err);
+      try{pincFacEventsUnsub?.()}catch(_){}
+      pincFacEventsUnsub=null;pincFacEventsReady=false;
+      const status=document.getElementById('pincNotificationStatus');
+      if(status)status.textContent='Sem sincronização. O aplicativo tentará restabelecer a conexão.';
+    });
+  }catch(e){console.warn('Avisos do Facilitador indisponíveis',e)}
+  finally{pincFacEventsConnecting=false}
+}
 initPincFacilitatorEvents();
+setInterval(()=>{if(!pincFacEventsUnsub&&!pincFacEventsConnecting)initPincFacilitatorEvents()},30000);
 const PINC_STATE_KEY='pinc-gestao-v6';
 const PINC_NOTIFIED_KEY='pinc-desktop-notified-v1';
 function pincGetState(){try{return JSON.parse(localStorage.getItem(PINC_STATE_KEY)||'null')}catch(e){return null}}
