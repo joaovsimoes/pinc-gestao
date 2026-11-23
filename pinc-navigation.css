@@ -1,0 +1,46 @@
+/* Navegação clara e identificação de quem está conectado à Gestão. */
+.sidebar .nav{gap:6px;margin-top:18px}
+.sidebar .nav button{display:flex;align-items:center;gap:12px;padding:12px 11px;min-height:45px;border-radius:11px;font-size:12px;font-weight:750;color:#58647b;transition:background-color .16s ease,color .16s ease}
+.sidebar .nav button:hover{background:#f7f3ff;color:#6823dc}
+.sidebar .nav button.active{background:#f1eaff;color:#6815e1}
+.sidebar .nav .ico{display:inline-flex;justify-content:center;align-items:center;flex:0 0 22px;width:22px;height:22px;color:inherit}
+.sidebar .nav .ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round}
+.sidebar .nav button:focus-visible,.pinc-user-avatar:focus-visible{outline:3px solid #b58bff;outline-offset:2px}
+.sidebar .side-bottom{display:grid;gap:12px;padding:15px 3px 0;margin-top:auto}
+.sidebar .pinc-profile-card{display:flex;align-items:center;gap:10px;padding:9px 7px;border:1px solid #ebe8f2;border-radius:13px;background:#fbfaff;min-width:0}
+.pinc-user-avatar{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;overflow:hidden;position:relative;padding:0;border-radius:50%;border:2px solid #e4d5ff;background:linear-gradient(135deg,#9d61ff,#6225c5);color:#fff;cursor:pointer;transition:box-shadow .15s ease,transform .15s ease}
+.pinc-user-avatar:hover{box-shadow:0 0 0 3px rgba(116,23,255,.13)}
+.pinc-user-avatar:disabled{opacity:.65;cursor:wait}
+.pinc-user-avatar .pinc-user-photo{width:100%;height:100%;object-fit:cover;display:block}
+.pinc-user-avatar .pinc-user-initials{font-size:13px;font-weight:850;letter-spacing:.01em}
+.pinc-profile-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.pinc-profile-info strong{font-size:11px;font-weight:850;color:#273048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinc-profile-info small{font-size:9px;color:#818ba1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pinc-profile-camera{position:absolute;right:0;bottom:0;display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#fff;color:#6518ca;box-shadow:0 0 0 1px #e5d9f5}
+.pinc-profile-camera svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pinc-profile-avatar-wrap{position:relative;flex:0 0 40px}
+.pinc-profile-avatar-wrap .pinc-user-avatar{width:40px;height:40px}
+.pinc-profile-avatar-wrap>.pinc-profile-camera{pointer-events:none}
+.pinc-top-avatar{width:38px;height:38px;flex:0 0 38px;border-width:2px;margin-left:3px}
+#pincProfileUpload{display:none!important}
+@media(max-width:1050px) and (min-width:721px){
+  .sidebar .nav button{justify-content:center;padding:11px}
+  .sidebar .nav .ico{flex-basis:24px;width:24px}
+  .sidebar .nav .ico svg{width:22px;height:22px}
+  .sidebar .pinc-profile-card{justify-content:center;padding:8px 0;border:0;background:transparent}
+  .sidebar .pinc-profile-info{display:none}
+  .sidebar .side-bottom{padding:10px 0 0}
+  .sidebar .side-bottom .system,.sidebar .side-bottom .back{display:none}
+}
+@media(max-width:720px){
+  .sidebar .nav button{min-height:42px;padding:9px 11px;gap:7px}
+  .sidebar .nav .ico svg{width:18px;height:18px}
+  .sidebar .side-bottom{display:none}
+  .topbar .top-actions{gap:6px}
+  .topbar .top-actions .chip:first-child{display:none}
+  .pinc-top-avatar{width:34px;height:34px;flex-basis:34px}
+}
+@media(max-width:440px){
+  .topbar .top-actions .location-select{max-width:100px}
+  .topbar .top-actions .chip:last-child{display:none}
+}
