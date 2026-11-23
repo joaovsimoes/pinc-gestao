@@ -98,7 +98,7 @@
       const accounts=await window.PINC_ACCESS.load();
       const account=accounts.find(x=>String(x.id)===String(user.id));
       if(!account)throw new Error('Seu cadastro não foi localizado. Entre novamente no sistema.');
-      await window.PINC_ACCESS.upsert({...account,photo});
+      await window.PINC_ACCESS.upsertPhoto(user.id,photo);
       const verified=await window.PINC_ACCESS.load({migrate:false});
       const stored=verified.find(x=>String(x.id)===String(user.id));
       if(!stored||stored.photo!==photo)
