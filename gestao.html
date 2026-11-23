@@ -304,6 +304,7 @@
 @media(max-width:700px){.registry-day-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.registry-day-tools{display:flex;flex-wrap:wrap}.registry-day-tools .registry-search{flex:1 0 100%}.registry-day-tools select{flex:1}.registry-day-bulk .btn{flex:1 1 130px}}
 </style>
 <link rel="stylesheet" href="pinc-agenda-view.css?v=20261123-1">
+<link rel="stylesheet" href="pinc-agenda-export.css?v=20261123-2">
 </head><body>
 <div class="app">
 <aside class="sidebar">
@@ -326,7 +327,7 @@
 <span id="pincAdminNoticeCount" class="pinc-admin-notice-count" hidden>0</span></button><span class="chip">PINC ativo</span></div></header>
 <div class="content">
 <section class="view active" id="agenda">
-  <div class="page-head"><div><h2>Agenda</h2><p>Programação de Efetivos e Aprendizes.</p></div><div class="head-actions"><div class="segment" id="audienceSeg"><button class="active" onclick="setAudience('efetivos')">Efetivos</button><button onclick="setAudience('aprendizes')">Aprendizes</button></div><div class="segment" id="daySeg"><button class="active" onclick="setDay(1)">Dia 1</button><button onclick="setDay(2)">Dia 2</button></div><div class="segment shift-wrap" id="shiftSeg"><button class="active" onclick="setShift('matutino')">Matutino</button><button onclick="setShift('vespertino')">Vespertino</button></div><button class="btn secondary" onclick="openAgendaReset()">↻ Resetar para novo PINC</button><button class="btn primary" onclick="openStageModal()">+ Nova etapa</button></div></div>
+  <div class="page-head"><div><h2>Agenda</h2><p>Programação de Efetivos e Aprendizes.</p></div><div class="head-actions"><div class="segment" id="audienceSeg"><button class="active" onclick="setAudience('efetivos')">Efetivos</button><button onclick="setAudience('aprendizes')">Aprendizes</button></div><div class="segment" id="daySeg"><button class="active" onclick="setDay(1)">Dia 1</button><button onclick="setDay(2)">Dia 2</button></div><div class="segment shift-wrap" id="shiftSeg"><button class="active" onclick="setShift('matutino')">Matutino</button><button onclick="setShift('vespertino')">Vespertino</button></div><button class="btn secondary" onclick="openAgendaReset()">↻ Resetar para novo PINC</button><button class="btn secondary pinc-export-trigger" type="button" onclick="PINC_AGENDA_EXPORT.open()" title="Gerar uma imagem PNG com esta agenda e orientações aos facilitadores">▧ Gerar imagem</button><button class="btn primary" onclick="openStageModal()">+ Nova etapa</button></div></div>
   <div class="agenda-layout"><div class="card agenda-table"><div id="agendaList"></div></div></div>
 </section>
 <section class="view" id="calendario">
@@ -460,6 +461,7 @@
 <script src="portal-registration.js?v=20261120-star-cdc-1"></script>
 <script src="pinc-calendar.js?v=20261123-events-2"></script>
 <script src="pinc-agenda-view.js?v=20261123-1"></script>
+<script src="pinc-agenda-export.js?v=20261123-2"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
