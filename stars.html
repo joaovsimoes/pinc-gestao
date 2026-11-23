@@ -66,6 +66,20 @@
   .people-card{min-height:140px}
   .stage-route{overflow-x:auto;scrollbar-width:thin}
 }
+
+/* Presença diária pendente no Stars, sem confundir com ausência */
+#starsPendingPanel[hidden]{display:none!important}
+.stars-pending-panel{padding:13px 16px!important;border:1px solid #f1e4cb!important;background:#fffdfa!important;border-radius:15px}
+.stars-pending-heading{display:flex;align-items:center;gap:11px}
+.stars-pending-symbol{height:29px;width:29px;flex:0 0 29px;border-radius:9px;background:#fff2d9;color:#ab7814;display:grid;place-items:center;font-size:17px;font-weight:900}
+.stars-pending-heading>div{flex:1;min-width:0}
+.stars-pending-heading h2{font-size:12px;color:#584628;margin:0 0 4px}
+.stars-pending-heading p{font-size:10px;color:#9a896b;margin:0;line-height:1.5}
+.stars-pending-heading .count.pending{background:#fff2d9;color:#a97914;font-size:10px}
+.stars-pending-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding-left:40px}
+.stars-pending-person{border:1px solid #efdfc4;background:#fff;border-radius:9px;padding:6px 9px;font-size:10px;color:#695c42}
+.stars-pending-person small{font-size:9px;color:#a49a87}
+@media(max-width:600px){.stars-pending-heading{align-items:flex-start}.stars-pending-list{padding-left:0}.stars-pending-heading .count.pending{margin-left:auto}}
 </style></head>
 <body>
 <div class="app">
@@ -95,6 +109,10 @@
       <section class="card people-card"><div class="people-head"><div class="people-heading"><div class="section-icon metric-green" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20v-3a6 6 0 0 1 12 0v3ZM16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/></svg></div><h2>Colaboradores presentes</h2></div><span class="count present" id="presentCount">0</span></div><div class="people-table" tabindex="0" aria-label="Colaboradores presentes"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>CDC</th></tr></thead><tbody id="presentTable"></tbody></table></div></section>
       <section class="card people-card"><div class="people-head"><div class="people-heading"><div class="section-icon metric-red" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20v-3a6 6 0 0 1 12 0v3ZM16 4a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 5"/></svg></div><h2>Colaboradores ausentes</h2></div><span class="count absent" id="absentCount">0</span></div><div class="people-table" tabindex="0" aria-label="Colaboradores ausentes"><table><thead><tr><th>Nome</th><th>Matrícula</th><th>CDC</th></tr></thead><tbody id="absentTable"></tbody></table></div></section>
     </div>
+    <section class="card stars-pending-panel" id="starsPendingPanel" hidden>
+      <div class="stars-pending-heading"><span class="stars-pending-symbol" aria-hidden="true">!</span><div><h2>Aguardando confirmação de presença</h2><p>Estes colaboradores ainda precisam ter a presença confirmada na Gestão para este dia.</p></div><span class="count pending" id="pendingCount">0 pendentes</span></div>
+      <div class="stars-pending-list" id="pendingTable"></div>
+    </section>
     <footer class="live-footer"><span><strong id="liveFooterStatus">Aguardando conexão</strong> • <span id="lastUpdate">Buscando dados da Gestão</span></span><span class="live-legend"><span class="presence-dot"></span> Presente <span class="presence-dot absent"></span> Ausente</span></footer>
     </div>
 </section>
@@ -291,19 +309,46 @@ function renderWelcome(){
 function peopleRows(){
   const feed=activeStarsFeed(),sourceParticipants=feed?.participants||S.participants||[],sourceAbsents=feed?.absents||S.absents||[];
   const authorizedCdc=String((window.parent.PINC_PORTAL_USER?.star||PORTAL_ACCESS_USER)?.cdc||'').trim();
-  const matches=p=>authorizedCdc&&String(p.cdc||'').trim()===authorizedCdc&&p.location===selected.location&&(!p.audience||(selected.audience==='aprendizes'?/aprendiz/i.test(p.audience):/efetiv/i.test(p.audience)));
-  const base=sourceParticipants.filter(matches).map(p=>{const attendance=selected.audience==='efetivos'?p.attendance?.['day'+selected.day]:null;return{...p,name:p.name||'',matricula:String(p.matricula||''),company:p.company||'—',cdc:p.cdc||'—',present:attendance==='present'?true:attendance==='absent'?false:p.present!==false}});
-  for(const p of sourceAbsents.filter(matches)){if(!base.some(x=>(p.matricula&&x.matricula===String(p.matricula))||x.name===p.name))base.push({...p,matricula:String(p.matricula||''),present:false})}
+  const matches=p=>authorizedCdc&&String(p.cdc||'').trim()===authorizedCdc&&p.location===selected.location&&
+    (!p.audience||(selected.audience==='aprendizes'?/aprendiz/i.test(p.audience):/efetiv/i.test(p.audience)));
+  const base=sourceParticipants.filter(matches).map(p=>{
+    let present=p.present!==false,pending=false;
+    if(selected.audience==='efetivos'){
+      const day='day'+selected.day,attendance=p.attendance||{};
+      if(Object.prototype.hasOwnProperty.call(attendance,day)){
+        if(attendance[day]==='present')present=true;
+        else if(attendance[day]==='absent')present=false;
+        else{present=false;pending=true}
+      }else if(selected.day===2){
+        // Dia 1 não confirma automaticamente a presença dos efetivos no Dia 2.
+        present=false;pending=true;
+      }
+    }
+    return{...p,name:p.name||'',matricula:String(p.matricula||''),company:p.company||'—',cdc:p.cdc||'—',present,pending};
+  });
+  for(const p of sourceAbsents.filter(matches)){
+    if(!base.some(x=>(p.matricula&&x.matricula===String(p.matricula))||x.name===p.name))
+      base.push({...p,matricula:String(p.matricula||''),present:false,pending:false});
+  }
   return base;
 }
 function renderPeople(){
   const rows=peopleRows();
-  for(const [type,present,label] of [['present',true,'presente'],['absent',false,'ausente']]){
-    const filtered=rows.filter(x=>x.present===present),count=document.getElementById(type+'Count'),table=document.getElementById(type+'Table');if(!table)continue;
-    if(count)count.textContent=`${filtered.length} ${label}${filtered.length===1?'':'s'}`;
-    const html=filtered.length?filtered.map(p=>`<tr title="${esc([p.company,p.role,p.manager].filter(Boolean).join(' • '))}"><td><div class="person-name"><span class="presence-dot ${type}" aria-hidden="true"></span><span>${esc(p.name)}</span></div></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.cdc||'—')}</td></tr>`).join(''):`<tr><td colspan="3"><div class="empty">Nenhum colaborador ${label} nesta localidade.</div></td></tr>`;
+  for(const [type,predicate,label] of [
+    ['present',p=>!p.pending&&p.present,'presente'],
+    ['absent',p=>!p.pending&&!p.present,'ausente']
+  ]){
+    const filtered=rows.filter(predicate),count=document.getElementById(type+'Count'),table=document.getElementById(type+'Table');
+    if(!table)continue;
+    if(count)count.textContent=filtered.length+' '+label+(filtered.length===1?'':'s');
+    const html=filtered.length?filtered.map(p=>'<tr title="'+esc([p.company,p.role,p.manager].filter(Boolean).join(' • '))+'"><td><div class="person-name"><span class="presence-dot '+type+'" aria-hidden="true"></span><span>'+esc(p.name)+'</span></div></td><td>'+esc(p.matricula||'—')+'</td><td>'+esc(p.cdc||'—')+'</td></tr>').join(''):
+      '<tr><td colspan="3"><div class="empty">Nenhum colaborador '+label+' para este dia.</div></td></tr>';
     if(table.innerHTML!==html)table.innerHTML=html;
   }
+  const pending=rows.filter(x=>x.pending),box=document.getElementById('starsPendingPanel'),list=document.getElementById('pendingTable'),count=document.getElementById('pendingCount');
+  if(box)box.hidden=pending.length===0;
+  if(count)count.textContent=pending.length+' pendente'+(pending.length===1?'':'s');
+  if(list)list.innerHTML=pending.map(p=>'<span class="stars-pending-person">'+esc(p.name)+' <small>• '+esc(p.matricula||'—')+'</small></span>').join('');
 }
 function renderLastUpdate(){
   const status=document.getElementById('liveFooterStatus'),last=document.getElementById('lastUpdate');
