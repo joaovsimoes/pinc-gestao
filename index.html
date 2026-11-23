@@ -35,7 +35,7 @@
 .pinc-calendar-gate-card p{font-size:13px;line-height:1.7;color:#6d778b;margin:0 0 11px}
 .pinc-calendar-gate-card .btn-close{width:100%;height:44px;margin-top:16px;border:0;border-radius:12px;background:linear-gradient(110deg,#7417ff,#9b4eff);color:#fff;font-weight:800}
 </style>
-<link rel="stylesheet" href="/pinc-home.css?v=20261123-icon-transparent-2">
+<link rel="stylesheet" href="/pinc-home.css?v=20261123-window-fit-3">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -134,7 +134,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
 <script src="management-access.js?v=20261008-2"></script>
 <script src="portal-access.js?v=20261120-matricula-1"></script>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261009-registros-1',facilitador:'facilitador.html?v=20261123-date-1',stars:'stars.html?v=20261123-date-1'};
+const PINC_MODULES={gestao:'gestao.html?v=20261123-calendar-month-1',facilitador:'facilitador.html?v=20261123-date-1',stars:'stars.html?v=20261123-date-1'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
