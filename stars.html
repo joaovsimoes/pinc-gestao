@@ -318,7 +318,10 @@ function peopleRows(){
       if(Object.prototype.hasOwnProperty.call(attendance,day)){
         if(attendance[day]==='present')present=true;
         else if(attendance[day]==='absent')present=false;
-        else{present=false;pending=true}
+        else if(selected.day===1&&attendance.schema!==2){
+          // Status legados já registrados na Gestão continuam válidos no Dia 1.
+          present=p.present!==false;
+        }else{present=false;pending=true}
       }else if(selected.day===2){
         // Dia 1 não confirma automaticamente a presença dos efetivos no Dia 2.
         present=false;pending=true;
