@@ -1,4 +1,4 @@
-/* Interface de importação de Stars (CSV/XLSX). Os dados só são gravados após prévia e confirmação. */
+/* Interface de importação de integrantes do Acolhe+ (CSV/XLSX). Os dados só são gravados após prévia e confirmação. */
 (() => {
   'use strict';
   const MAX_ROWS=2000;
@@ -18,10 +18,10 @@
     const status=el('pincStarImportStatus');
     if(status){status.hidden=false;status.textContent='Escolha uma planilha para visualizar os registros antes de importar.';}
     const btn=el('pincStarConfirm');
-    if(btn){btn.disabled=true;btn.textContent='Importar Stars válidos';}
+    if(btn){btn.disabled=true;btn.textContent='Importar cadastros válidos';}
   }
   function toggle(force){
-    if(managementLevel()<4)return toast('Seu perfil não pode importar Stars.');
+    if(managementLevel()<4)return toast('Seu perfil não pode importar integrantes do Acolhe+.');
     const box=el('pincStarImportPanel');
     if(!box)return;
     box.hidden=typeof force==='boolean'?!force:!box.hidden;
@@ -31,7 +31,7 @@
     const header='Nome;Matrícula;CDC;Localidade\n';
     const blob=new Blob(['\uFEFF'+header],{type:'text/csv;charset=utf-8'});
     const url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download='modelo-importacao-stars-pinc.csv';
+    a.href=url;a.download='modelo-importacao-acolhemais-pinc.csv';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),3000);
   }
@@ -88,7 +88,7 @@
       const row=rows[i]||[];
       if(row.every(v=>!cell(v)))continue;
       actual++;
-      if(actual>MAX_ROWS)throw new Error('A planilha excede '+MAX_ROWS+' linhas de Stars. Separe a base em planilhas menores.');
+      if(actual>MAX_ROWS)throw new Error('A planilha excede '+MAX_ROWS+' linhas de integrantes do Acolhe+. Separe a base em planilhas menores.');
       const name=cell(row[head.name]),matricula=cell(row[head.matricula]),cdc=cell(row[head.cdc]);
       const rawLoc=head.location>=0?cell(row[head.location]):'';
       const loc=resolveLocation(rawLoc);
@@ -129,11 +129,11 @@
       '<p class="pinc-star-import-clear">✓ Nenhum erro ou duplicidade encontrado na planilha.</p>';
     target.innerHTML='<div class="pinc-star-import-file"><strong>'+safe(fileName)+'</strong><span>'+candidate.length+' matrícula(s) nova(s) pronta(s) para importação</span></div>'+summary+body+
       (invalid.length?'<p class="pinc-star-import-warning">Corrija as linhas com erros e selecione a planilha novamente para liberar a importação. Matrículas já cadastradas ou repetidas serão ignoradas.</p>':
-        '<p class="pinc-star-import-help">A confirmação adicionará somente os Stars novos, sem apagar ou alterar os cadastros atuais.</p>');
+        '<p class="pinc-star-import-help">A confirmação adicionará somente os integrantes novos do Acolhe+, sem apagar ou alterar os cadastros atuais.</p>');
     target.hidden=false;
     const status=el('pincStarImportStatus');
     if(status){status.hidden=true;}
-    if(button){button.disabled=invalid.length>0||candidate.length===0;button.textContent='Importar '+candidate.length+' Star'+(candidate.length===1?'':'s');}
+    if(button){button.disabled=invalid.length>0||candidate.length===0;button.textContent='Importar '+candidate.length+' cadastro'+(candidate.length===1?'':'s');}
   }
   async function loaded(input){
     const file=input?.files?.[0];
@@ -173,15 +173,15 @@
     if(busy||!candidate.length||invalid.length)return;
     const locs=new Set(candidate.map(x=>x.location));
     const body='<p class="dialog-message">Confirma a inclusão de <strong>'+candidate.length+
-      ' Star(s)</strong> em '+locs.size+' localidade(s)? Cadastros existentes serão preservados e matrículas duplicadas ignoradas.</p>';
+      ' cadastro(s)</strong> em '+locs.size+' localidade(s)? Cadastros existentes serão preservados e matrículas duplicadas ignoradas.</p>';
     // The import panel lives outside the shared modal; use that modal only for confirmation.
-    openDialog('Confirmar importação de Stars',body,
+    openDialog('Confirmar importação de integrantes do Acolhe+',body,
       '<button type="button" class="btn secondary" onclick="closeModal()">Voltar</button>'+
       '<button type="button" class="btn primary" id="pincStarSubmitConfirm" onclick="PINC_STARS_IMPORT.submit()">Confirmar importação</button>');
   }
   async function submit(){
     if(busy||invalid.length||!candidate.length)return;
-    if(managementLevel()<4)return toast('Sem permissão para importar Stars.');
+    if(managementLevel()<4)return toast('Sem permissão para importar integrantes do Acolhe+.');
     busy=true;
     const button=el('pincStarSubmitConfirm');
     if(button){button.disabled=true;button.textContent='Importando...';}
@@ -190,12 +190,12 @@
       const result=await window.PINC_STAR_REGISTRY.importBulk(data);
       closeModal();
       toggle(false);
-      const desc=result.imported+' Star(s) incluído(s) no cadastro online.'+
+      const desc=result.imported+' cadastro(s) incluído(s) no cadastro online.'+
         (result.skipped?' '+result.skipped+' matrícula(s) ignorada(s) por já existir(em).':'');
       successDialog('Importação concluída',desc);
     }catch(error){
       if(button){button.disabled=false;button.textContent='Tentar novamente';}
-      toast(error.message||'Não foi possível importar Stars.');
+      toast(error.message||'Não foi possível importar integrantes do Acolhe+.');
       const status=el('pincStarImportStatus');
       if(status){status.hidden=false;status.classList.add('is-error');status.textContent=error.message||'Não foi possível importar.';}
       // Keep source/preview for correction or retry.
