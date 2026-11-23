@@ -159,7 +159,7 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
 <script src="management-access.js?v=20261008-2"></script>
 <script src="portal-access.js?v=20261120-matricula-1"></script>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261123-calendar-month-1',facilitador:'facilitador.html?v=20261123-date-1',stars:'stars.html?v=20261123-date-1'};
+const PINC_MODULES={gestao:'gestao.html?v=20261123-notices-1',facilitador:'facilitador.html?v=20261123-finish-notices-1',stars:'stars.html?v=20261123-notices-1'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
@@ -219,7 +219,6 @@ async function initPincFacilitatorEvents(){
     const auth=firebase.auth();
     if(!auth.currentUser)await auth.signInAnonymously();
     const db=firebase.firestore(),listenSince=Date.now();
-    let firstSnapshot=true;
     pincFacEventsUnsub=db.collection('pincLocks').where('type','==','facilitatorEvent').onSnapshot(snapshot=>{
       const recent=snapshot.docs.map(doc=>({id:doc.id,event:doc.data()||{}}))
         .filter(x=>x.event.location==='Anápolis'&&Number(x.event.createdAtMillis||0)>Date.now()-14*86400000)
@@ -233,7 +232,8 @@ async function initPincFacilitatorEvents(){
         pincFacUnread++;
         pincShowFacilitatorNotice(pincFacTitle(item.event),item.event.body||('Etapa: '+(item.event.stageName||'PINC')),item.id);
       }
-      pincFacEventsReady=true;firstSnapshot=false;
+      pincFacEventsReady=true;
+      if(!document.getElementById('pincNotificationPanel')?.hidden)pincFacUnread=0;
       pincRenderNotifications();
     },err=>{
       console.warn('Avisos do Facilitador - conexão',err);
