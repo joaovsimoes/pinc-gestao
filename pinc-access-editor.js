@@ -3,6 +3,7 @@
   'use strict';
   let selectedId=null;
   let draftPhoto='',uploadBusy=false,saveBusy=false;
+  let quickPhotoId=null,quickBusy=false;
   const byId=id=>document.getElementById(id);
   const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[char]));
   const photoOk=value=>typeof value==='string'&&value.length<60000&&/^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(value);
@@ -47,7 +48,7 @@
     const name=String(user.name||user.username||'Usuário').trim();
     const inputHTML='<div class="pinc-access-editor">'+
       '<div class="pinc-access-photo-row"><div id="pincAccessEditAvatar" class="pinc-access-photo-preview">'+photoMarkup(user)+'</div>'+
-        '<div class="pinc-access-photo-info"><strong>Foto de perfil</strong><p>Aparece no menu, nas notificações e na lista de usuários. Arquivos JPG, PNG ou WebP de até 5 MB.</p>'+
+        '<div class="pinc-access-photo-info"><strong>Foto de perfil</strong><p>Aparece no menu, nas notificações e na lista de usuários. Arquivos JPG, PNG ou WebP de até 5 MB. Selecione a foto e depois clique em Salvar alterações.</p>'+
         '<div class="pinc-access-photo-buttons"><label class="btn secondary" for="pincAccessEditFile">Escolher foto</label>'+
         '<input type="file" id="pincAccessEditFile" accept="image/jpeg,image/png,image/webp" onchange="PINC_ACCESS_EDITOR.upload(this)">'+
         '<button type="button" class="btn secondary" id="pincAccessRemovePhoto" onclick="PINC_ACCESS_EDITOR.removePhoto()" '+(draftPhoto?'':'disabled')+'>Remover foto</button></div></div></div>'+
@@ -133,7 +134,11 @@
       if(accessLevel(original)>=5&&meta.level<5&&latest.filter(x=>accessLevel(x)>=5&&x.active!==false).length<=1)
         throw new Error('Não é possível rebaixar o último usuário Master ativo.');
       const updated={...original,name,email,username,profile,level:meta.level,profileName:meta.name,location,photo:draftPhoto};
-      const results=await window.PINC_ACCESS.upsert(updated);
+      await window.PINC_ACCESS.upsert(updated);
+      const results=await window.PINC_ACCESS.load({migrate:false});
+      const confirmed=results.find(x=>String(x.id)===String(original.id));
+      if(!confirmed)throw new Error('Não foi possível confirmar a atualização do usuário na base online.');
+      if((confirmed.photo||'')!==draftPhoto)throw new Error('A foto não foi confirmada na base online. Selecione a imagem novamente e tente salvar.');
       S.accesses=results;
       window.PINC_PROFILE?.sync(results);
       const logged=managementAuth();
@@ -155,5 +160,50 @@
       if(button){button.disabled=false;button.textContent='Salvar alterações';}
     }
   }
-  window.PINC_ACCESS_EDITOR={open,upload,removePhoto,refreshPhoto:previewPhoto,save};
+
+  function quickPick(index){
+    if(quickBusy)return;
+    const account=records()[index];
+    if(!account||!canManageAccessRecord(account))return toast('Sem permissão para alterar a foto deste usuário.');
+    const input=byId('pincAccountQuickPhotoFile');
+    if(!input)return toast('O seletor de foto não está disponível. Atualize a página.');
+    quickPhotoId=String(account.id);
+    input.value='';
+    input.click();
+  }
+  async function quickUpload(input){
+    const file=input?.files?.[0];
+    if(input)input.value='';
+    if(!file||quickBusy||!quickPhotoId)return;
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type))
+      return toast('Escolha uma foto JPG, PNG ou WebP.');
+    if(file.size>5*1024*1024)return toast('A foto deve ter no máximo 5 MB.');
+    const id=quickPhotoId;
+    quickBusy=true;
+    try{
+      if(!window.PINC_PROFILE?.preparePhoto)throw new Error('O editor de imagens não está disponível. Atualize a página.');
+      const photo=await window.PINC_PROFILE.preparePhoto(file);
+      if(!photoOk(photo))throw new Error('Não foi possível preparar a foto.');
+      const latest=await window.PINC_ACCESS.load({migrate:false});
+      const account=latest.find(x=>String(x.id)===id);
+      if(!account||!canManageAccessRecord(account))throw new Error('Não foi possível localizar esse acesso para alterar a foto.');
+      await window.PINC_ACCESS.upsert({...account,photo});
+      const verified=await window.PINC_ACCESS.load({migrate:false});
+      const saved=verified.find(x=>String(x.id)===id);
+      if(!saved||saved.photo!==photo)
+        throw new Error('A foto ainda não foi confirmada na base online. Tente novamente.');
+      S.accesses=verified;
+      window.PINC_PROFILE?.sync(verified);
+      renderSettingsLists();
+      successDialog('Foto salva com sucesso','A imagem de '+String(saved.name||saved.username||'usuário')+' foi gravada e já pode ser visualizada na lista e nos avatares do PINC.');
+    }catch(error){
+      console.warn('PINC quick profile photo',error?.message||error);
+      toast(error?.message||'Não foi possível atualizar a foto.');
+    }finally{
+      quickBusy=false;
+      quickPhotoId=null;
+    }
+  }
+
+  window.PINC_ACCESS_EDITOR={open,upload,removePhoto,refreshPhoto:previewPhoto,save,quickPick,quickUpload};
 })();
