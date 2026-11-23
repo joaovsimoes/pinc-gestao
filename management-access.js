@@ -104,13 +104,14 @@
       millis(a) - millis(b) || String(a._documentId).localeCompare(String(b._documentId)));
     const records = new Map();
     const photoUpdates = new Map();
+    const photoOverrides = new Map();
     const photoPattern = /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i;
     const normalizePhoto = value => typeof value === 'string' &&
       value.length < 60000 && photoPattern.test(value) ? value : '';
-    const trackPhotos = accounts => {
+    const trackPhotos = (accounts, target = photoUpdates) => {
       for (const account of accounts) {
         if (!account || !account.id || !Object.prototype.hasOwnProperty.call(account, 'photo')) continue;
-        photoUpdates.set(String(account.id), normalizePhoto(account.photo));
+        target.set(String(account.id), normalizePhoto(account.photo));
       }
     };
     let migrated = false;
@@ -127,14 +128,19 @@
         for (const account of row.accesses) if (account && !legacy(account)) records.set(keyOf(account), account);
         trackPhotos(row.accesses);
       } else if (row.operation?.kind === 'photo') {
-        trackPhotos(row.accesses);
+        trackPhotos(row.accesses, photoOverrides);
       } else if (row.operation?.kind === 'delete') {
         records.delete(String(row.operation.id));
         photoUpdates.delete(String(row.operation.id));
+        photoOverrides.delete(String(row.operation.id));
       }
       if (row.schemaVersion === 2) migrated = true;
     }
     for (const [id, photo] of photoUpdates) {
+      if (records.has(id)) records.set(id, { ...records.get(id), photo });
+    }
+    // An explicitly uploaded photo must not be reset by an unrelated user edit.
+    for (const [id, photo] of photoOverrides) {
       if (records.has(id)) records.set(id, { ...records.get(id), photo });
     }
     return { exists: rows.length > 0, records: [...records.values()].map(enrich) };
