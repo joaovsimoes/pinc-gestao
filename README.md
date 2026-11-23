@@ -6,7 +6,7 @@ Portal integrado do Programa de Integração de Novos Colaboradores.
 - `index.html` — página inicial e navegação
 - `gestao.html` — módulo Gestão
 - `facilitador.html` — módulo Facilitador
-- `stars.html` — módulo Stars
+- `stars.html` — módulo Acolhe+
 - `firebase.json` — configuração do Firebase Hosting
 
 Firebase Project ID: `pinc-gestao`
