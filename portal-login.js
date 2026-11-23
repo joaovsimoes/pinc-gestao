@@ -103,8 +103,15 @@
     busy=true;if(button){button.disabled=true;button.textContent='Verificando CDC...'}
     if(err)err.textContent='Verificando os colaboradores presentes e pendentes...';
     try{
-      const matches=await loadPendingForCdc(cdc);
-      if(!matches.length){if(err)err.textContent='';showEmpty(cdc);return}
+      const allMatches=await loadPendingForCdc(cdc);
+      if(!allMatches.length){if(err)err.textContent='';showEmpty(cdc);return}
+      const openLocations=await window.PINC_DATES.openLocations();
+      const matches=allMatches.filter(m=>openLocations.includes(m.location));
+      if(!matches.length){
+        window.PINC_CLOSE_STAR_LOGIN();
+        window.PINC_SHOW_CALENDAR_CLOSED('stars',allMatches.length===1?allMatches[0].location:'',false);
+        return;
+      }
       if(matches.length===1){authorize(cdc,matches[0].location,matches[0].count);return}
       // Havendo o mesmo CDC em duas localidades, não se escolhe uma automaticamente.
       const select=document.getElementById('portalStarLocation'),
@@ -133,6 +140,11 @@
       const matches=await loadPendingForCdc(pending.cdc);
       const found=matches.find(m=>m.location===location);
       if(!found){showEmpty(pending.cdc);return}
+      if(!await window.PINC_DATES.allowed(location)){
+        window.PINC_CLOSE_STAR_LOGIN();
+        window.PINC_SHOW_CALENDAR_CLOSED('stars',location,false);
+        return;
+      }
       authorize(pending.cdc,location,found.count);
     }catch(e){
       const err=document.getElementById('portalStarLocationError');
@@ -143,6 +155,7 @@
     if(role==='star'){
       const session=window.PINC_PORTAL_USER?.star;
       if(!session?.cdc||!session.location)throw new Error('STAR_CDC_INVALID');
+      if(!await window.PINC_DATES.allowed(session.location)){window.PINC_PORTAL_USER.star=null;throw new Error('STAR_PINC_DATE_CLOSED')}
       const matches=await loadPendingForCdc(normalizeCdc(session.cdc));
       const match=matches.find(x=>x.location===session.location);
       if(!match){window.PINC_PORTAL_USER.star=null;throw new Error('STAR_CDC_NO_PENDING')}
@@ -159,6 +172,6 @@
   window.PINC_SHOW_PORTAL_LOGIN=role=>role==='star'?window.PINC_SHOW_STAR_LOGIN():window.PINC_DO_LAUNCH('facilitador');
   window.PINC_CLOSE_PORTAL_LOGIN=window.PINC_CLOSE_STAR_LOGIN;
   const direct=new URLSearchParams(window.location.search).get('portal');
-  if(direct==='star')window.PINC_SHOW_STAR_LOGIN();
+  if(direct==='star')window.PINC_GATE_ACCESS('stars').then(ok=>{if(ok)window.PINC_SHOW_STAR_LOGIN()});
   else if(direct==='host')window.PINC_DO_LAUNCH('facilitador');
 })();
