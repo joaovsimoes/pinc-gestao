@@ -307,6 +307,7 @@
 <link rel="stylesheet" href="pinc-agenda-export.css?v=20261123-3">
 <link rel="stylesheet" href="pinc-management-polish.css?v=20261123-5">
 <link rel="stylesheet" href="pinc-navigation.css?v=20261123-profile-1">
+<link rel="stylesheet" href="pinc-access-editor.css?v=20261123-users-1">
 </head><body>
 <div class="app">
 <aside class="sidebar">
@@ -498,7 +499,8 @@
 <script src="pinc-agenda-export.js?v=20261123-3"></script>
 <script src="pinc-calendar-extras.js?v=20261123-5"></script>
 <script src="pinc-stars-import.js?v=20261123-acolheplus-1"></script>
-<script src="pinc-user-profile.js?v=20261123-profile-1"></script>
+<script src="pinc-user-profile.js?v=20261123-users-1"></script>
+<script src="pinc-access-editor.js?v=20261123-users-1"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
@@ -1459,8 +1461,8 @@ function renderSettingsLists(){
   if(g('accessList')){
     const rows=(S.accesses||[]).map((u,i)=>({u,i})).filter(({u})=>isMaster()||(u.location===auth.location&&accessLevel(u)<=level));
     g('accessList').innerHTML=rows.length?rows.map(({u,i})=>{
-      const meta=MANAGEMENT_PROFILES[accessProfile(u)],name=String(u.name||u.username||'Responsável'),parts=name.trim().split(/\s+/),initials=((parts[0]?.[0]||'')+(parts.length>1?parts[parts.length-1][0]:'')).toUpperCase();
-      return `<div class="compact-row access-row"><div class="access-identity"><div class="access-avatar" aria-hidden="true">${esc(initials)}</div><div><strong>${esc(name)}</strong><div class="access-meta"><span>${esc(u.username||'—')}</span><span>${esc(u.location||'—')}</span></div>${u.email?`<span class="access-email">${esc(u.email)}</span>`:''}</div></div><div class="settings-row-actions"><span class="tag">${meta.name} · ${meta.level}</span><span class="status ${u.active?'green':'red'}">${u.active?'Ativo':'Inativo'}</span></div><div class="settings-row-actions"><button class="access-action" title="Redefinir senha" aria-label="Redefinir senha de ${esc(name)}" onclick="resetAccessPassword(${i})">Senha</button><button class="access-action" aria-label="${u.active?'Desativar':'Ativar'} acesso de ${esc(name)}" onclick="toggleAccess(${i})">${u.active?'Desativar':'Ativar'}</button><button class="icon-btn delete" title="Excluir acesso" aria-label="Excluir acesso de ${esc(name)}" onclick="removeAccess(${i})">${settingsTrashIcon()}</button></div></div>`;
+      const meta=MANAGEMENT_PROFILES[accessProfile(u)],name=String(u.name||u.username||'Responsável'),parts=name.trim().split(/\s+/),initials=((parts[0]?.[0]||'')+(parts.length>1?parts[parts.length-1][0]:'')).toUpperCase(),photo=typeof u.photo==='string'&&u.photo.length<60000&&/^data:image\/(?:jpeg|png|webp);base64,[a-z0-9+/=]+$/i.test(u.photo)?u.photo:'';
+      return `<div class="compact-row access-row"><div class="access-identity"><div class="access-avatar" aria-hidden="true">${photo?`<img class="access-photo" src="${photo}" alt="">`:esc(initials)}</div><div><strong>${esc(name)}</strong><div class="access-meta"><span>${esc(u.username||'—')}</span><span>${esc(u.location||'—')}</span></div>${u.email?`<span class="access-email">${esc(u.email)}</span>`:''}</div></div><div class="settings-row-actions"><span class="tag">${meta.name} · ${meta.level}</span><span class="status ${u.active?'green':'red'}">${u.active?'Ativo':'Inativo'}</span></div><div class="settings-row-actions"><button class="access-action access-edit-btn" title="Editar dados e foto de perfil" aria-label="Editar cadastro de ${esc(name)}" onclick="PINC_ACCESS_EDITOR.open(${i})">Editar</button><button class="access-action" title="Redefinir senha" aria-label="Redefinir senha de ${esc(name)}" onclick="resetAccessPassword(${i})">Senha</button><button class="access-action" aria-label="${u.active?'Desativar':'Ativar'} acesso de ${esc(name)}" onclick="toggleAccess(${i})">${u.active?'Desativar':'Ativar'}</button><button class="icon-btn delete" title="Excluir acesso" aria-label="Excluir acesso de ${esc(name)}" onclick="removeAccess(${i})">${settingsTrashIcon()}</button></div></div>`;
     }).join(''):'<p class="settings-help">Nenhum acesso disponível para este perfil.</p>';
   }
   updateNotificationStatus();
