@@ -42,7 +42,11 @@
     const record=accesses.find(x=>String(x.id)===String(u.id))||
       accesses.find(x=>String(x.username||'').toLowerCase()===String(u.username||'').toLowerCase());
     if(record){
-      const next={...u,name:record.name||u.name,photo:verifiedPhoto(record.photo),profileName:record.profileName||u.profileName};
+      const next={...u,
+        name:record.name||u.name,username:record.username||u.username,
+        location:record.location||u.location,profile:record.profile||u.profile,
+        level:Number(record.level||u.level),profileName:record.profileName||u.profileName,
+        photo:verifiedPhoto(record.photo)};
       window.parent.PINC_AUTH_USER=next;
     }
     render();
