@@ -157,9 +157,9 @@ try{firebase.initializeApp(window.PINC_FIREBASE_CONFIG);if(firebase.analytics)fi
   </div>
 </div>
 <script src="management-access.js?v=20261008-2"></script>
-<script src="portal-access.js?v=20261120-matricula-1"></script>
+<script src="portal-access.js?v=20261123-acolheplus-1"></script>
 <script>
-const PINC_MODULES={gestao:'gestao.html?v=20261123-attendance-1',facilitador:'facilitador.html?v=20261123-finish-notices-1',stars:'stars.html?v=20261123-attendance-1'};
+const PINC_MODULES={gestao:'gestao.html?v=20261123-acolheplus-1',facilitador:'facilitador.html?v=20261123-finish-notices-1',stars:'stars.html?v=20261123-acolheplus-1'};
 window.PINC_NOTIFICATION_PERMISSION=function(){return 'Notification'in window?Notification.permission:'unsupported'};
 window.PINC_REQUEST_NOTIFICATIONS=async function(){if(!('Notification'in window))return'unsupported';try{return Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){return'blocked'}};
 window.PINC_NOTIFY=function(title,body,tag){if(!('Notification'in window)||Notification.permission!=='granted')return false;try{new Notification(title,{body,tag,renotify:false});return true}catch(e){return false}};
@@ -338,4 +338,4 @@ pincLoadAccessesFromCloud().then(()=>pincRestoreRememberedAccess()).catch(e=>con
     titlebarLogo.appendChild(logo);
   }
 })();
-</script><script src="portal-login.js?v=20261123-date-1"></script><script src="pinc-home.js?v=20261003-slides"></script></body></html>
+</script><script src="portal-login.js?v=20261123-acolheplus-1"></script><script src="pinc-home.js?v=20261123-acolheplus-1"></script></body></html>
