@@ -98,22 +98,44 @@
   function decode(snapshot) {
     const rows = snapshot.docs.map(doc => ({ ...doc.data(), _documentId: doc.id }));
     const millis = row => row.updatedAt?.toMillis?.() || Number(row.updatedAtMillis || 0);
-    rows.sort((a, b) => millis(a) - millis(b) || String(a._documentId).localeCompare(String(b._documentId)));
-    let records = new Map();
+    // Older full snapshots form a baseline, not a later override of v2 events.
+    const generation = row => row.schemaVersion === 2 && row.operation ? 1 : 0;
+    rows.sort((a, b) => generation(a) - generation(b) ||
+      millis(a) - millis(b) || String(a._documentId).localeCompare(String(b._documentId)));
+    const records = new Map();
+    const photoUpdates = new Map();
+    const photoPattern = /^data:image\/(?:png|jpeg|webp);base64,[a-z0-9+/=]+$/i;
+    const normalizePhoto = value => typeof value === 'string' &&
+      value.length < 60000 && photoPattern.test(value) ? value : '';
+    const trackPhotos = accounts => {
+      for (const account of accounts) {
+        if (!account || !account.id || !Object.prototype.hasOwnProperty.call(account, 'photo')) continue;
+        photoUpdates.set(String(account.id), normalizePhoto(account.photo));
+      }
+    };
     let migrated = false;
     for (const row of rows) {
       if (!Array.isArray(row.accesses)) continue;
       if (!row.operation && !migrated) {
-        // Compatibility with the previous full-registry snapshots.
-        records = new Map(row.accesses.filter(u => u && !legacy(u)).map(u => [keyOf(u), u]));
+        records.clear();
+        for (const account of row.accesses) if (account && !legacy(account)) records.set(keyOf(account), account);
       } else if (row.operation?.kind === 'seed') {
-        if (!records.size && rows.indexOf(row) === 0) {
-          for (const u of row.accesses) if (u && !legacy(u)) records.set(keyOf(u), u);
+        if (!records.size) {
+          for (const account of row.accesses) if (account && !legacy(account)) records.set(keyOf(account), account);
         }
       } else if (row.operation?.kind === 'upsert') {
-        for (const u of row.accesses) if (u && !legacy(u)) records.set(keyOf(u), u);
-      } else if (row.operation?.kind === 'delete') records.delete(String(row.operation.id));
+        for (const account of row.accesses) if (account && !legacy(account)) records.set(keyOf(account), account);
+        trackPhotos(row.accesses);
+      } else if (row.operation?.kind === 'photo') {
+        trackPhotos(row.accesses);
+      } else if (row.operation?.kind === 'delete') {
+        records.delete(String(row.operation.id));
+        photoUpdates.delete(String(row.operation.id));
+      }
       if (row.schemaVersion === 2) migrated = true;
+    }
+    for (const [id, photo] of photoUpdates) {
+      if (records.has(id)) records.set(id, { ...records.get(id), photo });
     }
     return { exists: rows.length > 0, records: [...records.values()].map(enrich) };
   }
