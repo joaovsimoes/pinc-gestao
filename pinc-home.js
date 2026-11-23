@@ -6,7 +6,7 @@
   const slides = [
     { kicker: 'Integração que conecta', heading: 'Tudo para o PINC', accent: 'em um só lugar', description: 'Gerencie, conduza e acompanhe cada etapa do programa de integração\nde forma simples, organizada e em tempo real.' },
     { kicker: 'Acompanhamento em tempo real', heading: 'Cada etapa.', accent: 'Sempre no ritmo certo.', description: 'Acompanhe horários, etapas, participantes e acolhimentos\nenquanto o PINC acontece.' },
-    { kicker: 'Uma experiência conectada', heading: 'Gestão, Facilitadores e Stars', accent: 'falando a mesma língua.', description: 'Uma única plataforma conectando quem organiza,\nquem conduz e quem acompanha cada jornada do PINC.' }
+    { kicker: 'Uma experiência conectada', heading: 'Gestão, Facilitadores e Acolhe+', accent: 'falando a mesma língua.', description: 'Uma única plataforma conectando quem organiza,\nquem conduz e quem acompanha cada jornada do PINC.' }
   ];
   const dots = [...home.querySelectorAll('.slide-dot')];
   const backgrounds = [...home.querySelectorAll('.home-backdrop')];
