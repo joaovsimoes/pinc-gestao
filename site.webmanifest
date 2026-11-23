@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Programa de Integração de Novos Colaboradores",
+  "name": "PINC",
   "short_name": "PINC",
   "description": "Programa de Integração de Novos Colaboradores",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f6f7fb",
-  "theme_color": "#7417ff",
+  "background_color": "#ffffff",
+  "theme_color": "#090909",
   "icons": [
     {
       "src": "/pinc-icon-192.png?v=5",
@@ -33,5 +33,9 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
   ]
 }
