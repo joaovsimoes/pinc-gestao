@@ -1,0 +1,44 @@
+/* Gestão PINC: edição de usuários e imagens de perfil */
+#configuracoes .access-row{grid-template-columns:minmax(220px,1fr) auto auto;gap:13px;padding:15px 0}
+#configuracoes .access-row .access-identity{gap:12px;min-width:0}
+#configuracoes .access-avatar{overflow:hidden;position:relative;width:44px;height:44px;flex:0 0 44px;border:1px solid #eadbff;background:#f2eafb;color:#7038b9}
+#configuracoes .access-avatar .access-photo{width:100%;height:100%;object-fit:cover;display:block}
+#configuracoes .access-row>.settings-row-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;justify-content:flex-end;min-width:0}
+#configuracoes .access-row>.settings-row-actions .tag,#configuracoes .access-row>.settings-row-actions .status{white-space:nowrap}
+#configuracoes .access-action{min-height:34px;transition:background-color .14s ease,border-color .14s ease}
+#configuracoes .access-edit-btn{color:#6b27db!important;background:#f7f1ff!important;border-color:#e5d4ff!important;font-weight:850!important}
+#configuracoes .access-edit-btn:hover{color:#4b139c!important;background:#eee1ff!important}
+#modal .modal:has(.pinc-access-editor){width:min(690px,100%);max-height:min(92vh,850px)}
+.pinc-access-editor{display:grid;gap:17px}
+.pinc-access-photo-row{display:flex;align-items:center;gap:17px;padding:15px;background:#faf8ff;border:1px solid #ebe3f8;border-radius:14px}
+.pinc-access-photo-preview{width:82px;height:82px;flex:0 0 82px;border-radius:50%;background:linear-gradient(140deg,#a678fb,#7131c7);border:3px solid #e9d9ff;overflow:hidden;display:grid;place-items:center;font-size:25px;font-weight:850;color:#fff}
+.pinc-access-photo-preview .access-photo{width:100%;height:100%;object-fit:cover;display:block}
+.pinc-access-photo-info{min-width:0;flex:1}
+.pinc-access-photo-info>strong{font-size:13px;color:#2d3449}
+.pinc-access-photo-info>p{font-size:11px;line-height:1.5;color:#758196;margin:5px 0 10px}
+.pinc-access-photo-buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pinc-access-photo-buttons>.btn{min-height:35px;font-size:11px;cursor:pointer;padding:8px 12px}
+#pincAccessEditFile{display:none!important}
+.pinc-access-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pinc-access-form-grid .field{min-width:0;display:flex;flex-direction:column;gap:7px;font-size:11px;font-weight:850;color:#576179}
+.pinc-access-form-grid .field.full{grid-column:span 2}
+.pinc-access-form-grid .field input,.pinc-access-form-grid .field select{width:100%;height:43px;padding:0 12px;border:1px solid #e0e4ee;border-radius:10px;background:#fff;color:#273348;font-size:12px;outline:none}
+.pinc-access-form-grid .field input:focus,.pinc-access-form-grid .field select:focus{border-color:#a978fa;box-shadow:0 0 0 3px rgba(116,23,255,.08)}
+.pinc-access-form-grid .field select:disabled{background:#f6f7fa;color:#8a93a5}
+.pinc-access-editor-note{margin:0;border:1px solid #e9e9f1;background:#f9fafe;border-radius:10px;padding:10px 12px;color:#728099;font-size:11px;line-height:1.6}
+.pinc-access-editor-error{margin:0;color:#bc3854;border:1px solid #f2d5dc;background:#fff5f7;padding:10px 12px;border-radius:9px;font-size:11px;line-height:1.5}
+.pinc-access-editor-error[hidden]{display:none}
+@media(max-width:1190px){
+  #configuracoes .access-row{grid-template-columns:minmax(190px,1fr) auto;gap:11px}
+  #configuracoes .access-row>.settings-row-actions:nth-child(2){grid-column:2}
+  #configuracoes .access-row>.settings-row-actions:nth-child(3){grid-column:1/-1;justify-content:flex-end;padding-top:5px}
+}
+@media(max-width:720px){
+  #configuracoes .access-row{grid-template-columns:1fr;gap:10px;padding:14px 0}
+  #configuracoes .access-row>.settings-row-actions:nth-child(2),#configuracoes .access-row>.settings-row-actions:nth-child(3){grid-column:1;justify-content:flex-start}
+  #configuracoes .access-row>.settings-row-actions:nth-child(3){padding-top:2px}
+  .pinc-access-photo-row{padding:12px;gap:12px}
+  .pinc-access-photo-preview{width:68px;height:68px;flex-basis:68px;font-size:21px}
+  .pinc-access-form-grid{grid-template-columns:1fr}
+  .pinc-access-form-grid .field.full{grid-column:auto}
+}
