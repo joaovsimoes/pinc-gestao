@@ -37,6 +37,8 @@
     active:()=>here().filter(x=>x.name&&x.matricula&&x.cdc),
     find:id=>here().find(x=>x.id===id)||null,
     all:here,
+    allLocations:()=>entries.slice(),
+    importBulk,
     refresh
   };
   window.renderPortalRegistrations=function(){
@@ -108,6 +110,60 @@
     }catch(e){toast(firebaseMessage(e))}
     finally{busy=false;if(button){button.disabled=false;button.textContent='Salvar Star'}}
   };
+  // A importação escreve documentos no mesmo cadastro usado pelas telas Stars e Acolhimento.
+  // A base é relida do servidor antes da escrita e cada matrícula deve ser única por localidade.
+  async function importBulk(items){
+    if(busy)throw new Error('Outra operação de cadastro está em andamento.');
+    if(managementLevel()<4)throw new Error('Seu perfil não possui permissão para importar Stars.');
+    if(!Array.isArray(items)||!items.length)throw new Error('Não existem Stars válidos para importar.');
+    if(items.length>2000)throw new Error('Limite de 2.000 Stars por importação. Divida a planilha em partes.');
+    busy=true;
+    let total=0,skipped=0;
+    try{
+      const conn=await database();
+      const existing=decode(await feed(conn).get({source:'server'}));
+      const keys=new Set(existing.map(x=>x.location+'|'+x.matricula.trim()));
+      const permitted=(S.locations||[]).map(x=>x.name);
+      const safe=[];
+      for(const item of items){
+        const name=String(item.name||'').trim(),matricula=String(item.matricula||'').trim();
+        const cdc=String(item.cdc||'').trim(),loc=String(item.location||'').trim();
+        if(!name||name.length>120||!matricula||matricula.length>30||!cdc||cdc.length>30||!/^\d+$/.test(cdc))
+          throw new Error('Há dados inválidos na planilha. Revise a prévia e importe novamente.');
+        if(!permitted.includes(loc))throw new Error('Localidade não cadastrada: '+loc);
+        if(!isMaster()&&loc!==location())throw new Error('Seu perfil só pode importar Stars da própria localidade.');
+        const key=loc+'|'+matricula;
+        if(keys.has(key)){skipped++;continue}
+        keys.add(key);
+        safe.push({name,matricula,cdc,location:loc});
+      }
+      if(!safe.length)return{imported:0,skipped};
+      const authUid=firebase.auth().currentUser?.uid;
+      if(!authUid)throw new Error('Autenticação online indisponível. Entre novamente no sistema.');
+      // No máximo 400 documentos por lote, abaixo do limite do Firestore.
+      for(let start=0;start<safe.length;start+=400){
+        const batch=conn.batch(),group=safe.slice(start,start+400);
+        const now=Date.now();
+        for(const [i,star] of group.entries()){
+          const ref=conn.collection('pincLocks').doc();
+          batch.set(ref,{type:KIND,ownerUid:authUid,id:ref.id,...star,updatedAtMillis:now+i});
+        }
+        try{await batch.commit();total+=group.length}
+        catch(error){
+          const message=firebaseMessage(error);
+          throw new Error(total
+            ?'Importação parcialmente concluída: '+total+' Star(s) gravado(s) antes da falha. Atualize a lista e reimporte a planilha; matrículas já existentes serão ignoradas. Detalhe: '+message
+            :message);
+        }
+      }
+      await refresh();
+      return{imported:total,skipped};
+    } finally {
+      busy=false;
+      // A consulta online do cadastro continua disponível mesmo após erros de importação.
+      refresh().catch(error=>console.warn('Stars: falha ao atualizar após importação',error));
+    }
+  }
   window.removeStarRegistration=function(id){
     if(managementLevel()<4)return;
     const star=here().find(x=>x.id===id);if(!star)return;
