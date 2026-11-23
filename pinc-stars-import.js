@@ -190,7 +190,7 @@
       const result=await window.PINC_STAR_REGISTRY.importBulk(data);
       closeModal();
       toggle(false);
-      const desc=result.imported+' cadastro(s) incluído(s) no cadastro online.'+
+      const desc=result.imported+' cadastro(s) incluído(s) na base do Acolhe+.'+
         (result.skipped?' '+result.skipped+' matrícula(s) ignorada(s) por já existir(em).':'');
       successDialog('Importação concluída',desc);
     }catch(error){
