@@ -133,8 +133,10 @@
         throw new Error('Seu perfil não pode executar esta alteração.');
       if(accessLevel(original)>=5&&meta.level<5&&latest.filter(x=>accessLevel(x)>=5&&x.active!==false).length<=1)
         throw new Error('Não é possível rebaixar o último usuário Master ativo.');
-      const updated={...original,name,email,username,profile,level:meta.level,profileName:meta.name,location,photo:draftPhoto};
+      const photoChanged=(original.photo||'')!==draftPhoto;
+      const updated={...original,name,email,username,profile,level:meta.level,profileName:meta.name,location};
       await window.PINC_ACCESS.upsert(updated);
+      if(photoChanged)await window.PINC_ACCESS.upsertPhoto(original.id,draftPhoto);
       const results=await window.PINC_ACCESS.load({migrate:false});
       const confirmed=results.find(x=>String(x.id)===String(original.id));
       if(!confirmed)throw new Error('Não foi possível confirmar a atualização do usuário na base online.');
@@ -187,7 +189,7 @@
       const latest=await window.PINC_ACCESS.load({migrate:false});
       const account=latest.find(x=>String(x.id)===id);
       if(!account||!canManageAccessRecord(account))throw new Error('Não foi possível localizar esse acesso para alterar a foto.');
-      await window.PINC_ACCESS.upsert({...account,photo});
+      await window.PINC_ACCESS.upsertPhoto(id,photo);
       const verified=await window.PINC_ACCESS.load({migrate:false});
       const saved=verified.find(x=>String(x.id)===id);
       if(!saved||saved.photo!==photo)
