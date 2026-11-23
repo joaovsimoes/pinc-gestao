@@ -439,10 +439,10 @@
   </table></div>
 </section>
 <section class="view" id="stars-cadastro">
-  <div class="page-head"><div><h2>Acolhe+</h2><p>Cadastre os integrantes do Acolhe+ com nome, matrícula, CDC e localidade vinculada.</p></div><div class="pinc-star-head-actions"><button type="button" class="btn secondary" id="pincStarImportOpen" onclick="PINC_STARS_IMPORT.toggle(true)">⇪ Importar base</button><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Acolhe+</button></div></div>
+  <div class="page-head"><div><h2>Acolhe+</h2><p>Cadastre os integrantes do Acolhe+ com nome, matrícula, CDC e localidade vinculada.</p></div><div class="pinc-star-head-actions"><button type="button" class="btn secondary" id="pincStarImportOpen" onclick="PINC_STARS_IMPORT.toggle(true)">⇪ Importar base</button><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar integrante</button></div></div>
    <section class="card pinc-star-import" id="pincStarImportPanel" hidden aria-label="Importação de Acolhe+ em lote">
      <div class="pinc-star-import-heading">
-       <div><h3>Importar base de Acolhe+</h3><p>Carregue uma planilha .xlsx, .xls ou .csv com Nome, Matrícula e CDC. A coluna Localidade é opcional e, quando vazia, utiliza a localidade selecionada. Somente Master pode importar para várias localidades.</p></div>
+       <div><h3>Importar integrantes do Acolhe+</h3><p>Carregue uma planilha .xlsx, .xls ou .csv com Nome, Matrícula e CDC. A coluna Localidade é opcional e, quando vazia, utiliza a localidade selecionada. Somente Master pode importar para várias localidades.</p></div>
        <button type="button" class="pinc-star-import-close" onclick="PINC_STARS_IMPORT.toggle(false)" aria-label="Fechar importação">×</button>
      </div>
      <div class="pinc-star-import-actions">
@@ -1064,9 +1064,9 @@ function renderWelcomeStarOptions(preferredId){
   const select=g('welcomeStarSelect');if(!select)return;
   const prior=typeof preferredId==='string'?preferredId:select.value;
   const stars=(window.PINC_STAR_REGISTRY?.active?.()||[]).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name),'pt-BR'));
-  select.innerHTML='<option value="">Selecione o Responsável do Acolhe+</option>'+stars.map(star=>`<option value="${esc(star.id)}">${esc(star.name)}</option>`).join('');
+  select.innerHTML='<option value="">Selecione o responsável do Acolhe+</option>'+stars.map(star=>`<option value="${esc(star.id)}">${esc(star.name)}</option>`).join('');
   select.value=stars.some(star=>star.id===prior)?prior:'';
-  if(g('welcomeStarHint'))g('welcomeStarHint').textContent=stars.length?'Selecione o Responsável do Acolhe+. A matrícula será preenchida automaticamente.':'Nenhum integrante do Acolhe+ ativo com matrícula cadastrado na localidade. Cadastre ou atualize a pessoa na aba Acolhe+.';
+  if(g('welcomeStarHint'))g('welcomeStarHint').textContent=stars.length?'Selecione o responsável do Acolhe+. A matrícula será preenchida automaticamente.':'Nenhum integrante ativo do Acolhe+ com matrícula cadastrada na localidade. Cadastre ou atualize a pessoa na aba Acolhe+.';
   renderWelcomeStarDetails();
 }
 function renderWelcomeStarDetails(){
