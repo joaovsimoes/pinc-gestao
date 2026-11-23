@@ -119,7 +119,7 @@
       rows: Array.isArray(source) ? source.map(item => Array.isArray(item) ? item.slice() : []) : [],
       location: S.currentLocation || 'Localidade',
       audience: S.audience === 'aprendizes' ? 'aprendizes' : 'efetivos',
-      day: S.day === 2 ? 2 : 1,
+      day: Number(S.day) === 2 ? 2 : 1,
       shift: S.apprenticeShift === 'vespertino' ? 'vespertino' : 'matutino'
     };
   }
@@ -137,7 +137,7 @@
         .filter(e=>e.date&&e.date<=e.last)
         .sort((a,b)=>a.date.localeCompare(b.date));
       const today=window.PINC_DATES.today?.() || new Date().toISOString().slice(0,10);
-      return (same.find(e=>e.date===today)||same.find(e=>e.date>=today)||same[0])?.date||'';
+      return (same.find(e=>e.date===today)||same.find(e=>e.date>=today))?.date||'';
     }catch(e) {return '';}
   }
   function escapeHTML(value) {
