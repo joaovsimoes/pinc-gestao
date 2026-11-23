@@ -98,9 +98,13 @@
       const accounts=await window.PINC_ACCESS.load();
       const account=accounts.find(x=>String(x.id)===String(user.id));
       if(!account)throw new Error('Seu cadastro não foi localizado. Entre novamente no sistema.');
-      const updated=await window.PINC_ACCESS.upsert({...account,photo});
-      sync(updated);
-      window.toast?.('Foto do perfil atualizada.');
+      await window.PINC_ACCESS.upsert({...account,photo});
+      const verified=await window.PINC_ACCESS.load({migrate:false});
+      const stored=verified.find(x=>String(x.id)===String(user.id));
+      if(!stored||stored.photo!==photo)
+        throw new Error('A foto ainda não foi confirmada na base online. Tente novamente.');
+      sync(verified);
+      window.toast?.('Foto do perfil salva na base online.');
     }catch(e){
       window.toast?.(e?.message||'Não foi possível salvar a foto. Verifique a conexão.');
       console.warn('PINC profile image',e?.message||e);
