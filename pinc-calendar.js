@@ -30,7 +30,7 @@
   function key(location,date){return location+'|'+date}
   function decode(snapshot){
     const docs=snapshot.docs.map(d=>({...d.data(),_id:d.id})).filter(x=>x.type===TYPE);
-    docs.sort((a,b)=>Number(a.updatedAtMillis||0)-Number(b.updatedAtMillis||0)||String(a._id).localeCompare(String(b._id)));
+    docs.sort((a,b)=>Number(a.createdAt?.seconds||0)-Number(b.createdAt?.seconds||0)||Number(a.createdAt?.nanoseconds||0)-Number(b.createdAt?.nanoseconds||0)||Number(a.updatedAtMillis||0)-Number(b.updatedAtMillis||0)||String(a._id).localeCompare(String(b._id)));
     const map=new Map();
     for(const e of docs){
       const location=String(e.location||'').trim(),date=String(e.date||'');
@@ -43,8 +43,10 @@
   async function connect(){
     if(!window.firebase?.firestore||!window.firebase?.auth)throw new Error('FIREBASE_UNAVAILABLE');
     if(!authPromise)authPromise=(async()=>{
-      const config=window.PINC_FIREBASE_CONFIG||window.PINC_MANAGEMENT_CONFIG;
-      if(!firebase.apps.length)firebase.initializeApp(config);
+      let config=window.PINC_FIREBASE_CONFIG||window.PINC_MANAGEMENT_CONFIG;
+      if(!config){try{config=window.parent?.PINC_FIREBASE_CONFIG}catch(e){}}
+      if(!config){try{config=PINC_FIREBASE_CONFIG}catch(e){}}
+      if(!firebase.apps.length){if(!config)throw new Error('FIREBASE_UNAVAILABLE');firebase.initializeApp(config)};
       const auth=firebase.auth();
       if(!auth.currentUser)await auth.signInAnonymously();
       db=firebase.firestore();
