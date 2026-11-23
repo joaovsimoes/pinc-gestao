@@ -999,6 +999,103 @@ function pincPeriodLabel(item){
   return item.start===item.end?format(item.start):format(item.start)+' até '+format(item.end);
 }
 function pincDuration(item){return window.PINC_DATES.range(item.start,item.end).length}
+
+let pincMonthCursor=window.PINC_DATES.today().slice(0,7);
+let pincSelectedDate=window.PINC_DATES.today();
+let pincMonthInitialized=false;
+function pincMonthDates(month){
+  const parts=String(month).split('-').map(Number),year=parts[0],m=parts[1];
+  if(!year||!m||m<1||m>12)return [];
+  const first=new Date(Date.UTC(year,m-1,1));
+  const mondayOffset=(first.getUTCDay()+6)%7;
+  const monthDays=new Date(Date.UTC(year,m,0)).getUTCDate();
+  const slots=Math.ceil((monthDays+mondayOffset)/7)*7;
+  const monday=new Date(Date.UTC(year,m-1,1-mondayOffset));
+  return Array.from({length:slots},(_,i)=>new Date(monday.getTime()+i*86400000).toISOString().slice(0,10));
+}
+function pincFirstDateInMonth(month,entries){
+  const begin=month+'-01';
+  const end=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).toISOString().slice(0,10);
+  const matching=entries.filter(x=>x.start<=end&&x.end>=begin).sort((a,b)=>a.start.localeCompare(b.start));
+  return matching.length?(matching[0].start<begin?begin:matching[0].start):begin;
+}
+function pincMoveMonth(offset){
+  const [year,month]=pincMonthCursor.split('-').map(Number);
+  const date=new Date(Date.UTC(year,month-1+offset,1));
+  pincMonthCursor=date.toISOString().slice(0,7);
+  pincMonthInitialized=true;
+  pincSelectedDate=pincFirstDateInMonth(pincMonthCursor,pincDaysEntries.filter(x=>x.location===S.currentLocation));
+  renderPincMonth();
+}
+function pincGoToToday(){
+  pincSelectedDate=window.PINC_DATES.today();
+  pincMonthCursor=pincSelectedDate.slice(0,7);pincMonthInitialized=true;
+  renderPincMonth();
+}
+function pincSelectDate(day){
+  try{window.PINC_DATES.range(day,day)}catch(e){return}
+  pincSelectedDate=day;pincMonthCursor=day.slice(0,7);pincMonthInitialized=true;
+  renderPincMonth();
+}
+function pincPrepareSelectedDate(){
+  if(!calendarPermission())return toast('Este perfil não pode cadastrar PINCs.');
+  if(!pincDaysLoaded)return toast('O calendário ainda não foi sincronizado.');
+  pincDaysEditing=null;
+  if(g('pincDayFrom'))g('pincDayFrom').value=pincSelectedDate;
+  if(g('pincDayUntil'))g('pincDayUntil').value=pincSelectedDate;
+  if(g('pincDayAudience'))g('pincDayAudience').value='';
+  renderPincDays();
+  g('pincCalendarEditor')?.scrollIntoView?.({behavior:'smooth',block:'start'});
+  g('pincDayAudience')?.focus?.();
+}
+function renderPincMonth(){
+  const grid=g('pincMonthGrid');if(!grid)return;
+  const today=window.PINC_DATES.today(),location=S.currentLocation||'';
+  const entries=pincDaysEntries.filter(x=>x.location===location);
+  if(!pincMonthInitialized&&pincDaysLoaded){
+    const hasThisMonth=entries.some(x=>x.start<=pincMonthCursor+'-31'&&x.end>=pincMonthCursor+'-01');
+    if(!hasThisMonth){
+      const next=entries.filter(x=>x.end>=today).sort((a,b)=>a.start.localeCompare(b.start))[0];
+      if(next){pincMonthCursor=(next.start<today?today:next.start).slice(0,7);
+        pincSelectedDate=pincFirstDateInMonth(pincMonthCursor,entries)}
+    }
+    pincMonthInitialized=true;
+  }
+  const first=new Date(pincMonthCursor+'-01T12:00:00Z');
+  const heading=new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',month:'long',year:'numeric'}).format(first);
+  if(g('pincMonthLabel'))g('pincMonthLabel').textContent=heading;
+  const dates=pincMonthDates(pincMonthCursor);
+  grid.innerHTML=dates.map(day=>{
+    const events=entries.filter(x=>x.start<=day&&day<=x.end);
+    const inMonth=day.slice(0,7)===pincMonthCursor;
+    const badges=events.slice(0,2).map(x=>
+      '<span class="pinc-month-entry '+(x.audience||'unknown')+'">'+esc(x.audience?window.PINC_DATES.audienceLabel(x.audience):'PINC')+'</span>'
+    ).join('');
+    const more=events.length>2?'<span class="pinc-month-more">+'+(events.length-2)+' evento(s)</span>':'';
+    const accessible=window.PINC_DATES.label(day)+' · '+(events.length?events.map(x=>window.PINC_DATES.audienceLabel(x.audience)).join(', '):'Sem PINCs');
+    const classes='pinc-month-day'+(!inMonth?' is-outside':'')+(day===today?' is-today':'')+(day===pincSelectedDate?' is-selected':'');
+    return '<button type="button" data-day="'+day+'" class="'+classes+'" aria-pressed="'+(day===pincSelectedDate)+'" aria-label="'+esc(accessible)+'" onclick="pincSelectDate(\''+day+'\')">'+
+      '<span class="pinc-month-day-number">'+Number(day.slice(-2))+'</span>'+badges+more+'</button>';
+  }).join('');
+  const chosen=entries.filter(x=>x.start<=pincSelectedDate&&pincSelectedDate<=x.end);
+  const selected=new Date(pincSelectedDate+'T12:00:00Z');
+  const title=new Intl.DateTimeFormat('pt-BR',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(selected);
+  if(g('pincSelectedDayLabel'))g('pincSelectedDayLabel').textContent=title;
+  if(g('pincSelectedDayCount'))g('pincSelectedDayCount').textContent=!pincDaysLoaded?'Consultando datas...':
+    chosen.length?chosen.length+' integração'+(chosen.length===1?'':'ões')+' programada'+(chosen.length===1?'':'s')+' para este dia.':'Nenhum PINC cadastrado neste dia.';
+  const list=g('pincSelectedDayEvents');
+  if(list){
+    list.innerHTML=!pincDaysLoaded?'<div class="pinc-month-empty">Carregando calendário...</div>':
+      chosen.length?chosen.map(x=>{
+        const key=encodeURIComponent(x.id).replace(/'/g,'%27');
+        const caption=window.PINC_DATES.audienceLabel(x.audience);
+        const action=calendarPermission()?'<button type="button" class="btn secondary" onclick="editPincEvent(\''+key+'\')">'+(x.legacy?'Definir público':'Editar PINC')+'</button>':'';
+        return '<div class="pinc-month-detail-event"><strong>'+esc(caption)+'</strong>'+
+          '<span>'+pincPeriodLabel(x)+' · '+pincDuration(x)+' dia(s)</span>'+action+'</div>';
+      }).join(''):'<div class="pinc-month-empty">Nenhuma integração está programada para a data selecionada.</div>';
+  }
+  if(g('pincMonthNewButton')){g('pincMonthNewButton').style.display=calendarPermission()?'':'none';g('pincMonthNewButton').disabled=!pincDaysLoaded}
+}
 function renderPincDays(){
   const table=g('pincDaysList');if(!table)return;
   const location=S.currentLocation||'',today=window.PINC_DATES.today(),canEdit=calendarPermission();
@@ -1058,6 +1155,7 @@ function renderPincDays(){
         '<td><span class="pinc-cal-status '+when+'">'+status+'</span></td>'+
         '<td><div class="pinc-cal-actions">'+actions+'</div></td></tr>';
     }).join(''):'<tr><td colspan="5" class="pinc-cal-empty">Nenhum PINC encontrado para esses filtros. Cadastre um período acima.</td></tr>';
+  renderPincMonth();
 }
 function syncPincDayRange(){
   const start=g('pincDayFrom'),end=g('pincDayUntil');
@@ -1148,7 +1246,7 @@ async function confirmRemovePincDay(){
   finally{pincDaysMutating=false;renderPincDays()}
 }
 function renderLocationSelect(){const auth=managementAuth(),master=isMaster();const locs=master?S.locations:S.locations.filter(l=>l.name===auth.location);if(!master&&auth.location)S.currentLocation=auth.location;if(master&&!locs.some(l=>l.name===S.currentLocation))S.currentLocation=auth.location&&locs.some(l=>l.name===auth.location)?auth.location:(locs[0]?.name||'');topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!master;applyManagementAccessProfile()}
-async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();cancelEditPincEvent();if(previous!==v)toast('Localidade alterada para '+v+'.')}
+async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();pincMonthInitialized=false;cancelEditPincEvent();if(previous!==v)toast('Localidade alterada para '+v+'.')}
 function settingsTrashIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>'}
 function renderSettingsLists(){
   applyManagementAccessProfile();
