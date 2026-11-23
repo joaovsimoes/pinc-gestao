@@ -618,7 +618,62 @@ function confirmRemoveStage(){const i=window.__pendingStageDelete;if(Number.isIn
 function participantsHere(){return (S.participants||[]).filter(p=>(p.location||S.currentLocation)===S.currentLocation)}
 function absentHere(){return participantsHere().filter(p=>!p.present)}
 function syncAbsents(){S.absents=(S.participants||[]).filter(p=>!p.present).map(p=>({name:p.name,matricula:p.matricula||'—',cdc:p.cdc||'—',cdcDescription:p.cdcDescription||p.cdc||'—',manager:p.manager||'Não informado',audience:p.audience||'Efetivos',company:p.company||'—',note:p.note||'',location:p.location||S.currentLocation}))}
-function renderAbs(){const allRows=participantsHere(),query=normalizeHeaderText(g('registrySearch')?.value||''),statusFilter=g('registryStatusFilter')?.value||'all';const rows=allRows.filter(p=>{if(statusFilter==='present'&&!p.present)return false;if(statusFilter==='absent'&&p.present)return false;if(!query)return true;const hay=normalizeHeaderText([p.company,p.name,p.matricula,p.role,p.cdc,p.manager].filter(Boolean).join(' '));return hay.includes(query)});const tb=g('absTable');if(tb)tb.innerHTML=rows.length?rows.map(p=>{const i=S.participants.indexOf(p);return `<tr>${participantCells(p)}<td><span class="status ${p.present?'green':'red'}">${p.present?'Presente':'Ausente'}</span></td><td><div class="presence-actions"><span class="presence-toggle"><button class="presence-choice present ${p.present?'active':''}" ${p.present?'disabled':''} onclick="setParticipantPresence(${i},true)">Presente</button><button class="presence-choice absent ${!p.present?'active':''}" ${!p.present?'disabled':''} onclick="setParticipantPresence(${i},false)">Ausente</button></span><button class="mini-delete" title="Excluir colaborador" aria-label="Excluir colaborador" onclick="deleteParticipant(${i})"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M7 7l1 13h8l1-13"></path><path d="M10 11v5M14 11v5"></path></svg></button></div></td></tr>`}).join(''):`<tr><td colspan="8" style="text-align:center;color:#8a93a4;padding:28px">${allRows.length?'Nenhum colaborador encontrado com os filtros atuais.':'Nenhum colaborador cadastrado nesta localidade.'}</td></tr>`;const present=allRows.filter(p=>p.present).length,absent=allRows.length-present;if(g('partCount'))g('partCount').textContent=allRows.length;if(g('presentCount'))g('presentCount').textContent=present;if(g('absCount'))g('absCount').textContent=absent;if(g('mailCount'))g('mailCount').textContent=S.mailCount||0;if(g('registryResult'))g('registryResult').textContent=`${rows.length} de ${allRows.length} registro${allRows.length===1?'':'s'} exibido${rows.length===1?'':'s'}`;syncAbsents();renderWelcome()}
+function registrySelectedDay(){return g('registryDay')?.value==='2'?2:1}
+function participantDay2Applies(p){
+  const audience=normalizeHeaderText(p.audience||'Efetivos');
+  const location=locationKey(p.location||S.currentLocation);
+  return !['goiania','gyn'].includes(location)&&audience.includes('efetiv');
+}
+function effectiveParticipantPresence(p){
+  const d2=participantDay2Applies(p)?attendanceValue(p,2):null;
+  const effective=d2==null?attendanceValue(p,1):d2;
+  if(effective==='present'||effective==='absent')p.present=effective==='present';
+  if(!p.present&&p.welcomeDone)p.welcomeDone=false;
+}
+function renderAbs(){
+  const allRows=participantsHere(),day=registrySelectedDay(),
+    query=normalizeHeaderText(g('registrySearch')?.value||''),
+    statusFilter=g('registryStatusFilter')?.value||'all';
+  const statusFor=p=>day===2&&!participantDay2Applies(p)?'na':attendanceValue(p,day);
+  const rows=allRows.filter(p=>{
+    const status=statusFor(p);
+    if(statusFilter==='present'&&status!=='present')return false;
+    if(statusFilter==='absent'&&status!=='absent')return false;
+    if(statusFilter==='pending'&&status!==null)return false;
+    if(!query)return true;
+    const hay=normalizeHeaderText([p.company,p.name,p.matricula,p.role,p.cdc,p.manager,p.audience].filter(Boolean).join(' '));
+    return hay.includes(query);
+  });
+  const tb=g('absTable');
+  if(tb)tb.innerHTML=rows.length?rows.map(p=>{
+    const i=S.participants.indexOf(p),day2Eligible=participantDay2Applies(p);
+    return '<tr>'+participantCells(p)+
+      '<td>'+attendanceButtons(i,1,attendanceValue(p,1))+'</td>'+
+      '<td>'+(day2Eligible?attendanceButtons(i,2,attendanceValue(p,2)):
+        '<span class="att-na">Não se aplica</span>')+'</td>'+
+      '<td><button class="registry-delete" type="button" title="Excluir colaborador" aria-label="Excluir colaborador" onclick="deleteParticipant('+i+')">'+
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5m4-5v5"/></svg></button></td></tr>';
+  }).join(''):'<tr><td colspan="9" style="text-align:center;color:#8590a2;padding:30px">'+
+    (allRows.length?'Nenhum colaborador encontrado para o dia e filtros selecionados.':'Nenhum colaborador cadastrado nesta localidade.')+'</td></tr>';
+  const eligibleDay2=allRows.filter(participantDay2Applies);
+  const day1Present=allRows.filter(p=>attendanceValue(p,1)==='present').length;
+  const day2Present=eligibleDay2.filter(p=>attendanceValue(p,2)==='present').length;
+  const absent=allRows.filter(p=>statusFor(p)==='absent').length;
+  const pending=allRows.filter(p=>attendanceValue(p,1)==null).length+
+    eligibleDay2.filter(p=>attendanceValue(p,2)==null).length;
+  if(g('partCount'))g('partCount').textContent=allRows.length;
+  if(g('presentCount'))g('presentCount').textContent=day1Present;
+  if(g('day2PresentCount'))g('day2PresentCount').textContent=day2Present;
+  if(g('pendingAttendanceCount'))g('pendingAttendanceCount').textContent=pending;
+  if(g('absCount'))g('absCount').textContent=absent;
+  if(g('mailCount'))g('mailCount').textContent=S.mailCount||0;
+  if(g('registryResult'))g('registryResult').textContent=rows.length+' de '+allRows.length+' exibidos';
+  if(g('registryDaySummary'))g('registryDaySummary').textContent=
+    'Filtro: Dia '+day+' · '+allRows.filter(p=>statusFor(p)==='present').length+
+    ' presentes · '+absent+' ausentes · '+allRows.filter(p=>statusFor(p)==null).length+' pendentes';
+  if(g('registryDay2Bulk'))g('registryDay2Bulk').disabled=!eligibleDay2.length;
+  renderWelcome();
+}
 function clearAllParticipants(){const count=(S.participants||[]).filter(p=>p.location===S.currentLocation).length;if(!count)return toast('Não há colaboradores cadastrados nesta localidade.');confirmDialog('Limpar todos os colaboradores',`Você está prestes a excluir ${count} colaborador${count===1?'':'es'} de ${S.currentLocation}.`,'Excluir todos','confirmClearAllParticipants()',true)}
 function confirmClearAllParticipants(){S.participants=(S.participants||[]).filter(p=>p.location!==S.currentLocation);S.absents=(S.absents||[]).filter(p=>p.location!==S.currentLocation);S.mailCount=0;if(g('registrySearch'))g('registrySearch').value='';if(g('registryStatusFilter'))g('registryStatusFilter').value='all';if(!persist())return;closeModal();renderAbs();successDialog('Colaboradores excluídos','Todos os colaboradores desta localidade foram removidos definitivamente.')}
 const PARTICIPANT_FIELDS=[
@@ -646,7 +701,7 @@ function saveParticipantManual(){
   S.participants.push(p);syncAbsents();if(!persist())return;closeModal();renderAbs();successDialog('Colaborador cadastrado','O colaborador foi incluído nos registros do PINC.')
 }
 function setParticipantPresence(i,present){const p=S.participants[i];if(!p)return;window.__presenceChange={i,present};confirmDialog(present?'Confirmar presença':'Confirmar ausência',`Deseja marcar “${p.name}” como ${present?'presente':'ausente'}?`,present?'Marcar presente':'Marcar ausente','confirmParticipantPresence()',false)}
-function confirmParticipantPresence(){const x=window.__presenceChange;if(!x||!S.participants[x.i])return closeModal();const p=S.participants[x.i];p.present=!!x.present;syncAbsents();const saved=persist({broadcast:true});closeModal();renderAbs();if(saved)successDialog('Status atualizado',`${p.name} foi marcado como ${p.present?'presente':'ausente'}.`);else toast('Não foi possível salvar o status neste navegador.');window.__presenceChange=null}
+function confirmParticipantPresence(){const x=window.__presenceChange;if(!x||!S.participants[x.i])return closeModal();const p=S.participants[x.i],day=registrySelectedDay();closeModal();setAttendance(x.i,day,x.present?'present':'absent');successDialog('Presença atualizada',p.name+' foi marcado como '+(x.present?'presente':'ausente')+' no Dia '+day+'.');window.__presenceChange=null}
 function deleteParticipant(i){const p=S.participants[i];if(!p)return;window.__participantDelete=i;confirmDialog('Excluir colaborador',`Deseja excluir “${p.name}” dos registros? Esta ação é irreversível.`,'Excluir definitivamente','confirmDeleteParticipant()',true)}
 function confirmDeleteParticipant(){const i=window.__participantDelete;if(Number.isInteger(i)&&S.participants[i])S.participants.splice(i,1);syncAbsents();persist();closeModal();renderAbs();successDialog('Colaborador excluído','O registro foi excluído definitivamente.');window.__participantDelete=null}
 function normalizeHeaderText(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
@@ -688,16 +743,61 @@ function handleParticipantImport(event){
   };reader.readAsText(file,'UTF-8')
 }
 function confirmParticipantImport(){const rows=window.__pendingImport||[];let added=0,updated=0;for(const p of rows){const existing=S.participants.find(x=>String(x.matricula||'')===String(p.matricula||'')&&normalizeHeaderText(x.location||'')===normalizeHeaderText(p.location||''));if(existing){for(const f of PARTICIPANT_FIELDS)existing[f.key]=p[f.key];existing.cdcDescription=p.cdcDescription;updated++}else{S.participants.push(p);added++}}window.__pendingImport=null;syncAbsents();persist();closeModal();renderAbs();successDialog('Importação concluída',`${added} colaborador(es) incluído(s) e ${updated} atualizado(s). Os status já existentes foram preservados.`)}
-function attendanceValue(p,day){const a=p.attendance||{};return day===1?a.day1:a.day2}
+function attendanceValue(p,day){
+  const data=p.attendance||{},key=day===1?'day1':'day2';
+  if(Object.prototype.hasOwnProperty.call(data,key))return data[key]==='present'||data[key]==='absent'?data[key]:null;
+  // Compatibilidade: o status antigo representa o Dia 1, nunca libera o Dia 2 sozinho.
+  return day===1?(p.present===true?'present':p.present===false?'absent':null):null;
+}
 function attendanceLabel(v){return v==='present'?'Presente':v==='absent'?'Ausente':'Pendente'}
-function attendanceButtons(idx,day,value){return `<div class="attendance-controls"><button class="att-btn pending ${value==null?'active':''}" onclick="setAttendance(${idx},${day},null)">Pendente</button><button class="att-btn present ${value==='present'?'active':''}" onclick="setAttendance(${idx},${day},'present')">Presente</button><button class="att-btn absent ${value==='absent'?'active':''}" onclick="setAttendance(${idx},${day},'absent')">Ausente</button></div>`}
-function renderAttendance(){const all=(S.participants||[]).filter(p=>p.location===S.currentLocation),q=normalizeHeaderText(g('attendanceSearch')?.value||''),filter=g('attendanceFilter')?.value||'all';const rows=all.filter(p=>{const d1=attendanceValue(p,1),d2=attendanceValue(p,2),isApprentice=normalizeHeaderText(p.audience||'').includes('aprendiz');if(filter==='pending'&&!(d1==null||(!isApprentice&&d2==null)))return false;if(filter==='day1-present'&&d1!=='present')return false;if(filter==='day1-absent'&&d1!=='absent')return false;if(filter==='day2-present'&&(isApprentice||d2!=='present'))return false;if(filter==='day2-absent'&&(isApprentice||d2!=='absent'))return false;if(!q)return true;const hay=normalizeHeaderText([p.name,p.matricula,p.cdc,p.manager,p.role,p.company,p.audience].filter(Boolean).join(' '));return hay.includes(q)});const tb=g('attendanceTable');if(tb)tb.innerHTML=rows.length?rows.map(p=>{const idx=S.participants.indexOf(p),isApprentice=normalizeHeaderText(p.audience||'').includes('aprendiz');return `<tr><td><strong>${esc(p.name)}</strong><div style="font-size:8px;color:#8a93a4;margin-top:2px">${esc(p.role||'')}</div></td><td>${esc(p.matricula||'—')}</td><td>${esc(p.cdc||'—')}</td><td>${esc(p.manager||'Não informado')}</td><td>${esc(p.audience||'Efetivos')}</td><td>${attendanceButtons(idx,1,attendanceValue(p,1))}</td><td>${isApprentice?'<span class="att-na">Não se aplica</span>':attendanceButtons(idx,2,attendanceValue(p,2))}</td></tr>`}).join(''):`<tr><td colspan="7" style="text-align:center;color:#8a93a4;padding:28px">Nenhum colaborador encontrado.</td></tr>`;const day1=all.filter(p=>attendanceValue(p,1)==='present').length,day2=all.filter(p=>!normalizeHeaderText(p.audience||'').includes('aprendiz')&&attendanceValue(p,2)==='present').length,pending=all.reduce((n,p)=>n+(attendanceValue(p,1)==null?1:0)+(!normalizeHeaderText(p.audience||'').includes('aprendiz')&&attendanceValue(p,2)==null?1:0),0);if(g('attendanceTotal'))g('attendanceTotal').textContent=all.length;if(g('attendanceDay1'))g('attendanceDay1').textContent=day1;if(g('attendanceDay2'))g('attendanceDay2').textContent=day2;if(g('attendancePending'))g('attendancePending').textContent=pending;if(g('attendanceResult'))g('attendanceResult').textContent=`${rows.length} de ${all.length} registro${all.length===1?'':'s'} exibido${rows.length===1?'':'s'}`}
-function setAttendance(idx,day,value){const p=S.participants[idx];if(!p)return;if(!p.attendance)p.attendance={day1:null,day2:null};if(day===2&&normalizeHeaderText(p.audience||'').includes('aprendiz'))return;p.attendance[day===1?'day1':'day2']=value;if(day===2&&value){p.present=value==='present';if(!p.present)p.welcomeDone=false;syncAbsents()}if(!persist())return;renderAttendance();renderAbs();renderWelcome()}
-function markAllAttendance(day,value){const eligible=(S.participants||[]).filter(p=>p.location===S.currentLocation&&(day===1||!normalizeHeaderText(p.audience||'').includes('aprendiz')));if(!eligible.length)return toast('Não há colaboradores elegíveis nesta localidade.');window.__pendingAttendanceBulk={day,value};confirmDialog('Confirmar presença em massa',`Deseja marcar ${eligible.length} colaborador${eligible.length===1?'':'es'} como presente no Dia ${day}?`,'Confirmar presença','confirmMarkAllAttendance()',false)}
-function confirmMarkAllAttendance(){const x=window.__pendingAttendanceBulk;if(!x)return closeModal();for(const p of S.participants||[]){if(p.location!==S.currentLocation)continue;if(x.day===2&&normalizeHeaderText(p.audience||'').includes('aprendiz'))continue;if(!p.attendance)p.attendance={day1:null,day2:null};p.attendance[x.day===1?'day1':'day2']=x.value}window.__pendingAttendanceBulk=null;if(!persist())return;closeModal();renderAttendance();successDialog('Presença atualizada',`As marcações do Dia ${x.day} foram atualizadas com sucesso.`)}
+function attendanceButtons(idx,day,value){
+  return '<div class="attendance-controls" role="group" aria-label="Presença no Dia '+day+'">'+
+    '<button type="button" class="att-btn pending '+(value==null?'active':'')+'" aria-pressed="'+(value==null)+'" onclick="setAttendance('+idx+','+day+',null)">Pendente</button>'+
+    '<button type="button" class="att-btn present '+(value==='present'?'active':'')+'" aria-pressed="'+(value==='present')+'" onclick="setAttendance('+idx+','+day+',\'present\')">Presente</button>'+
+    '<button type="button" class="att-btn absent '+(value==='absent'?'active':'')+'" aria-pressed="'+(value==='absent')+'" onclick="setAttendance('+idx+','+day+',\'absent\')">Ausente</button></div>';
+}
+function renderAttendance(){renderAbs()}
+function setAttendance(idx,day,value){
+  const p=S.participants[idx];if(!p||p.location!==S.currentLocation)return;
+  if(day!==1&&day!==2)return;
+  if(day===2&&!participantDay2Applies(p))return toast('Este colaborador não possui Dia 2 de Efetivos nesta localidade.');
+  if(!p.attendance)p.attendance={};
+  const key=day===1?'day1':'day2';
+  p.attendance[key]=value;
+  // Dia 2 permanece pendente até que seja confirmado explicitamente.
+  if(day===1&&!Object.prototype.hasOwnProperty.call(p.attendance,'day2')&&participantDay2Applies(p))
+    p.attendance.day2=null;
+  effectiveParticipantPresence(p);syncAbsents();
+  const saved=persist({broadcast:true});
+  renderAbs();
+  if(!saved)toast('Não foi possível salvar esta presença. Verifique a conexão.');
+}
+function markAllAttendance(day,value='present'){
+  const eligible=(S.participants||[]).filter(p=>p.location===S.currentLocation&&(day===1||participantDay2Applies(p)));
+  if(!eligible.length)return toast('Não há colaboradores elegíveis neste dia e localidade.');
+  window.__pendingAttendanceBulk={day,value};
+  confirmDialog('Confirmar presença em massa','Marcar '+eligible.length+' colaborador(es) como '+attendanceLabel(value).toLowerCase()+
+    ' no Dia '+day+'? As marcações do outro dia permanecerão como estão.','Confirmar presença','confirmMarkAllAttendance()',false);
+}
+function confirmMarkAllAttendance(){
+  const x=window.__pendingAttendanceBulk;if(!x)return closeModal();
+  for(const p of S.participants||[]){
+    if(p.location!==S.currentLocation||(x.day===2&&!participantDay2Applies(p)))continue;
+    if(!p.attendance)p.attendance={};
+    p.attendance[x.day===1?'day1':'day2']=x.value;
+    if(x.day===1&&participantDay2Applies(p)&&!Object.prototype.hasOwnProperty.call(p.attendance,'day2'))
+      p.attendance.day2=null;
+    effectiveParticipantPresence(p);
+  }
+  window.__pendingAttendanceBulk=null;
+  syncAbsents();const saved=persist({broadcast:true});
+  closeModal();renderAbs();
+  if(saved)successDialog('Presença atualizada','As confirmações do Dia '+x.day+' foram registradas. O outro dia não foi alterado.');
+  else toast('Não foi possível sincronizar a presença. Verifique a conexão.');
+}
 function exportAttendanceExcel(){const rows=(S.participants||[]).filter(p=>p.location===S.currentLocation);if(!rows.length)return toast('Não há colaboradores para exportar.');const data=rows.map(p=>{const isApprentice=normalizeHeaderText(p.audience||'').includes('aprendiz');return{'Colaborador':p.name||'','Matrícula':p.matricula||'','CDC':p.cdc||'','Cargo':p.role||'','Gestor Imediato':p.manager||'','Empresa':p.company||'','Público':p.audience||'','Presença Dia 1':attendanceLabel(attendanceValue(p,1)),'Presença Dia 2':isApprentice?'Não se aplica':attendanceLabel(attendanceValue(p,2))}});if(typeof XLSX==='undefined'){const headers=Object.keys(data[0]);const csv=[headers.join(';'),...data.map(r=>headers.map(h=>`"${String(r[h]??'').replace(/"/g,'""')}"`).join(';'))].join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Presenca_PINC_${S.currentLocation}_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);return}const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();ws['!cols']=[{wch:30},{wch:14},{wch:12},{wch:24},{wch:28},{wch:18},{wch:14},{wch:16},{wch:16}];XLSX.utils.book_append_sheet(wb,ws,'Presença');XLSX.writeFile(wb,`Presenca_PINC_${S.currentLocation}_${new Date().toISOString().slice(0,10)}.xlsx`)}
 
-function absentRowsForEmail(){return participantsHere().filter(p=>!p.present)}
+function absentRowsForEmail(){const day=registrySelectedDay();return participantsHere().filter(p=>(day===1||participantDay2Applies(p))&&attendanceValue(p,day)==='absent')}
 function emailTableHTML(){const rows=absentRowsForEmail();return `<table class="email-table"><thead><tr><th>Localidade</th><th>Matrícula</th><th>Nome do colaborador</th><th>Cargo</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.location||S.currentLocation)}</td><td>${esc(x.matricula||'—')}</td><td>${esc(x.name||'—')}</td><td>${esc(x.role||'—')}</td></tr>`).join('')}</tbody></table>`}
 function emailPlainText(){const rows=absentRowsForEmail();const headers=['Localidade','Matrícula','Nome do colaborador','Cargo'];const data=rows.map(x=>[x.location||S.currentLocation,x.matricula||'—',x.name||'—',x.role||'—']);const widths=headers.map((h,i)=>{const maxData=data.length?Math.max(...data.map(r=>String(r[i]||'—').length)):0;return Math.min(Math.max(h.length,maxData),i===2?34:24)});const fit=(value,width)=>{let s=String(value==null?'—':value);if(s.length>width)s=s.slice(0,Math.max(0,width-1))+'…';return s.padEnd(width,' ')};const sep='+'+widths.map(w=>'-'.repeat(w+2)).join('+')+'+';const header='| '+headers.map((h,i)=>fit(h,widths[i])).join(' | ')+' |';const bodyRows=data.map(r=>'| '+r.map((v,i)=>fit(v,widths[i])).join(' | ')+' |');return ['Olá,','','Informo que os colaboradores abaixo não compareceram no PINC.','',sep,header,sep,...bodyRows,sep].join('\n')}
 function emailHtmlBody(){const rows=absentRowsForEmail().map(x=>`<tr><td style="border:1px solid #8d8d8d;padding:8px 10px;font-family:Arial,sans-serif;font-size:14px">${esc(x.location||S.currentLocation)}</td><td style="border:1px solid #8d8d8d;padding:8px 10px;font-family:Arial,sans-serif;font-size:14px;text-align:center">${esc(x.matricula||'—')}</td><td style="border:1px solid #8d8d8d;padding:8px 10px;font-family:Arial,sans-serif;font-size:14px">${esc(x.name||'—')}</td><td style="border:1px solid #8d8d8d;padding:8px 10px;font-family:Arial,sans-serif;font-size:14px">${esc(x.role||'—')}</td></tr>`).join('');return `<div style="font-family:Arial,sans-serif;color:#222;font-size:14px;line-height:1.45"><p>Olá,</p><p>Informo que os colaboradores abaixo não compareceram no PINC.</p><table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #8d8d8d;background:#fff"><thead><tr><th style="border:1px solid #8d8d8d;padding:8px 10px;background:#f3f3f3;text-align:center;font-weight:700">Localidade</th><th style="border:1px solid #8d8d8d;padding:8px 10px;background:#f3f3f3;text-align:center;font-weight:700">Matrícula</th><th style="border:1px solid #8d8d8d;padding:8px 10px;background:#f3f3f3;text-align:center;font-weight:700">Nome do colaborador</th><th style="border:1px solid #8d8d8d;padding:8px 10px;background:#f3f3f3;text-align:center;font-weight:700">Cargo</th></tr></thead><tbody>${rows}</tbody></table></div>`}
