@@ -89,6 +89,7 @@
 <script src="pinc-agenda.js?v=20261009-1"></script>
 <script src="pinc-reset.js?v=20261009-1"></script>
 <script src="pinc-schedule.js?v=20261009-1"></script>
+<script src="pinc-calendar.js?v=20261123-1"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
@@ -195,7 +196,19 @@ function renderLocations(){
 function chooseAudience(v){if(starsIsGoiania()&&v!=='efetivos')return starsNotifyToast('Em Goiânia o PINC está disponível somente para Efetivos.');selected.audience=v;applyStarsLocationPolicy()}
 function chooseDay(v){if(starsIsGoiania()&&Number(v)!==1)return starsNotifyToast('Em Goiânia o PINC acontece em um único dia.');selected.day=v;applyStarsLocationPolicy()}
 function chooseShift(v){if(starsIsGoiania())return starsNotifyToast('Em Goiânia não há agenda de Aprendizes.');selected.shift=v;document.querySelectorAll('#appSegment .option').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='matutino')||(i===1&&v==='vespertino')))}
-async function enterStars(){try{const account=await parent.PINC_VALIDATE_PORTAL('star');selected.location=account.location;S.currentLocation=account.location;renderLocations()}catch(e){starsNotifyToast('Neste PINC não há colaboradores pendentes para esse CDC. Consulte outro CDC.');parent.PINC_NAV('home');parent.PINC_SHOW_STAR_LOGIN();return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
+
+async function enforceStarsCalendar(){
+  const location=String((window.parent.PINC_PORTAL_USER?.star||PORTAL_ACCESS_USER)?.location||'').trim();
+  try{
+    if(location&&await window.PINC_DATES.allowed(location))return true;
+    parent.PINC_NAV('home');parent.PINC_SHOW_CALENDAR_CLOSED('stars',location,false);
+  }catch(e){
+    console.warn('PINC calendário Stars',e);
+    parent.PINC_NAV('home');parent.PINC_SHOW_CALENDAR_CLOSED('stars',location,true);
+  }
+  return false;
+}
+async function enterStars(){if(!await enforceStarsCalendar())return;try{const account=await parent.PINC_VALIDATE_PORTAL('star');selected.location=account.location;S.currentLocation=account.location;renderLocations()}catch(e){starsNotifyToast('Neste PINC não há colaboradores pendentes para esse CDC. Consulte outro CDC.');parent.PINC_NAV('home');parent.PINC_SHOW_STAR_LOGIN();return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);if(!await enforceStarsCalendar())return;selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
 function backToSelection(){dashboardView.classList.add('hidden');selectionView.classList.remove('hidden');if(starsRealtimeUnsub){starsRealtimeUnsub();starsRealtimeUnsub=null}starsRemoteLock=null;starsPublishedFeed=null;starsRows=[];setStarsSyncStatus(false);S=load();renderLocations()}
 function list(){return selected.audience==='efetivos'?(S.agenda?.efetivos?.[selected.day]||[]):(S.agenda?.aprendizes?.[selected.shift]||[])}
 function contextRows(audience,period){return starsRows.filter(d=>d.location===selected.location&&d.audience===audience&&String(d.period)===String(period)&&window.PINC_RESET.freshFeed(d,starsResets))}
@@ -291,6 +304,6 @@ function notificationPermissionLocal(){try{return parent&&parent.PINC_NOTIFICATI
 function updateNotificationBell(){const b=document.getElementById('notificationBell');if(!b)return;const p=notificationPermissionLocal(),enabled=localStorage.getItem('pinc-notifications-local')==='true';b.classList.toggle('active',p==='granted'&&enabled);b.classList.toggle('blocked',p==='denied');b.title=p==='granted'&&enabled?'Notificações ativas':p==='denied'?'Notificações bloqueadas no navegador':'Ativar notificações no computador'}
 async function requestLocalNotifications(){let p='unsupported';try{if(parent&&parent.PINC_REQUEST_NOTIFICATIONS)p=await parent.PINC_REQUEST_NOTIFICATIONS();else if('Notification'in window)p=Notification.permission==='default'?await Notification.requestPermission():Notification.permission}catch(e){p='blocked'}if(p==='granted'){localStorage.setItem('pinc-notifications-local','true');try{if(parent&&parent.PINC_NOTIFY)parent.PINC_NOTIFY('PINC • Notificações ativadas','Você receberá avisos do Programa de Integração de Novos Colaboradores neste computador.','notifications-enabled')}catch(e){}starsNotifyToast('Notificações ativadas neste computador.')}else if(p==='denied'){localStorage.removeItem('pinc-notifications-local');starsNotifyToast('As notificações estão bloqueadas nas permissões do navegador.')}else{starsNotifyToast('Este navegador não oferece notificações para esta página.')}updateNotificationBell()}
 
-renderLocations();chooseAudience('efetivos');updateNotificationBell();initSharedCoreStars().then(()=>fetchLatestAgendaStars(locationSelect.value));locationSelect.addEventListener('change',()=>{renderLocations()});
+renderLocations();chooseAudience('efetivos');updateNotificationBell();setInterval(()=>{if(!dashboardView.classList.contains('hidden'))enforceStarsCalendar()},60000);initSharedCoreStars().then(()=>fetchLatestAgendaStars(locationSelect.value));locationSelect.addEventListener('change',()=>{renderLocations()});
 </script>
 </body></html>
