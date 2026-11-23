@@ -628,6 +628,7 @@ function effectiveParticipantPresence(p){
   const d2=participantDay2Applies(p)?attendanceValue(p,2):null;
   const effective=d2==null?attendanceValue(p,1):d2;
   if(effective==='present'||effective==='absent')p.present=effective==='present';
+  else if(p.attendance?.schema===2)p.present=false;
   if(!p.present&&p.welcomeDone)p.welcomeDone=false;
 }
 function renderAbs(){
@@ -689,7 +690,7 @@ function participantCells(p){return PARTICIPANT_FIELDS.map(f=>`<td>${f.key==='na
 function participantRequiredText(){return PARTICIPANT_FIELDS.map(f=>f.label).join(' | ')}
 function openAbsentModal(){
   const fields=PARTICIPANT_FIELDS.map(f=>`<div class="field"><label for="${f.input}">${esc(f.label)} *</label><input id="${f.input}" required autocomplete="off" ${['matricula','cdc'].includes(f.key)?'inputmode="numeric"':''}></div>`).join('');
-  openDialog('Registrar colaborador',`<div class="hint" style="margin-bottom:12px">Localidade: <strong>${esc(S.currentLocation)}</strong>. Os seis dados são obrigatórios.</div><div class="form-grid" style="grid-template-columns:1fr 1fr">${fields}<div class="field"><label>Status inicial</label><select id="aStatus"><option value="present">Presente</option><option value="absent">Ausente</option></select></div></div>`,`<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveParticipantManual()">Cadastrar colaborador</button>`);setTimeout(()=>g('aCompany')?.focus(),50)
+  openDialog('Registrar colaborador',`<div class="hint" style="margin-bottom:12px">Localidade: <strong>${esc(S.currentLocation)}</strong>. Os seis dados são obrigatórios.</div><div class="form-grid" style="grid-template-columns:1fr 1fr">${fields}<div class="field"><label>Presença inicial no Dia 1</label><select id="aStatus"><option value="present">Presente</option><option value="absent">Ausente</option></select></div></div>`,`<button class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveParticipantManual()">Cadastrar colaborador</button>`);setTimeout(()=>g('aCompany')?.focus(),50)
 }
 function saveParticipantManual(){
   const data=Object.fromEntries(PARTICIPANT_FIELDS.map(f=>[f.key,g(f.input)?.value.trim()||'']));
@@ -697,7 +698,7 @@ function saveParticipantManual(){
   const missing=PARTICIPANT_FIELDS.filter(f=>!data[f.key]);
   if(missing.length)return toast('Preencha: '+missing.map(f=>f.label).join(', ')+'.');
   if(!S.currentLocation)return toast('Selecione a localidade na Gestão.');
-  const p={...data,location:S.currentLocation,present:g('aStatus')?.value!=='absent',audience:'Efetivos',cdcDescription:data.cdc,welcomeDone:false,note:'',attendance:{day1:null,day2:null}};
+  const p={...data,location:S.currentLocation,present:g('aStatus')?.value!=='absent',audience:'Efetivos',cdcDescription:data.cdc,welcomeDone:false,note:'',attendance:{day1:g('aStatus')?.value==='absent'?'absent':'present',day2:null,schema:2}};
   S.participants.push(p);syncAbsents();if(!persist())return;closeModal();renderAbs();successDialog('Colaborador cadastrado','O colaborador foi incluído nos registros do PINC.')
 }
 function setParticipantPresence(i,present){const p=S.participants[i];if(!p)return;window.__presenceChange={i,present};confirmDialog(present?'Confirmar presença':'Confirmar ausência',`Deseja marcar “${p.name}” como ${present?'presente':'ausente'}?`,present?'Marcar presente':'Marcar ausente','confirmParticipantPresence()',false)}
@@ -721,7 +722,7 @@ function parseCsvText(text,locationName=S.currentLocation){
     const data=Object.fromEntries(fields.map(f=>[f.key,String(r[f.index]??'').trim()]));
     data.cdc=normalizeCdc(data.cdc);
     if(fields.some(f=>!data[f.key])){invalidRows.push(headerLine+n+2);return}
-    rows.push({...data,location:locationName,present:true,audience:'Efetivos',cdcDescription:data.cdc,welcomeDone:false,note:'',attendance:{day1:null,day2:null}})
+    rows.push({...data,location:locationName,present:true,audience:'Efetivos',cdcDescription:data.cdc,welcomeDone:false,note:'',attendance:{day1:'present',day2:null,schema:2}})
   });
   return{rows,missing:[],invalidRows}
 }
@@ -745,7 +746,10 @@ function handleParticipantImport(event){
 function confirmParticipantImport(){const rows=window.__pendingImport||[];let added=0,updated=0;for(const p of rows){const existing=S.participants.find(x=>String(x.matricula||'')===String(p.matricula||'')&&normalizeHeaderText(x.location||'')===normalizeHeaderText(p.location||''));if(existing){for(const f of PARTICIPANT_FIELDS)existing[f.key]=p[f.key];existing.cdcDescription=p.cdcDescription;updated++}else{S.participants.push(p);added++}}window.__pendingImport=null;syncAbsents();persist();closeModal();renderAbs();successDialog('Importação concluída',`${added} colaborador(es) incluído(s) e ${updated} atualizado(s). Os status já existentes foram preservados.`)}
 function attendanceValue(p,day){
   const data=p.attendance||{},key=day===1?'day1':'day2';
-  if(Object.prototype.hasOwnProperty.call(data,key))return data[key]==='present'||data[key]==='absent'?data[key]:null;
+  if(Object.prototype.hasOwnProperty.call(data,key)){
+    if(day===1&&data.day1==null&&data.schema!==2)return p.present===true?'present':p.present===false?'absent':null;
+    return data[key]==='present'||data[key]==='absent'?data[key]:null;
+  }
   // Compatibilidade: o status antigo representa o Dia 1, nunca libera o Dia 2 sozinho.
   return day===1?(p.present===true?'present':p.present===false?'absent':null):null;
 }
@@ -763,7 +767,7 @@ function setAttendance(idx,day,value){
   if(day===2&&!participantDay2Applies(p))return toast('Este colaborador não possui Dia 2 de Efetivos nesta localidade.');
   if(!p.attendance)p.attendance={};
   const key=day===1?'day1':'day2';
-  p.attendance[key]=value;
+  p.attendance[key]=value;p.attendance.schema=2;
   // Dia 2 permanece pendente até que seja confirmado explicitamente.
   if(day===1&&!Object.prototype.hasOwnProperty.call(p.attendance,'day2')&&participantDay2Applies(p))
     p.attendance.day2=null;
@@ -784,7 +788,7 @@ function confirmMarkAllAttendance(){
   for(const p of S.participants||[]){
     if(p.location!==S.currentLocation||(x.day===2&&!participantDay2Applies(p)))continue;
     if(!p.attendance)p.attendance={};
-    p.attendance[x.day===1?'day1':'day2']=x.value;
+    p.attendance[x.day===1?'day1':'day2']=x.value;p.attendance.schema=2;
     if(x.day===1&&participantDay2Applies(p)&&!Object.prototype.hasOwnProperty.call(p.attendance,'day2'))
       p.attendance.day2=null;
     effectiveParticipantPresence(p);
