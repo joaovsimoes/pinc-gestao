@@ -45,7 +45,7 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
 .notify-bell.has-unread{position:relative;box-shadow:0 0 0 3px #b89aff55;border-color:#8a48e8}.notify-bell.has-unread:after{content:'';position:absolute;right:6px;top:5px;width:8px;height:8px;border-radius:50%;background:#ec2969;border:2px solid #fff}
 
-/* Stars: prioriza horários de acolhimento e listas de colaboradores */
+/* Acolhe+: prioriza horários de acolhimento e listas de colaboradores */
 @media(min-width:901px){
   .dashboard-shell{flex:0 0 auto!important;min-height:0!important;padding:16px 18px 14px;gap:13px;border-radius:24px}
   .stage-route{padding:9px 10px 16px!important;border:1px solid #eee7fa;border-radius:15px;background:#fcfbff;min-height:74px}
@@ -67,7 +67,7 @@
   .stage-route{overflow-x:auto;scrollbar-width:thin}
 }
 
-/* Presença diária pendente no Stars, sem confundir com ausência */
+/* Presença diária pendente no Acolhe+, sem confundir com ausência */
 #starsPendingPanel[hidden]{display:none!important}
 .stars-pending-panel{padding:13px 16px!important;border:1px solid #f1e4cb!important;background:#fffdfa!important;border-radius:15px}
 .stars-pending-heading{display:flex;align-items:center;gap:11px}
@@ -87,7 +87,7 @@
 <main class="content">
 <section id="selectionView">
   <div class="launch">
-    <div class="launch-head"><div><div class="eyebrow">Star • Nível 1</div><h1>Acompanhar a integração</h1></div><p>Sua localidade está vinculada ao código. Selecione o público e o período para acompanhar.</p></div>
+    <div class="launch-head"><div><div class="eyebrow">Acolhe+ • Nível 1</div><h1>Acompanhar a integração</h1></div><p>Sua localidade está vinculada ao código. Selecione o público e o período para acompanhar.</p></div>
     <p id="portalIdentity" style="margin:0 0 18px;color:#7417ff;font-weight:750;overflow-wrap:anywhere"></p>
     <div class="launcher-grid">
       <div class="block"><div class="block-label">1 • Localidade</div><select id="locationSelect"></select></div>
@@ -98,7 +98,7 @@
   </div>
 </section>
 <section id="dashboardView" class="hidden">
-  <div class="dash-head"><div><div class="eyebrow">Star • acompanhamento ao vivo</div><h1 id="dashTitle">PINC • Efetivos</h1></div><div class="context-chips"><span class="chip" id="locChip">Anápolis</span><span class="chip" id="audChip">Efetivos</span><span class="chip" id="periodChip">Dia 1</span></div></div>
+  <div class="dash-head"><div><div class="eyebrow">Acolhe+ • acompanhamento ao vivo</div><h1 id="dashTitle">PINC • Efetivos</h1></div><div class="context-chips"><span class="chip" id="locChip">Anápolis</span><span class="chip" id="audChip">Efetivos</span><span class="chip" id="periodChip">Dia 1</span></div></div>
   <div class="dashboard-shell">
     <ol class="stage-route" id="stageRoute" aria-label="Etapas da integração"></ol>
     <section class="card welcome-card" id="welcomeCard" aria-label="Previsões de acolhimento">
@@ -194,7 +194,7 @@ async function fetchLatestAgendaStars(location){
     try{const shared=await starsDb.collection('pincShared').doc('core').get();if(shared.exists)applySharedCoreStars(shared.data())}catch(e){console.warn('PINC core indisponível',e)}
     const snap=await starsDb.collection('pincLocks').where('location','==',location).get();if(location!==selected.location)return false;
     consumeStarsRows(snap.docs.map(d=>d.data()),!!snap.metadata?.fromCache);renderLocations();return !!list().length;
-  }catch(e){console.error('Fetch agenda Stars',e);setStarsSyncStatus(false);return false}
+  }catch(e){console.error('Fetch agenda Acolhe+',e);setStarsSyncStatus(false);return false}
 }
 async function watchStarsRealtime(){
   try{
@@ -202,8 +202,8 @@ async function watchStarsRealtime(){
     starsRealtimeUnsub=starsDb.collection('pincLocks').where('location','==',location).onSnapshot({includeMetadataChanges:true},snap=>{
       if(selected.location!==location)return;consumeStarsRows(snap.docs.map(d=>d.data()),!!snap.metadata?.fromCache);
       if(!dashboardView.classList.contains('hidden'))renderDashboard();
-    },e=>{console.error('Stars realtime',e);setStarsSyncStatus(false)});
-  }catch(e){console.error('Stars realtime init',e);setStarsSyncStatus(false)}
+    },e=>{console.error('Acolhe+ realtime',e);setStarsSyncStatus(false)});
+  }catch(e){console.error('Acolhe+ realtime init',e);setStarsSyncStatus(false)}
 }
 function load(){try{const raw=localStorage.getItem(STORAGE)||localStorage.getItem(BACKUP_STORAGE);return migrate(raw?JSON.parse(raw):structuredClone(FALLBACK))}catch(e){return structuredClone(FALLBACK)}}
 function migrate(x){x=x&&typeof x==='object'?x:structuredClone(FALLBACK);if(!x.locations?.length)x.locations=structuredClone(FALLBACK.locations);if(!x.agenda)x.agenda=structuredClone(FALLBACK.agenda);if(!x.agenda.aprendizes?.matutino)x.agenda.aprendizes=structuredClone(FALLBACK.agenda.aprendizes);if(!x.live)x.live=structuredClone(FALLBACK.live);if(!x.participants)x.participants=structuredClone(FALLBACK.participants);if(!x.absents)x.absents=[];if(!x.reports)x.reports=[];if(!x.settings)x.settings={tolerance:10,notificationLead:10,desktopNotifications:false};if(x.settings.notificationLead==null)x.settings.notificationLead=10;if(!x.welcomeSchedule)x.welcomeSchedule={};if(!x.starsBroadcast||typeof x.starsBroadcast!=='object')x.starsBroadcast={};const addMin=(start,mins)=>{const p=String(start||'00:00').split(':').map(Number),t=((p[0]*60+p[1]+(+mins||0))%1440+1440)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};[x.agenda?.efetivos?.[1],x.agenda?.efetivos?.[2],x.agenda?.aprendizes?.matutino,x.agenda?.aprendizes?.vespertino].forEach(g=>(g||[]).forEach(s=>{if(Array.isArray(s)&&!s[5])s[5]=addMin(s[2],s[3])}));return x}
@@ -234,7 +234,7 @@ async function enforceStarsCalendar(){
     if(location&&await window.PINC_DATES.allowed(location))return true;
     parent.PINC_NAV('home');parent.PINC_SHOW_CALENDAR_CLOSED('stars',location,false);
   }catch(e){
-    console.warn('PINC calendário Stars',e);
+    console.warn('PINC calendário Acolhe+',e);
     parent.PINC_NAV('home');parent.PINC_SHOW_CALENDAR_CLOSED('stars',location,true);
   }
   return false;
