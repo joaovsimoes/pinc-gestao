@@ -16,7 +16,7 @@
 .home-top{min-height:70px;justify-content:flex-start;background:#090909;border-bottom-color:#252525;padding:0 6%}
 .home-brand{gap:0}
 .home-brand-copy,.home-top .live{display:none}
-.home-top .home-logo{display:block;width:160px;height:52px;max-height:52px;box-sizing:border-box;object-fit:contain;background:#fff;padding:5px 10px;border-radius:11px}
+.home-top .home-logo{display:block;width:42px;height:42px;max-height:42px;box-sizing:border-box;object-fit:contain;background:transparent;padding:0;border-radius:0}
 .access{width:min(1000px,82%);gap:14px}
 .access-card{min-height:190px;padding:20px 24px;border-radius:19px}
 .access-icon{width:46px;height:46px;border-radius:14px}
@@ -33,7 +33,7 @@
 @media(max-height:790px) and (min-width:901px){
   .home-shell{grid-template-rows:62px minmax(0,1fr) 46px}
   .home-top{min-height:62px}
-  .home-top .home-logo{height:46px;max-height:46px;width:148px}
+  .home-top .home-logo{height:38px;max-height:38px;width:38px}
   .access-card{min-height:164px;padding:16px 21px}
   .access-icon{width:41px;height:41px}
   .access-icon svg{width:23px;height:23px}
@@ -43,7 +43,7 @@
 @media(max-width:900px),(max-height:560px){
   .home-shell{min-height:100dvh;height:auto;grid-template-rows:auto 1fr auto}
   .home-top{min-height:65px;padding:9px 5%}
-  .home-top .home-logo{width:145px;height:47px;max-height:47px}
+  .home-top .home-logo{width:40px;height:40px;max-height:40px}
   .access{width:min(1000px,90%);gap:12px}
   .access-card{min-height:175px;padding:17px 18px}
   .access-card p{font-size:12px}
@@ -51,7 +51,7 @@
 }
 @media(max-width:650px){
   .home-top{padding:9px 20px}
-  .home-top .home-logo{width:133px;height:44px}
+  .home-top .home-logo{width:36px;height:36px}
   .home-main{min-height:310px}
   .access{width:calc(100% - 36px);grid-template-columns:1fr;gap:10px}
   .access-card{min-height:142px;padding:16px 20px}
@@ -71,14 +71,14 @@
 .pinc-window-home{
   position:absolute;left:calc(env(titlebar-area-x, 0px) + 13px);top:50%;
   transform:translateY(-50%);height:calc(env(titlebar-area-height, 42px) - 8px);
-  width:137px;max-width:calc(env(titlebar-area-width, 100vw) - 32px);
-  border:0;background:#fff;border-radius:9px;
+  width:44px;max-width:calc(env(titlebar-area-width, 100vw) - 32px);
+  border:0;background:transparent;border-radius:0;
   display:flex;align-items:center;justify-content:center;
-  padding:3px 7px;cursor:pointer;-webkit-app-region:no-drag
+  padding:0;cursor:pointer;-webkit-app-region:no-drag
 }
-.pinc-window-home:hover{background:#f1f0f8}
+.pinc-window-home:hover{background:transparent}
 .pinc-window-home:focus-visible{outline:2px solid #c99cff;outline-offset:2px}
-.pinc-window-logo{display:block;max-width:123px;max-height:100%;width:auto;height:auto;object-fit:contain}
+.pinc-window-logo{display:block;width:34px;height:34px;max-width:100%;max-height:100%;object-fit:contain}
 @media(display-mode:window-controls-overlay){
   .pinc-window-bar{display:block}
   #homeView,#moduleView{
