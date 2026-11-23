@@ -44,6 +44,28 @@
 @media(max-width:600px){.stage-card{padding:14px;gap:14px}.stage-main{gap:12px}.stage-no{width:48px;height:48px;font-size:24px;border-radius:15px}.stage-copy h2{font-size:22px;overflow-wrap:anywhere}.stage-top .status{margin-left:60px}.progress-center{grid-template-columns:70px minmax(0,1fr);gap:12px;padding:12px}.ring{width:70px;height:64px}.ring-content strong{font-size:32px}.progress-info .big{font-size:15px}.progress-info p{font-size:10px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
 .notify-bell.has-unread{position:relative;box-shadow:0 0 0 3px #b89aff55;border-color:#8a48e8}.notify-bell.has-unread:after{content:'';position:absolute;right:6px;top:5px;width:8px;height:8px;border-radius:50%;background:#ec2969;border:2px solid #fff}
+
+/* Stars: prioriza horários de acolhimento e listas de colaboradores */
+@media(min-width:901px){
+  .dashboard-shell{flex:0 0 auto!important;min-height:0!important;padding:16px 18px 14px;gap:13px;border-radius:24px}
+  .stage-route{padding:9px 10px 16px!important;border:1px solid #eee7fa;border-radius:15px;background:#fcfbff;min-height:74px}
+  .welcome-card{flex:0 0 auto!important;padding:15px 17px;border-radius:17px}
+  .people-grid{flex:0 0 auto!important;min-height:0!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .people-card{height:auto!important;min-height:190px!important;max-height:350px;padding:14px 16px!important;border-radius:17px}
+  .people-table{flex:0 1 auto;min-height:70px;max-height:285px;overflow:auto}
+  .live-footer{padding:4px 4px 0}
+}
+@media(max-width:900px){
+  .dashboard-shell{flex:0 0 auto;min-height:0;padding:13px;gap:12px}
+  .people-grid{flex:0 0 auto;min-height:0}
+  .people-card{min-height:155px}
+  .people-table{flex:0 1 auto;max-height:280px}
+}
+@media(max-width:620px){
+  .people-grid{grid-template-columns:1fr}
+  .people-card{min-height:140px}
+  .stage-route{overflow-x:auto;scrollbar-width:thin}
+}
 </style></head>
 <body>
 <div class="app">
@@ -65,16 +87,6 @@
   <div class="dash-head"><div><div class="eyebrow">Star • acompanhamento ao vivo</div><h1 id="dashTitle">PINC • Efetivos</h1></div><div class="context-chips"><span class="chip" id="locChip">Anápolis</span><span class="chip" id="audChip">Efetivos</span><span class="chip" id="periodChip">Dia 1</span></div></div>
   <div class="dashboard-shell">
     <ol class="stage-route" id="stageRoute" aria-label="Etapas da integração"></ol>
-    <section class="card stage-card">
-      <div class="stage-top">
-        <div class="stage-main"><div class="stage-no" id="stageNo">1</div><div class="stage-copy"><div class="label">Etapa atual</div><h2 id="stageName">Institucional</h2><p id="stageOwner">Gente & Gestão</p></div></div>
-        <span class="status gray" id="stageStatus">Aguardando início</span>
-      </div>
-      <div class="progress-center">
-        <div class="ring" id="progressRing" style="--pct:0"><div class="ring-content"><strong id="overallPct">0%</strong><span>concluído</span></div></div>
-        <div class="progress-info"><div class="big" id="progressTitle">Evolução do PINC</div><p id="progressCopy">Aguardando o início das etapas.</p><div class="progress-track"><div class="progress-fill" id="overallFill" style="width:0%"></div></div></div>
-      </div>
-    </section>
     <section class="card welcome-card" id="welcomeCard" aria-label="Previsões de acolhimento">
       <div class="welcome-intro"><div class="section-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="16" height="15" rx="3"/><path d="M7 3v4m8-4v4M3 10h16"/><circle cx="17" cy="17" r="5"/><path d="M17 14v3l2 1"/></svg></div><div><h2>Horário previsto de acolhimento</h2><p id="scheduleStatusText">Previsões baseadas no andamento do Dia 2.</p></div></div>
       <div class="welcome-grid" id="welcomeGrid"></div>
@@ -253,10 +265,11 @@ function renderStageRoute(){
   el.innerHTML=visible.length?visible.map((row,offset)=>{const i=start+offset,current=i===Number(l.activeIndex||0),done=i<Number(l.completed||0),parts=String(row[0]||'Etapa').split('/'),title=parts.shift(),subtitle=parts.join(' / ')||row[1]||'';return `<li class="route-step ${current?'is-current':done?'is-complete':''}" ${current?'aria-current="step"':''} title="${esc(row[0])}"><div class="route-marker" aria-hidden="true">${done?'✓':i+1}</div><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></li>`}).join(''):'<li class="route-empty">Aguardando a agenda da Gestão.</li>';
 }
 function renderDashboard(){applyStarsResets();
-const a=list(),l=live(),st=currentStage(),o=overall(),period=selected.audience==='efetivos'?`Dia ${selected.day}`:(selected.shift==='matutino'?'Matutino':'Vespertino');
-dashTitle.textContent=selected.audience==='efetivos'?'PINC • Efetivos':'PINC • Aprendizes';locChip.textContent=selected.location;audChip.textContent=selected.audience==='efetivos'?'Efetivos':'Aprendizes';periodChip.textContent=period;
-if(st){stageNo.textContent=(l.activeIndex||0)+1;stageName.textContent=st[0];stageOwner.textContent=st[1];stageStatus.className='status '+(l.running?'green':'gray');stageStatus.textContent=l.running?'Em andamento':'Aguardando início'}else if(a.length===0){stageNo.textContent='…';stageName.textContent='Sincronizando agenda';stageOwner.textContent='Buscando a programação atual da Gestão.';stageStatus.className='status gray';stageStatus.textContent='Sincronizando'}else{stageNo.textContent='✓';stageName.textContent='PINC concluído';stageOwner.textContent='Todas as etapas foram finalizadas.';stageStatus.className='status green';stageStatus.textContent='Concluído'}
-overallPct.textContent=o.pct+'%';progressRing.style.setProperty('--pct',o.pct);overallFill.style.width=o.pct+'%';progressCopy.textContent=`${o.completed} de ${o.total} etapas concluídas.`;
+const period=selected.audience==='efetivos'?'Dia '+selected.day:(selected.shift==='matutino'?'Matutino':'Vespertino');
+dashTitle.textContent=selected.audience==='efetivos'?'PINC • Efetivos':'PINC • Aprendizes';
+locChip.textContent=selected.location;
+audChip.textContent=selected.audience==='efetivos'?'Efetivos':'Aprendizes';
+periodChip.textContent=period;
 renderStageRoute();renderWelcome();renderPeople();renderLastUpdate();
 }
 function renderWelcome(){
