@@ -920,74 +920,165 @@ function confirmWelcomeNow(){
   successDialog('Acolhimento confirmado',count===1?'O colaborador foi marcado como acolhido.':`${count} colaboradores foram marcados como acolhidos.`);
 }
 
-let pincDaysEntries=[],pincDaysLoaded=false,pincDaysMutating=false,pincDaysWatch=null,pincDaysDeleting=null;
+
+let pincDaysEntries=[],pincDaysLoaded=false,pincDaysMutating=false,pincDaysWatch=null,pincDaysDeleting=null,pincDaysEditing=null;
 function calendarPermission(){return managementLevel()>=4}
+function pincStatus(item,today){return item.start<=today&&item.end>=today?'today':item.start>today?'future':'past'}
+function pincPeriodLabel(item){
+  const format=window.PINC_DATES.label;
+  return item.start===item.end?format(item.start):format(item.start)+' até '+format(item.end);
+}
+function pincDuration(item){return window.PINC_DATES.range(item.start,item.end).length}
 function renderPincDays(){
-  const container=g('pincDaysList');if(!container)return;
+  const table=g('pincDaysList');if(!table)return;
   const location=S.currentLocation||'',today=window.PINC_DATES.today(),canEdit=calendarPermission();
+  const all=pincDaysEntries.filter(x=>x.location===location);
+  const todayEvents=all.filter(x=>pincStatus(x,today)==='today');
+  const futureEvents=all.filter(x=>x.end>=today).sort((a,b)=>a.start.localeCompare(b.start));
+  const state=g('pincDaysTodayStatus');
   if(g('pincDaysLocation'))g('pincDaysLocation').textContent=location;
   if(g('pincDaySelectedLocation'))g('pincDaySelectedLocation').textContent=location;
-  const current=pincDaysEntries.filter(x=>x.location===location),allowed=current.some(x=>x.date===today);
-  if(g('pincDaysTodayStatus')){g('pincDaysTodayStatus').textContent=!pincDaysLoaded?'Verificando online':allowed?'Acesso liberado hoje':'Acesso bloqueado hoje';g('pincDaysTodayStatus').className='status '+(pincDaysLoaded&&allowed?'green':'amber')}
-  if(g('pincDaysTotal'))g('pincDaysTotal').textContent=current.length+' dia'+(current.length===1?'':'s');
-  if(g('pincDaysSave'))g('pincDaysSave').style.display=canEdit?'':'none';
-  if(g('pincDayFrom'))g('pincDayFrom').disabled=!canEdit||pincDaysMutating;
-  if(g('pincDayUntil'))g('pincDayUntil').disabled=!canEdit||pincDaysMutating;
-  if(g('pincDaysSave'))g('pincDaysSave').disabled=!pincDaysLoaded||pincDaysMutating;
-  const sorted=current.slice().sort((a,b)=>(a.date<today?1:0)-(b.date<today?1:0)||a.date.localeCompare(b.date));
-  container.innerHTML=!pincDaysLoaded?'<tr><td colspan="4" style="padding:25px;text-align:center">Sincronizando calendário...</td></tr>':sorted.length?sorted.map((x)=>{
-    const status=x.date===today?'PINC hoje':x.date<today?'Concluído':'Agendado';
-    const key=encodeURIComponent(x.date);
-    return `<tr><td><strong>${window.PINC_DATES.label(x.date)}</strong></td><td>${esc(x.location)}</td><td><span class="status ${x.date===today?'green':'amber'}">${status}</span></td><td>${canEdit?`<button type="button" class="btn secondary" onclick="askRemovePincDay('${key}')">Remover</button>`:'—'}</td></tr>`;
-  }).join(''):'<tr><td colspan="4" style="text-align:center;padding:26px">Nenhum dia de PINC cadastrado para esta localidade. Facilitador e Stars ficarão bloqueados.</td></tr>';
+  if(state){
+    state.textContent=!pincDaysLoaded?'Consultando...':todayEvents.length?'PINC acontecendo hoje':'Sem PINC hoje';
+    state.className='pinc-cal-today '+(pincDaysLoaded&&todayEvents.length?'is-open':'is-closed');
+  }
+  if(g('pincDaysTotal'))g('pincDaysTotal').textContent=pincDaysLoaded?String(all.length):'—';
+  if(g('pincDaysNext'))g('pincDaysNext').textContent=futureEvents[0]?window.PINC_DATES.label(futureEvents[0].start):'—';
+  if(g('pincDaysNextType'))g('pincDaysNextType').textContent=futureEvents[0]?window.PINC_DATES.audienceLabel(futureEvents[0].audience):'Nenhum evento futuro';
+  if(g('pincDaysAccess'))g('pincDaysAccess').textContent=!pincDaysLoaded?'Verificando':todayEvents.length?'Liberado hoje':'Bloqueado hoje';
+  if(g('pincDaysSave')){
+    g('pincDaysSave').style.display=canEdit?'':'none';
+    g('pincDaysSave').disabled=!pincDaysLoaded||pincDaysMutating;
+    g('pincDaysSave').textContent=pincDaysEditing?'Salvar alterações':'+ Cadastrar PINC';
+  }
+  if(g('pincDaysCancelEdit'))g('pincDaysCancelEdit').style.display=pincDaysEditing?'':'none';
+  if(g('pincCalendarFormTitle'))g('pincCalendarFormTitle').textContent=pincDaysEditing?'Editar PINC':'Cadastrar PINC';
+  for(const field of ['pincDayFrom','pincDayUntil','pincDayAudience'])if(g(field))g(field).disabled=!canEdit||pincDaysMutating;
+  const from=g('pincDayFrom')?.value||'',until=g('pincDayUntil')?.value||from;
+  if(g('pincDaysPreview')){
+    let description='Selecione o público e o período do PINC.';
+    if(from&&until){
+      try{
+        const n=window.PINC_DATES.range(from,until).length;
+        const audience=g('pincDayAudience')?.value||'';
+        description=window.PINC_DATES.audienceLabel(audience)+' · '+n+' dia'+(n===1?'':'s')+' · Acesso de 00h às 23h59 (Brasília) em cada data.';
+      }catch(e){description=e.message}
+    }
+    g('pincDaysPreview').textContent=description;
+  }
+  const period=g('pincDaysFilter')?.value||'all',audience=g('pincDaysFilterAudience')?.value||'all';
+  const visible=all.filter(x=>{
+    const when=pincStatus(x,today);
+    if(period==='future'&&when==='past')return false;
+    if(period==='past'&&when!=='past')return false;
+    return audience==='all'||(audience==='unknown'?!x.audience:x.audience===audience);
+  }).sort((a,b)=>(a.end<today?1:0)-(b.end<today?1:0)||a.start.localeCompare(b.start)||a.end.localeCompare(b.end));
+  table.innerHTML=!pincDaysLoaded?
+    '<tr><td colspan="5" class="pinc-cal-empty">Sincronizando calendário online...</td></tr>':
+    visible.length?visible.map(x=>{
+      const when=pincStatus(x,today),days=pincDuration(x),name=window.PINC_DATES.audienceLabel(x.audience);
+      const status=when==='today'?'Em andamento':when==='future'?'Agendado':'Concluído';
+      const id=encodeURIComponent(x.id),kind=x.audience||'unknown';
+      const actions=canEdit?
+        '<button class="btn secondary" type="button" onclick="editPincEvent(\''+id+'\')">'+(x.legacy?'Definir público':'Editar')+'</button>'+
+        '<button class="btn danger" type="button" onclick="askRemovePincDay(\''+id+'\')">Remover</button>':'—';
+      return '<tr><td><span class="pinc-cal-period">'+pincPeriodLabel(x)+'</span><span class="pinc-cal-sub">'+esc(x.location)+'</span></td>'+
+        '<td><span class="pinc-cal-type '+kind+'">'+esc(name)+'</span></td>'+
+        '<td>'+days+' dia'+(days===1?'':'s')+'</td>'+
+        '<td><span class="pinc-cal-status '+when+'">'+status+'</span></td>'+
+        '<td><div class="pinc-cal-actions">'+actions+'</div></td></tr>';
+    }).join(''):'<tr><td colspan="5" class="pinc-cal-empty">Nenhum PINC encontrado para esses filtros. Cadastre um período acima.</td></tr>';
+}
+function syncPincDayRange(){
+  const start=g('pincDayFrom'),end=g('pincDayUntil');
+  if(start&&end&&(!end.value||end.value<start.value))end.value=start.value;
+  renderPincDays();
+}
+function cancelEditPincEvent(){
+  pincDaysEditing=null;
+  if(g('pincDayAudience'))g('pincDayAudience').value='';
+  if(g('pincDayFrom'))g('pincDayFrom').value=window.PINC_DATES.today();
+  if(g('pincDayUntil'))g('pincDayUntil').value=window.PINC_DATES.today();
+  renderPincDays();
+}
+function editPincEvent(encoded){
+  if(!calendarPermission())return;
+  const id=decodeURIComponent(encoded),event=pincDaysEntries.find(x=>x.id===id&&x.location===S.currentLocation);
+  if(!event)return toast('PINC não encontrado. Atualize o calendário.');
+  pincDaysEditing=id;
+  if(g('pincDayFrom'))g('pincDayFrom').value=event.start;
+  if(g('pincDayUntil'))g('pincDayUntil').value=event.end;
+  if(g('pincDayAudience'))g('pincDayAudience').value=event.audience||'';
+  renderPincDays();
+  g('pincCalendarEditor')?.scrollIntoView?.({behavior:'smooth',block:'start'});
+  g('pincDayAudience')?.focus?.();
 }
 async function refreshPincDays(){
-  try{pincDaysEntries=await window.PINC_DATES.list();pincDaysLoaded=true;if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Calendário atualizado e sincronizado online.';renderPincDays()}
-  catch(e){pincDaysLoaded=false;if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Não foi possível consultar as datas. Confira a conexão.';renderPincDays();throw e}
+  try{
+    pincDaysEntries=await window.PINC_DATES.list();pincDaysLoaded=true;
+    if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Calendário sincronizado com o PINC.';
+    renderPincDays();
+  }catch(e){
+    pincDaysLoaded=false;
+    if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Não foi possível consultar o calendário. Confira a conexão.';
+    renderPincDays();throw e;
+  }
 }
 async function initPincDays(){
-  const today=window.PINC_DATES.today();
-  if(g('pincDayFrom')&&!g('pincDayFrom').value)g('pincDayFrom').value=today;
-  if(g('pincDayUntil')&&!g('pincDayUntil').value)g('pincDayUntil').value=today;
+  const day=window.PINC_DATES.today();
+  if(g('pincDayFrom')&&!g('pincDayFrom').value)g('pincDayFrom').value=day;
+  if(g('pincDayUntil')&&!g('pincDayUntil').value)g('pincDayUntil').value=day;
+  for(const id of ['pincDayFrom','pincDayUntil','pincDayAudience'])g(id)?.addEventListener('change',renderPincDays);
   try{
     await refreshPincDays();
     if(pincDaysWatch)return;
-    pincDaysWatch=await window.PINC_DATES.watch(entries=>{
-      pincDaysEntries=entries;pincDaysLoaded=true;renderPincDays();
+    pincDaysWatch=await window.PINC_DATES.watch(rows=>{
+      pincDaysEntries=rows;pincDaysLoaded=true;renderPincDays();
       if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Calendário sincronizado com o PINC.';
-    },e=>{pincDaysLoaded=false;renderPincDays();if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Falha na sincronização do calendário.';console.warn('PINC calendário',e)});
+    },error=>{
+      pincDaysLoaded=false;renderPincDays();
+      if(g('pincDaysSyncStatus'))g('pincDaysSyncStatus').textContent='Falha na sincronização do calendário.';
+      console.warn('PINC calendário',error);
+    });
   }catch(e){console.warn('PINC calendário indisponível',e)}
 }
 async function registerPincDays(){
-  if(!calendarPermission())return toast('Apenas Master e Hub podem cadastrar dias de PINC.');
+  if(!calendarPermission())return toast('Apenas Master e Hub podem cadastrar PINCs.');
   if(pincDaysMutating)return;
   const location=S.currentLocation,start=g('pincDayFrom')?.value,end=g('pincDayUntil')?.value||start;
-  if(!start)return toast('Informe a data inicial do PINC.');
+  const audience=g('pincDayAudience')?.value||'',id=pincDaysEditing;
+  if(!audience)return toast('Selecione o tipo de PINC: Efetivos, Aprendizes ou Estagiários.');
+  if(!start||!end)return toast('Informe a data inicial e a final.');
   pincDaysMutating=true;renderPincDays();
   try{
-    const count=await window.PINC_DATES.addRange(location,start,end);
-    await refreshPincDays();
-    successDialog('Calendário atualizado',count?`${count} dia(s) de PINC cadastrado(s) em ${esc(location)}. Facilitador e Stars serão liberados somente nas datas cadastradas.`:'Esses dias já estavam cadastrados.');
-  }catch(e){toast(e?.message||'Não foi possível cadastrar os dias.')}finally{pincDaysMutating=false;renderPincDays()}
+    const result=await window.PINC_DATES.saveEvent({id,location,start,end,audience});
+    await refreshPincDays();cancelEditPincEvent();
+    const title=id?'PINC atualizado':'PINC cadastrado';
+    const period=start===end?window.PINC_DATES.label(start):window.PINC_DATES.label(start)+' a '+window.PINC_DATES.label(end);
+    successDialog(title,window.PINC_DATES.audienceLabel(audience)+' · '+period+' · '+result.count+' dia(s).');
+  }catch(e){toast(e?.message||'Não foi possível salvar o PINC.')}
+  finally{pincDaysMutating=false;renderPincDays()}
 }
 function askRemovePincDay(encoded){
   if(!calendarPermission())return toast('Sem permissão para alterar o calendário.');
-  const date=decodeURIComponent(encoded);
-  if(!pincDaysEntries.some(x=>x.location===S.currentLocation&&x.date===date))return;
-  pincDaysDeleting={location:S.currentLocation,date};
-  confirmDialog('Remover dia de PINC',`Remover o dia ${window.PINC_DATES.label(date)} da localidade ${S.currentLocation}? Facilitador e Stars ficarão bloqueados nessa data.`,'Remover dia','confirmRemovePincDay()',false);
+  const id=decodeURIComponent(encoded),event=pincDaysEntries.find(x=>x.id===id&&x.location===S.currentLocation);
+  if(!event)return toast('Esse PINC não foi encontrado.');
+  pincDaysDeleting={id,location:event.location};
+  confirmDialog('Remover PINC','Remover o PINC de '+pincPeriodLabel(event)+' ('+window.PINC_DATES.audienceLabel(event.audience)+')? A liberação por esse evento será removida.','Remover PINC','confirmRemovePincDay()',false);
 }
 async function confirmRemovePincDay(){
-  const selected=pincDaysDeleting;if(!selected||!calendarPermission()||pincDaysMutating)return;
+  const record=pincDaysDeleting;if(!record||!calendarPermission()||pincDaysMutating)return;
   pincDaysDeleting=null;pincDaysMutating=true;closeModal();
   try{
-    const removed=await window.PINC_DATES.remove(selected.location,selected.date);
+    const removed=await window.PINC_DATES.removeEvent(record.id);
     await refreshPincDays();
-    successDialog('Calendário atualizado',removed?'O dia foi removido. O acesso nesta data será bloqueado.':'O dia já estava removido.');
-  }catch(e){toast('Não foi possível remover o dia. Tente novamente.')}finally{pincDaysMutating=false;renderPincDays()}
+    if(pincDaysEditing===record.id)cancelEditPincEvent();
+    successDialog('Calendário atualizado',removed?'O PINC foi removido do calendário.':'Esse PINC já estava removido.');
+  }catch(e){toast('Não foi possível remover o PINC. Tente novamente.')}
+  finally{pincDaysMutating=false;renderPincDays()}
 }
 function renderLocationSelect(){const auth=managementAuth(),master=isMaster();const locs=master?S.locations:S.locations.filter(l=>l.name===auth.location);if(!master&&auth.location)S.currentLocation=auth.location;if(master&&!locs.some(l=>l.name===S.currentLocation))S.currentLocation=auth.location&&locs.some(l=>l.name===auth.location)?auth.location:(locs[0]?.name||'');topLocation.innerHTML=locs.map(l=>`<option ${l.name===S.currentLocation?'selected':''}>${l.name}</option>`).join('');topLocation.disabled=!master;applyManagementAccessProfile()}
-async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();renderPincDays();if(previous!==v)toast('Localidade alterada para '+v+'.')}
+async function setLocation(v){const auth=managementAuth();if(!isMaster()&&v!==auth.location){toast('Seu perfil '+(managementAuth().profileName||'Hub')+' está vinculado à localidade '+auth.location+'.');renderLocationSelect();return}if(!S.locations.some(l=>l.name===v))return;const previous=S.currentLocation;snapshotCurrentLocationState();loadLocationState(v);lastAgendaRealtimeSignature='';await initManagementResets().catch(e=>console.warn('PINC reset location',e));const cloudLoaded=await loadLocationAgendaFromCloud(v);if(!cloudLoaded&&isGoianiaLocation(v)){S.agenda=structuredClone(S.agendasByLocation[v]||emptyAgenda());applyLocationAgendaPolicy()}snapshotCurrentLocationState();persist({broadcast:false});renderLocationSelect();renderAgenda();renderReports();renderAbs();renderWelcomeStarOptions('');renderPortalRegistrations();renderSettingsLists();cancelEditPincEvent();if(previous!==v)toast('Localidade alterada para '+v+'.')}
 function settingsTrashIcon(){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>'}
 function renderSettingsLists(){
   applyManagementAccessProfile();
