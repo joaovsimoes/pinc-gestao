@@ -333,19 +333,51 @@ async function finishStage(){
     const rec={stage:st[0],stageIndex:index,planned:+st[3]||0,actual,actualStart:l.actualStart||clockNow(new Date(startedAt)),actualEnd:clockNow(finished),startedAt,location:selected.location,audience:selected.audience,period:selected.audience==='efetivos'?`Dia ${selected.day}`:selected.shift,finishedAt:finished.toISOString()};
     window.PINC_RESET.stampReport(rec,facResets,selected.location);mergeFacReports([rec]);
     Object.assign(l,{completed:Math.max(l.completed,index+1),activeIndex:Math.max(l.completed,index+1),activePct:0,running:false,startedAt:null,actualStart:null,elapsedBefore:0,elapsedSeconds:0,_updatedAt:Date.now(),_updatedBy:'facilitador'});
-    lastObservedLive=null;persist();facCommandPending=false;closeModal();renderOperation();
+    lastObservedLive=null;persist();closeModal();renderOperation();
     const payload={type:'facilitatorProgress',status:'idle',commandLock:false,running:false,ownerUid:lockAuthUser.uid,location:selected.location,audience:selected.audience,period:lockPeriod(),periodResetAt:Number(l._periodResetAt||0),completed:l.completed,activeIndex:l.activeIndex,agendaTotal:list().length,nextStageName:next?.[0]||'',nextStageOwner:next?.[1]||'',nextPlannedStart:next?.[2]||'',report:rec,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAtMillis:l._updatedAt};
-    // Publish the next stage and remove the old command lock in one Firestore commit.
-    const progressRef=progressFeedDoc(),batch=lockDb.batch();batch.set(progressRef,payload);batch.delete(ref);
-    try{await facOnlineWait(batch.commit(),'A confirmação online')}catch(e){
-      console.error('PINC finalização online',e);
-      showToast('Etapa finalizada neste dispositivo. A confirmação online falhou; tentando sincronizar novamente.');
-      if(context!==lockContextKey()||Number(live().completed||0)<=payload.completed)await facOnlineWait(progressRef.set(payload),'A publicação da próxima etapa');await facOnlineWait(ref.delete(),'A liberação da etapa');
+    // O avanço da agenda e o evento de notificação devem ser gravados juntos.
+    // O ID estável impede notificações duplicadas em novas tentativas de envio.
+    const completedMillis=Number.isFinite(Date.parse(startedAt))?Date.parse(startedAt):l._updatedAt;
+    const eventId='fac_finished_'+lockAuthUser.uid+'_'+completedMillis+'_'+index;
+    const eventRef=lockDb.collection('pincLocks').doc(eventId);
+    const eventPayload={
+      type:'facilitatorEvent',location:selected.location,audience:selected.audience,
+      period:lockPeriod(),action:'finished',stageName:String(st[0]||'Etapa'),
+      stageOwner:String(st[1]||''),stageIndex:index,actualMinutes:actual,
+      nextStageName:String(next?.[0]||''),nextStageOwner:String(next?.[1]||''),
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdAtMillis:l._updatedAt,completedAt:finished.toISOString(),
+      ownerUid:lockAuthUser.uid,
+      body:'Etapa “'+String(st[0]||'Etapa')+'” concluída às '+clockNow(finished)+
+        ' ('+actual+' min). '+(next?'Próxima etapa: '+String(next[0])+'.':'Todas as etapas deste período foram concluídas.')
+    };
+    const progressRef=progressFeedDoc(),batch=lockDb.batch();
+    batch.set(progressRef,payload);batch.set(eventRef,eventPayload);batch.delete(ref);
+    let notificationSaved=false;
+    try{
+      await facOnlineWait(batch.commit(),'A confirmação e notificação da etapa');
+      notificationSaved=true;
+    }catch(e){
+      console.warn('PINC finalização - reenvio online',e);
+      // Um commit pode ter chegado ao servidor mesmo que a resposta tenha falhado.
+      // Regravar o mesmo documento de evento é seguro e evita disparos duplicados.
+      if(context!==lockContextKey()||Number(live().completed||0)<=payload.completed)
+        await facOnlineWait(progressRef.set(payload),'A publicação da próxima etapa');
+      await facOnlineWait(ref.delete(),'A liberação da etapa');
+      try{
+        await facOnlineWait(eventRef.set(eventPayload),'O aviso de conclusão');
+        notificationSaved=true;
+      }catch(notificationError){
+        console.error('PINC aviso não entregue',notificationError);
+      }
     }
-    if(ownCommandLockRef?.id===ref.id)ownCommandLockRef=null;if(remoteLock?.__id===ref.id)remoteLock=null;renderOperation();
+    if(ownCommandLockRef?.id===ref.id)ownCommandLockRef=null;
+    if(remoteLock?.__id===ref.id)remoteLock=null;
+    renderOperation();
     syncReportsCloud();
-    await publishFacilitatorEvent('finished',st,finished,actual);
-    showToast(`Etapa finalizada em ${actual} min.`);
+    showToast(notificationSaved?
+      'Etapa finalizada em '+actual+' min. Notificação enviada ao PINC.':
+      'Etapa finalizada em '+actual+' min. Aviso pendente de envio. Confira a conexão.');
   }catch(e){console.error('PINC finish stage',e);showToast('Não foi possível confirmar a finalização online. Verifique a conexão e tente novamente.')}
   finally{if(command===facCommandSequence)facCommandPending=false;renderOperation();applyCloudLockUI()}
 }
