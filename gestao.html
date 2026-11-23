@@ -273,6 +273,35 @@
 .pinc-admin-notice{position:relative;flex:0 0 37px;height:37px;width:37px;border:1px solid var(--line);border-radius:11px;background:#fff;color:#7c48c6;display:grid;place-items:center;transition:background .15s}
 .pinc-admin-notice:hover{background:#f5efff;border-color:#decafd}.pinc-admin-notice svg{width:19px;height:19px}
 .pinc-admin-notice-count{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:10px;background:#e92066;color:#fff;border:2px solid #fff;font-size:9px;font-weight:900;line-height:13px}
+
+/* Presença diária de efetivos: Dia 1 e Dia 2 independentes */
+.registry-day-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.registry-day-guide{display:flex;align-items:center;gap:13px;padding:15px 17px;margin-bottom:13px;box-shadow:none;border-radius:14px}
+.registry-day-guide-icon{height:36px;width:36px;flex:0 0 36px;display:grid;place-items:center;color:#6f22d5;background:#f2eaff;border-radius:12px;font-size:17px;font-weight:900}
+.registry-day-guide strong{font-size:12px;color:#263148}
+.registry-day-guide p{font-size:10px;line-height:1.6;color:#778398;margin:4px 0 0}
+.registry-day-bulk{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;flex:0 0 auto}
+.registry-day-bulk .btn{min-height:36px;padding:9px 12px;font-size:10px}
+.registry-day-tools{grid-template-columns:minmax(260px,1fr) auto 96px 145px auto;align-items:center}
+.registry-day-filter-label{font-size:10px;font-weight:750;white-space:nowrap;color:#69758c}
+.registry-day-table{padding:0;box-shadow:none;border-radius:14px;overflow-x:auto}
+.registry-day-table table{min-width:1240px}
+.registry-day-table th,.registry-day-table td{padding:13px 10px}
+.registry-day-table .registry-att-header{text-align:center;min-width:230px}
+.registry-day-table .registry-att-header small{font-size:9px;font-weight:600;text-transform:none}
+.registry-day-table th:last-child,.registry-day-table td:last-child{min-width:55px;text-align:center}
+.registry-day-table td:nth-last-child(3),.registry-day-table td:nth-last-child(2){text-align:center}
+.registry-day-table .attendance-controls{display:inline-flex;gap:4px;padding:3px;background:#f9faff;border:1px solid #eaeef5;border-radius:10px;white-space:nowrap}
+.registry-day-table .att-btn{font-size:9px;border-radius:7px;padding:8px 9px}
+.registry-day-table .att-btn:hover:not(.active){background:#f1eaff;color:#7831c9}
+.registry-day-table .att-btn.active{font-weight:900}
+.registry-day-table tr:hover{background:#fcfbff}
+.registry-day-table .registry-delete{width:32px;height:32px;border:1px solid #f3dbe0;background:#fff7f8;border-radius:9px;color:#d24b66;display:grid;place-items:center;margin:auto}
+.registry-day-table .registry-delete svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.registry-day-table .registry-delete:hover{background:#fbe8ee}
+.registry-day-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 3px;color:#8690a1;font-size:10px;flex-wrap:wrap}
+@media(max-width:1050px){.registry-day-guide{flex-wrap:wrap}.registry-day-bulk{margin-left:0;width:100%;justify-content:flex-start}.registry-day-tools{grid-template-columns:1fr 100px 130px}.registry-day-filter-label{display:none}}
+@media(max-width:700px){.registry-day-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.registry-day-tools{display:flex;flex-wrap:wrap}.registry-day-tools .registry-search{flex:1 0 100%}.registry-day-tools select{flex:1}.registry-day-bulk .btn{flex:1 1 130px}}
 </style>
 </head><body>
 <div class="app">
@@ -336,35 +365,41 @@
 </section>
 <section class="view" id="registros">
   <div class="page-head">
-    <div><h2>Registros</h2><p>Controle dos colaboradores do PINC e identificação dos ausentes para comunicação.</p></div>
+    <div><h2>Registros e presença</h2><p>Confirme a participação dos efetivos separadamente no Dia 1 e no Dia 2. Os dados são sincronizados com o Portal Stars.</p></div>
     <div class="head-actions records-head-actions">
       <input id="participantImport" type="file" accept=".csv,text/csv" hidden onchange="handleParticipantImport(event)">
-      <button class="btn secondary" onclick="participantImport.click()" title="Importar lista de colaboradores">↑ Subir lista</button>
-      <button class="btn secondary" onclick="openEmailPreview()" title="Preparar comunicação dos ausentes">✉ Avisar ausentes</button>
-      <button class="btn secondary" style="color:var(--red);border-color:#f1ccd3" onclick="clearAllParticipants()" title="Excluir todos os colaboradores cadastrados">⌫ Limpar tudo</button>
-      <button class="btn primary" onclick="openAbsentModal()">+ Adicionar pessoa</button>
+      <button type="button" class="btn secondary" onclick="participantImport.click()">↑ Subir lista</button>
+      <button type="button" class="btn secondary" onclick="exportAttendanceExcel()">↓ Exportar presença</button>
+      <button type="button" class="btn secondary" onclick="openEmailPreview()">✉ Avisar ausentes</button>
+      <button type="button" class="btn secondary" style="color:var(--red);border-color:#f1ccd3" onclick="clearAllParticipants()">⌫ Limpar tudo</button>
+      <button type="button" class="btn primary" onclick="openAbsentModal()">+ Adicionar pessoa</button>
     </div>
   </div>
-  <div class="kpis">
+  <div class="kpis registry-day-kpis">
     <div class="card kpi"><small>Participantes</small><strong id="partCount">0</strong><span>na localidade</span></div>
-    <div class="card kpi"><small>Presentes</small><strong id="presentCount">0</strong><span>confirmados</span></div>
-    <div class="card kpi"><small>Ausentes</small><strong id="absCount">0</strong><span>para comunicação</span></div>
-    <div class="card kpi"><small>Comunicados</small><strong id="mailCount">0</strong><span>e-mails preparados</span></div>
+    <div class="card kpi"><small>Presentes no Dia 1</small><strong id="presentCount">0</strong><span>presenças confirmadas</span></div>
+    <div class="card kpi"><small>Presentes no Dia 2</small><strong id="day2PresentCount">0</strong><span>efetivos confirmados</span></div>
+    <div class="card kpi"><small>Pendentes</small><strong id="pendingAttendanceCount">0</strong><span>confirmações ainda não realizadas</span></div>
   </div>
-  <div class="card panel" style="margin-bottom:12px">
-    <div class="hint"><strong>Padrão obrigatório da lista:</strong> Empresa → Nome do Colaborador → Matrícula → Cargo → CDC → Gestor Imediato. Preencha os seis dados em cada linha; a lista será vinculada à localidade selecionada na Gestão. Todos os registros importados entram inicialmente como <b>Presentes</b>; depois você pode alterar individualmente para <b>Ausente</b>.</div>
+  <div class="card panel registry-day-guide">
+    <div class="registry-day-guide-icon" aria-hidden="true">✓</div>
+    <div><strong>Presença por dia</strong><p>Marque cada colaborador como <b>Presente</b>, <b>Ausente</b> ou <b>Pendente</b> em cada dia. A marcação do Dia 1 não preenche automaticamente o Dia 2. Presenças já registradas anteriormente são preservadas como referência do Dia 1.</p></div>
+    <div class="registry-day-bulk"><button type="button" class="btn secondary" onclick="markAllAttendance(1,'present')">✓ Presentes Dia 1</button><button type="button" class="btn secondary" id="registryDay2Bulk" onclick="markAllAttendance(2,'present')">✓ Presentes Dia 2</button></div>
   </div>
-  <div class="card registry-tools">
-    <div class="registry-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg><input id="registrySearch" type="search" placeholder="Pesquisar empresa, nome, matrícula, cargo, CDC ou gestor..." oninput="renderAbs()" autocomplete="off"></div>
-    <select id="registryStatusFilter" onchange="renderAbs()" aria-label="Filtrar por status"><option value="all">Todos os status</option><option value="present">Somente presentes</option><option value="absent">Somente ausentes</option></select>
+  <div class="card registry-tools registry-day-tools">
+    <div class="registry-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.6-3.6"></path></svg><input id="registrySearch" type="search" placeholder="Pesquisar nome, matrícula, CDC, empresa ou gestor..." oninput="renderAbs()" autocomplete="off"></div>
+    <label class="registry-day-filter-label" for="registryDay">Filtrar presenças do</label>
+    <select id="registryDay" onchange="renderAbs()" aria-label="Dia para filtrar presenças"><option value="1">Dia 1</option><option value="2">Dia 2</option></select>
+    <select id="registryStatusFilter" onchange="renderAbs()" aria-label="Filtrar por presença"><option value="all">Todos os status</option><option value="present">Presentes</option><option value="absent">Ausentes</option><option value="pending">Pendentes</option></select>
     <div class="registry-result" id="registryResult">0 registros exibidos</div>
   </div>
-  <div class="card panel table-wrap">
+  <div class="card panel table-wrap registry-day-table">
     <table>
-      <thead><tr><th>Empresa</th><th>Nome do Colaborador</th><th>Matrícula</th><th>Cargo</th><th>CDC</th><th>Gestor Imediato</th><th>Status</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Empresa</th><th>Nome do Colaborador</th><th>Matrícula</th><th>Cargo</th><th>CDC</th><th>Gestor Imediato</th><th class="registry-att-header">Dia 1<br><small>Presença</small></th><th class="registry-att-header">Dia 2<br><small>Presença</small></th><th>Ações</th></tr></thead>
       <tbody id="absTable"></tbody>
     </table>
   </div>
+  <div class="registry-day-footer"><span id="registryDaySummary">Selecione um dia para filtrar os registros de presença.</span><span>Comunicados preparados: <strong id="mailCount">0</strong> · Ausentes no dia selecionado: <strong id="absCount">0</strong></span></div>
 </section>
 <section class="view" id="relatorios">
   <div class="page-head"><div><h2>Relatórios</h2><p>Desvios do cronograma e oportunidades de melhoria.</p></div><div class="head-actions"><span class="chip" id="toleranceChip">Tolerância ±10 min</span><button class="btn secondary" onclick="openReportReset()">↻ Resetar relatório</button><button class="btn primary" onclick="downloadReportPDF()">↓ Emitir PDF</button></div></div>
