@@ -113,5 +113,5 @@
     }
     render();
   }
-  window.PINC_PROFILE={init,render,sync,pick,upload};
+  window.PINC_PROFILE={init,render,sync,pick,upload,preparePhoto:shrink};
 })();
