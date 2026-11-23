@@ -305,6 +305,7 @@
 </style>
 <link rel="stylesheet" href="pinc-agenda-view.css?v=20261123-1">
 <link rel="stylesheet" href="pinc-agenda-export.css?v=20261123-3">
+<link rel="stylesheet" href="pinc-management-polish.css?v=20261123-5">
 </head><body>
 <div class="app">
 <aside class="sidebar">
@@ -331,7 +332,7 @@
   <div class="agenda-layout"><div class="card agenda-table"><div id="agendaList"></div></div></div>
 </section>
 <section class="view" id="calendario">
- <div class="page-head pinc-cal-head"><div><h2>Calendário de PINCs</h2><p>Organize os períodos de integração e controle os dias de acesso aos portais.</p></div><div class="pinc-cal-context"><span class="pinc-cal-location" id="pincDaysLocation">Anápolis</span><span class="pinc-cal-today" id="pincDaysTodayStatus">Consultando...</span></div></div>
+ <div class="page-head pinc-cal-head"><div><h2>Calendário de PINCs</h2><p>Organize os períodos de integração e controle os dias de acesso aos portais.</p></div><div class="pinc-cal-header-actions"><div class="pinc-cal-context"><span class="pinc-cal-location" id="pincDaysLocation">Anápolis</span><span class="pinc-cal-today" id="pincDaysTodayStatus">Consultando...</span></div><button type="button" class="btn primary" id="pincCalendarTopNew" onclick="pincPrepareSelectedDate()">+ Novo PINC</button></div></div>
  <div class="pinc-cal-stats"><div><span>PINCs cadastrados</span><strong id="pincDaysTotal">—</strong><small>Na localidade selecionada</small></div><div><span>Próximo PINC</span><strong id="pincDaysNext">—</strong><small id="pincDaysNextType">Nenhum evento futuro</small></div><div><span>Acesso aos portais</span><strong id="pincDaysAccess">Verificando</strong><small>Conforme as datas cadastradas</small></div></div>
  <div class="pinc-month-layout">
   <div class="card pinc-month-board">
@@ -341,13 +342,14 @@
         <button type="button" class="pinc-month-today" onclick="pincGoToToday()">Hoje</button>
         <button type="button" class="pinc-month-nav-btn" onclick="pincMoveMonth(-1)" aria-label="Mês anterior" title="Mês anterior">‹</button>
         <strong id="pincMonthLabel">Carregando...</strong>
-        <button type="button" class="pinc-month-nav-btn" onclick="pincMoveMonth(1)" aria-label="Próximo mês" title="Próximo mês">›</button>
+        <button type="button" class="pinc-month-nav-btn" onclick="pincMoveMonth(1)" aria-label="Próximo mês" title="Próximo mês">›</button><label class="pinc-month-jump" title="Ir para outro mês">Ir para <input type="month" id="pincCalendarMonthJump" aria-label="Selecionar mês e ano" onchange="pincJumpMonth(this.value)"></label>
       </div>
     </div>
     <div class="pinc-month-scroller">
       <div class="pinc-month-weekdays" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
       <div id="pincMonthGrid" class="pinc-month-grid" role="group" aria-label="Datas do calendário PINC"></div>
     </div>
+    <div class="pinc-month-summary" id="pincMonthSummary">Consultando integrações do mês...</div>
     <div class="pinc-month-legend"><span><i class="pinc-month-dot efetivos"></i>Efetivos</span><span><i class="pinc-month-dot aprendizes"></i>Aprendizes</span><span><i class="pinc-month-dot estagiarios"></i>Estagiários</span><span><i class="pinc-month-dot unknown"></i>Não informado</span></div>
   </div>
   <aside class="card pinc-month-detail" aria-live="polite">
@@ -355,6 +357,7 @@
     <h3 id="pincSelectedDayLabel">Selecione um dia</h3>
     <p id="pincSelectedDayCount">Consulte as integrações programadas.</p>
     <div class="pinc-month-detail-events" id="pincSelectedDayEvents"></div>
+    <div class="pinc-cal-upcoming" id="pincMonthUpcoming"></div>
     <button type="button" class="btn secondary pinc-month-new" onclick="pincPrepareSelectedDate()" id="pincMonthNewButton">+ Cadastrar PINC neste dia</button>
   </aside>
 </div>
@@ -436,7 +439,26 @@
   </table></div>
 </section>
 <section class="view" id="stars-cadastro">
-  <div class="page-head"><div><h2>Cadastro de Stars</h2><p>Cadastre os Stars com nome, matrícula, CDC e localidade vinculada.</p></div><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Star</button></div>
+  <div class="page-head"><div><h2>Cadastro de Stars</h2><p>Cadastre os Stars com nome, matrícula, CDC e localidade vinculada.</p></div><div class="pinc-star-head-actions"><button type="button" class="btn secondary" id="pincStarImportOpen" onclick="PINC_STARS_IMPORT.toggle(true)">⇪ Importar base</button><button class="btn primary" id="portalRegisterButton" onclick="openPortalRegistration()">+ Cadastrar Star</button></div></div>
+   <section class="card pinc-star-import" id="pincStarImportPanel" hidden aria-label="Importação de Stars em lote">
+     <div class="pinc-star-import-heading">
+       <div><h3>Importar base de Stars</h3><p>Carregue uma planilha .xlsx, .xls ou .csv com Nome, Matrícula e CDC. A coluna Localidade é opcional e, quando vazia, utiliza a localidade selecionada. Somente Master pode importar para várias localidades.</p></div>
+       <button type="button" class="pinc-star-import-close" onclick="PINC_STARS_IMPORT.toggle(false)" aria-label="Fechar importação">×</button>
+     </div>
+     <div class="pinc-star-import-actions">
+       <button class="btn secondary" type="button" onclick="PINC_STARS_IMPORT.template()">↓ Baixar modelo CSV</button>
+       <div class="pinc-star-import-upload">
+         <label for="pincStarFile">Escolher planilha</label>
+         <input type="file" id="pincStarFile" accept=".xlsx,.xls,.csv" aria-label="Selecionar planilha para importar Stars" onchange="PINC_STARS_IMPORT.loaded(this)">
+       </div>
+     </div>
+     <p class="pinc-star-import-status" id="pincStarImportStatus" aria-live="polite">Escolha uma planilha para visualizar os registros antes de importar.</p>
+     <div class="pinc-star-import-results" id="pincStarImportResults" hidden></div>
+     <div class="pinc-star-import-footer">
+       <span>O sistema confere os dados antes de salvar. Matrículas já existentes não serão sobrescritas.</span>
+       <button type="button" class="btn primary" id="pincStarConfirm" onclick="PINC_STARS_IMPORT.ask()" disabled>Importar Stars válidos</button>
+     </div>
+   </section>
   <div class="card panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>Stars da localidade</h3><p>Cada Star possui nome, matrícula, CDC e localidade vinculada. O acesso ao Portal Stars verifica o CDC dos colaboradores presentes e pendentes.</p></div><span class="chip" id="portalRegistrationLocation">—</span></div>
     <div class="hint">Não é necessário cadastrar usuário ou senha. O acesso é liberado quando o CDC possui colaboradores presentes aguardando acolhimento no PINC.</div>
   </div>
@@ -462,6 +484,8 @@
 <script src="pinc-calendar.js?v=20261123-events-2"></script>
 <script src="pinc-agenda-view.js?v=20261123-1"></script>
 <script src="pinc-agenda-export.js?v=20261123-3"></script>
+<script src="pinc-calendar-extras.js?v=20261123-5"></script>
+<script src="pinc-stars-import.js?v=20261123-5"></script>
 <script>
 const STORAGE='pinc-gestao-v6';
 const BACKUP_STORAGE='pinc-gestao-backup-v1';
@@ -1176,6 +1200,14 @@ function pincMoveMonth(offset){
   pincSelectedDate=pincFirstDateInMonth(pincMonthCursor,pincDaysEntries.filter(x=>x.location===S.currentLocation));
   renderPincMonth();
 }
+function pincJumpMonth(value){
+  if(!/^\d{4}-\d{2}$/.test(String(value||'')))return;
+  const month=Number(value.slice(5,7));
+  if(month<1||month>12)return;
+  pincMonthCursor=value;pincMonthInitialized=true;
+  pincSelectedDate=pincFirstDateInMonth(value,pincDaysEntries.filter(x=>x.location===S.currentLocation));
+  renderPincMonth();
+}
 function pincGoToToday(){
   pincSelectedDate=window.PINC_DATES.today();
   pincMonthCursor=pincSelectedDate.slice(0,7);pincMonthInitialized=true;
@@ -1244,6 +1276,7 @@ function renderPincMonth(){
       }).join(''):'<div class="pinc-month-empty">Nenhuma integração está programada para a data selecionada.</div>';
   }
   if(g('pincMonthNewButton')){g('pincMonthNewButton').style.display=calendarPermission()?'':'none';g('pincMonthNewButton').disabled=!pincDaysLoaded}
+  window.PINC_CALENDAR_POLISH?.render({events:entries,month:pincMonthCursor,selectedDate:pincSelectedDate,today,loaded:pincDaysLoaded});
 }
 function renderPincDays(){
   const table=g('pincDaysList');if(!table)return;
@@ -1262,6 +1295,7 @@ function renderPincDays(){
   if(g('pincDaysNext'))g('pincDaysNext').textContent=futureEvents[0]?window.PINC_DATES.label(futureEvents[0].start):'—';
   if(g('pincDaysNextType'))g('pincDaysNextType').textContent=futureEvents[0]?window.PINC_DATES.audienceLabel(futureEvents[0].audience):'Nenhum evento futuro';
   if(g('pincDaysAccess'))g('pincDaysAccess').textContent=!pincDaysLoaded?'Verificando':todayEvents.length?'Liberado hoje':'Bloqueado hoje';
+  if(g('pincCalendarTopNew')){g('pincCalendarTopNew').style.display=canEdit?'':'none';g('pincCalendarTopNew').disabled=!pincDaysLoaded}
   if(g('pincDaysSave')){
     g('pincDaysSave').style.display=canEdit?'':'none';
     g('pincDaysSave').disabled=!pincDaysLoaded||pincDaysMutating;
