@@ -116,7 +116,7 @@
     if (!get('pincAgendaToolbar')) return;
     const stages = Array.isArray(context?.rows) ? context.rows : [];
     const audience = context?.audience === 'aprendizes' ? 'Aprendizes' : context?.audience === 'estagiarios' ? 'Estagiários' : 'Efetivos';
-    const period = context?.period;
+    const period = context?.audience === 'estagiarios' ? 'Horário único' : context?.period;
     const where = [context?.location, audience, period].filter(Boolean).join('  •  ');
     const contextEl = get('pincAgendaContext');
     if (contextEl) contextEl.textContent = where;
