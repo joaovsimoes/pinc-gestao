@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const period = (audience, value) => audience !== 'efetivos' ? String(value || 'matutino').toLowerCase() : String(value || '1').replace(/[^12]/g, '') || '1';
+  const period = (audience, value) => audience === 'estagiarios' ? 'unico' : audience === 'aprendizes' ? String(value || 'matutino').toLowerCase() : String(value || '1').replace(/[^12]/g, '') || '1';
   const key = (location, audience, value) => JSON.stringify([location, audience, period(audience, value)]);
   const events = rows => (rows || []).filter(r => r.type === 'periodReset' && ['agenda', 'report'].includes(r.kind) && r.location && ['efetivos', 'aprendizes', 'estagiarios'].includes(r.audience) && Number(r.createdAtMillis) > 0);
   function cutoff(rows, location, audience, value, kind) {
