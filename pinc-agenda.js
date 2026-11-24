@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const groups = [['efetivos', '1'], ['efetivos', '2'], ['aprendizes', 'matutino'], ['aprendizes', 'vespertino']];
+  const groups = [['efetivos', '1'], ['efetivos', '2'], ['aprendizes', 'matutino'], ['aprendizes', 'vespertino'], ['estagiarios', 'matutino'], ['estagiarios', 'vespertino']];
   function transform(value, encode) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
     const agenda = structuredClone(value);
