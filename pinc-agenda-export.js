@@ -118,12 +118,12 @@
     return {
       rows: Array.isArray(source) ? source.map(item => Array.isArray(item) ? item.slice() : []) : [],
       location: S.currentLocation || 'Localidade',
-      audience: S.audience === 'aprendizes' ? 'aprendizes' : 'efetivos',
+      audience: ['efetivos','aprendizes','estagiarios'].includes(S.audience) ? S.audience : 'efetivos',
       day: Number(S.day) === 2 ? 2 : 1,
       shift: S.apprenticeShift === 'vespertino' ? 'vespertino' : 'matutino'
     };
   }
-  function audienceName(data){ return data.audience==='efetivos'?'Efetivos':'Aprendizes'; }
+  function audienceName(data){ return data.audience==='efetivos'?'Efetivos':data.audience==='estagiarios'?'Estagiários':'Aprendizes'; }
   function periodName(data){ return data.audience==='efetivos'?'Dia '+data.day : (data.shift==='vespertino'?'Vespertino':'Matutino'); }
   async function preferredDate(data) {
     // Only prefill a date actually registered in Calendário PINC.
