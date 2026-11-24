@@ -203,6 +203,18 @@
     write(ctx,'PINC',W/2,65,75,COLORS.purple,900,'center');
     write(ctx,'Programa de Integração de Novos Colaboradores',W/2,147,18,COLORS.gray,500,'center');
   }
+  // Apresentação editorial: linhas simples e agrupamento por período, sem alterar a ordem das etapas.
+  function sectionForStage(stage,index,total) {
+    const name=String(stage[0]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    if(index===total-1 && /(acolh|encerr|orienta|fretado|fechamento|finaliz|conclusao)/.test(name))return 'Encerramento';
+    const time=String(stage[2]||'').trim().match(/^(\d{1,2})[:h](\d{2})/i);
+    if(!time)return 'Programação';
+    return Number(time[1])<12?'Manhã':'Tarde';
+  }
+  function isBreakStage(stage) {
+    return /(?:^|\b)(pausa|almoco|intervalo|cafe|recepcao)(?:\b|\/)/i.test(
+      String(stage[0]||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+  }
   async function paint(){
     const data=snapshot;
     const canvas=byId('pincExportCanvas');
@@ -211,108 +223,121 @@
     const drawVersion=++version;
     if(download)download.disabled=true;
     const status=byId('pincExportStatus');
-    if(status)status.textContent='Gerando prévia...';
+    if(status)status.textContent='Atualizando prévia...';
 
     const previewDate=formatDay(byId('pincExportDate')?.value||'');
     const instructions=instructionsFromInput();
     const measure=document.createElement('canvas').getContext('2d');
     if(!measure){if(status)status.textContent='Este navegador não oferece suporte à geração da imagem.';return;}
-    const stageLayouts=data.rows.map(stage=>{
-      const title=wrap(measure,stage[0]||'Etapa sem título',615,24,800);
-      const owner=wrap(measure,stage[1]||'PINC',615,18,500);
-      return {stage,title,owner,height:Math.max(104,28+title.length*30+owner.length*23+13)};
+
+    const rows=data.rows.map((stage,i)=>{
+      const title=wrap(measure,stage[0]||'Etapa sem título',625,24,700);
+      const owner=wrap(measure,stage[1]||'PINC',625,16,500);
+      const height=Math.max(79,14+title.length*28+5+owner.length*21+15);
+      return {stage,title,owner,height,section:sectionForStage(stage,i,data.rows.length)};
     });
-    const guidanceLayouts=instructions.map((s)=>wrap(measure,s,980,20,500));
-    const guidanceHeight=84+guidanceLayouts.reduce((sum,lines)=>sum+Math.max(34,lines.length*27+7),0)+28;
-    const firstY=354;
-    const stagesHeight=stageLayouts.reduce((sum,row)=>sum+row.height+10,0);
-    const guideY=firstY+stagesHeight+30;
-    const footerY=guideY+guidanceHeight+25;
-    const H=footerY+95;
+    // Os grupos são criados em sequência para não alterar os horários cadastrados.
+    const sections=[];
+    rows.forEach(row=>{
+      let group=sections[sections.length-1];
+      if(!group||group.name!==row.section){
+        group={name:row.section,rows:[]};
+        sections.push(group);
+      }
+      group.rows.push(row);
+    });
+    const top=359,groupHeaderH=57,groupGap=24;
+    const stagesHeight=sections.reduce((sum,group)=>
+      sum+groupHeaderH+group.rows.reduce((n,row)=>n+row.height,0)+groupGap,0);
+
+    // Orientações em duas colunas, sem a grande caixa de texto do modelo anterior.
+    const tipRows=[];
+    for(let i=0;i<instructions.length;i+=2){
+      const left=wrap(measure,instructions[i],447,17,500);
+      const right=instructions[i+1]?wrap(measure,instructions[i+1],447,17,500):[];
+      tipRows.push({left,right,height:Math.max(38,Math.max(left.length,right.length)*25+12)});
+    }
+    const guidanceHeight=instructions.length ? 78+tipRows.reduce((sum,row)=>sum+row.height,0)+20 : 0;
+    const guideY=top+stagesHeight+3;
+    const footerY=guideY+(guidanceHeight?guidanceHeight+28:0);
+    const H=Math.max(footerY+88,660);
     canvas.width=W;
     canvas.height=H;
     const ctx=canvas.getContext('2d',{alpha:false});
     if(!ctx){if(status)status.textContent='Falha ao criar a imagem.';return;}
-    // Wait for branding font and logo to settle. Ignore outdated renders.
     try{if(document.fonts?.ready)await document.fonts.ready;}catch(e){}
     if(drawVersion!==version||!byId('pincExportCanvas'))return;
 
-    ctx.fillStyle=COLORS.bg;ctx.fillRect(0,0,W,H);
-    const fade=ctx.createLinearGradient(0,0,310,280);
-    fade.addColorStop(0,'#e4c7ff');fade.addColorStop(1,'#faf7ff');
-    ctx.fillStyle=fade;
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(350,0);ctx.bezierCurveTo(280,90,176,146,0,171);ctx.closePath();ctx.fill();
-    ctx.fillStyle='#f1e8ff';
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(160,0);ctx.bezierCurveTo(140,56,67,128,0,135);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    // Pequenos detalhes da paleta PINC, sem ornamentação sobre os conteúdos.
+    ctx.fillStyle='#f7f1ff';
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(210,0);
+    ctx.bezierCurveTo(158,64,85,95,0,102);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='#efe4fd';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(W+50,H+65,208,Math.PI*1.0,Math.PI*1.56);ctx.stroke();
 
     await drawLogo(ctx);
     if(drawVersion!==version||!byId('pincExportCanvas'))return;
-
-    write(ctx,'Agenda do PINC',W/2,174,59,COLORS.text,900,'center');
-    panel(ctx,W/2-43,248,86,5,3,COLORS.purple);
-    const label=audienceName(data)+'  •  '+periodName(data)+'  •  '+data.location;
-    write(ctx,label,W/2,270,24,COLORS.subtitle,600,'center');
+    write(ctx,'Agenda do PINC',W/2,175,52,COLORS.text,850,'center');
+    write(ctx,audienceName(data)+'  •  '+periodName(data)+'  •  '+data.location,
+      W/2,247,22,COLORS.subtitle,550,'center');
     if(previewDate){
-      panel(ctx,W/2-105,309,210,32,16,COLORS.soft);
-      write(ctx,previewDate,W/2,316,18,COLORS.darkPurple,750,'center');
+      panel(ctx,W/2-105,288,210,39,19,'#f5efff');
+      write(ctx,previewDate,W/2,295,20,COLORS.darkPurple,750,'center');
     }else{
-      write(ctx,'Programação diária',W/2,311,18,COLORS.gray,500,'center');
+      write(ctx,'Programação da integração',W/2,294,17,COLORS.gray,500,'center');
     }
+    ctx.beginPath();ctx.moveTo(95,338);ctx.lineTo(W-95,338);
+    ctx.strokeStyle='#ede8f3';ctx.lineWidth=2;ctx.stroke();
 
-    // Timeline visual and row cards.
-    if(stageLayouts.length>1){
-      ctx.strokeStyle='#b58aff';ctx.lineWidth=3;ctx.beginPath();
-      ctx.moveTo(56,firstY+54);
-      ctx.lineTo(56,firstY+stagesHeight-stageLayouts[stageLayouts.length-1].height/2-6);
-      ctx.stroke();
+    let y=top;
+    sections.forEach(group=>{
+      // Cada período tem um único título e um divisor discreto.
+      panel(ctx,96,y+7,7,25,3,COLORS.purple);
+      write(ctx,group.name.toLocaleUpperCase('pt-BR'),115,y+8,18,COLORS.darkPurple,800);
+      ctx.beginPath();ctx.moveTo(97,y+47);ctx.lineTo(W-97,y+47);
+      ctx.strokeStyle='#e8e1ed';ctx.lineWidth=1.6;ctx.stroke();
+      y+=groupHeaderH;
+      group.rows.forEach((row,i)=>{
+        const h=row.height;
+        const isPause=isBreakStage(row.stage);
+        if(isPause)panel(ctx,95,y+3,W-190,h-6,13,'#faf7fe');
+        write(ctx,String(row.stage[2]||'—'),112,y+Math.max(13,(h-27)/2),23,
+          isPause?'#7c55a5':COLORS.darkPurple,750);
+        const contentY=y+(h-(row.title.length*28+5+row.owner.length*21))/2;
+        drawLines(ctx,row.title,280,contentY,28,24,COLORS.text,700);
+        drawLines(ctx,row.owner,280,contentY+row.title.length*28+5,21,16,COLORS.subtitle,450);
+        const value=duration(row.stage[3]);
+        write(ctx,value,W-112,y+Math.max(17,(h-22)/2),18,COLORS.subtitle,600,'right');
+        if(i<group.rows.length-1){
+          ctx.beginPath();ctx.moveTo(280,y+h);ctx.lineTo(W-110,y+h);
+          ctx.strokeStyle='#efebf4';ctx.lineWidth=1;ctx.stroke();
+        }
+        y+=h;
+      });
+      y+=groupGap;
+    });
+
+    if(instructions.length){
+      panel(ctx,95,guideY,W-190,guidanceHeight,17,'#faf8fe','#eee7f6',1);
+      write(ctx,'Orientações aos facilitadores',119,guideY+23,23,COLORS.darkPurple,750);
+      let tipY=guideY+77;
+      tipRows.forEach(({left,right,height})=>{
+        ctx.fillStyle='#a879e7';
+        ctx.beginPath();ctx.arc(125,tipY+10,4,0,Math.PI*2);ctx.fill();
+        drawLines(ctx,left,144,tipY,25,17,COLORS.text,500);
+        if(right.length){
+          ctx.beginPath();ctx.arc(645,tipY+10,4,0,Math.PI*2);ctx.fill();
+          drawLines(ctx,right,665,tipY,25,17,COLORS.text,500);
+        }
+        tipY+=height;
+      });
     }
-    let y=firstY;
-    stageLayouts.forEach((row,i)=>{
-      const h=row.height;
-      panel(ctx,79,y,1080,h,20,i%2===0?'#ffffff':'#fdfbff','#ddccef',1.5);
-      panel(ctx,100,y+(h-54)/2,54,54,14,COLORS.soft);
-      write(ctx,i+1,127,y+(h-31)/2,27,COLORS.darkPurple,900,'center');
-      ctx.fillStyle='#ffffff';ctx.strokeStyle='#a778eb';ctx.lineWidth=3;
-      ctx.beginPath();ctx.arc(56,y+h/2,9,0,Math.PI*2);ctx.fill();ctx.stroke();
-      let ty=y+21;
-      drawLines(ctx,row.title,179,ty,30,24,COLORS.text,800);
-      ty+=row.title.length*30+7;
-      drawLines(ctx,row.owner,179,ty,23,18,COLORS.subtitle,500);
-      ctx.beginPath();ctx.strokeStyle='#e0d0ee';ctx.lineWidth=2;
-      ctx.moveTo(841,y+19);ctx.lineTo(841,y+h-19);ctx.stroke();
-      panel(ctx,862,y+(h-49)/2,137,49,12,COLORS.soft);
-      shapeClock(ctx,887,y+h/2,COLORS.darkPurple);
-      write(ctx,String(row.stage[2]||'—'),922,y+(h-25)/2,22,COLORS.text,800);
-      panel(ctx,1013,y+(h-49)/2,129,49,12,COLORS.soft);
-      shapeHourglass(ctx,1037,y+h/2,COLORS.darkPurple);
-      write(ctx,duration(row.stage[3]),1059,y+(h-22)/2,17,COLORS.text,800);
-      y+=h+10;
-    });
-
-    panel(ctx,79,guideY,1080,guidanceHeight,23,'#f6efff','#e6d2ff',1.5);
-    panel(ctx,105,guideY+21,49,49,13,COLORS.purple);
-    // Simplified checklist symbol.
-    ctx.strokeStyle='#ffffff';ctx.lineWidth=3;ctx.lineCap='round';
-    [0,1,2].forEach(i=>{
-      const ly=guideY+32+i*11;
-      ctx.beginPath();ctx.moveTo(115,ly+3);ctx.lineTo(119,ly+7);ctx.lineTo(125,ly);ctx.moveTo(132,ly+4);ctx.lineTo(145,ly+4);ctx.stroke();
-    });
-    write(ctx,'Orientações aos facilitadores',171,guideY+30,30,COLORS.darkPurple,850);
-    let gy=guideY+89;
-    guidanceLayouts.forEach((lines,i)=>{
-      const rowH=Math.max(34,lines.length*27+7);
-      if(i===0)panel(ctx,103,gy-7,1027,rowH+7,13,'#ead8ff');
-      ctx.fillStyle=COLORS.purple;ctx.beginPath();ctx.arc(123,gy+12,5,0,Math.PI*2);ctx.fill();
-      drawLines(ctx,lines,145,gy,27,20,i===0?COLORS.darkPurple:COLORS.text,i===0?800:500);
-      gy+=rowH;
-    });
-    ctx.strokeStyle='#d1b7ea';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(190,footerY+25);ctx.lineTo(350,footerY+25);
-    ctx.moveTo(890,footerY+25);ctx.lineTo(1050,footerY+25);ctx.stroke();
-    write(ctx,'Planejamento e acompanhamento da integração',W/2,footerY+13,19,COLORS.subtitle,500,'center');
-
+    write(ctx,'Planejamento e acompanhamento da integração',
+      W/2,footerY+23,16,COLORS.gray,500,'center');
     pngCanvas=canvas;
     if(download)download.disabled=false;
-    if(status)status.textContent=W+' × '+H+' px • pronta para baixar';
+    if(status)status.textContent=W+' × '+H+' px • imagem pronta para baixar';
   }
   function download() {
     const canvas=pngCanvas;
