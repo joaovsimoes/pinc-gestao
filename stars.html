@@ -92,7 +92,7 @@
     <div class="launcher-grid">
       <div class="block"><div class="block-label">1 • Localidade</div><select id="locationSelect"></select></div>
       <div class="block"><div class="block-label">2 • Público</div><div class="option-pair audience-options"><button class="option active" id="effChoice" onclick="chooseAudience('efetivos')">Efetivos</button><button class="option" id="appChoice" onclick="chooseAudience('aprendizes')">Aprendizes</button><button class="option" id="internChoice" onclick="chooseAudience('estagiarios')">Estagiários</button></div></div>
-      <div class="block"><div class="block-label" id="periodLabel">3 • Dia</div><div class="option-pair" id="effSegment"><button class="option active" onclick="chooseDay(1)">Dia 1</button><button class="option" onclick="chooseDay(2)">Dia 2</button></div><div class="option-pair hidden" id="appSegment"><button class="option active" onclick="chooseShift('matutino')">Matutino</button><button class="option" onclick="chooseShift('vespertino')">Vespertino</button></div></div>
+      <div class="block"><div class="block-label" id="periodLabel">3 • Dia</div><div class="option-pair" id="effSegment"><button class="option active" onclick="chooseDay(1)">Dia 1</button><button class="option" onclick="chooseDay(2)">Dia 2</button></div><div class="option-pair hidden" id="appSegment"><button class="option active" onclick="chooseShift('matutino')">Matutino</button><button class="option" onclick="chooseShift('vespertino')">Vespertino</button></div><div id="internSegment" class="option-pair hidden"><span class="option active" style="display:grid;place-items:center;grid-column:1/-1" aria-label="Estagiários, horário único">Horário único</span></div></div>
     </div>
     <button class="enter" onclick="enterStars()">Acompanhar PINC</button>
   </div>
@@ -126,7 +126,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 const STORAGE='pinc-gestao-v6', BACKUP_STORAGE='pinc-gestao-backup-v1', PREVIOUS='pinc-gestao-v4';
-const FALLBACK={locations:[{name:'Anápolis',code:'ANP'},{name:'Goiânia',code:'GYN'}],settings:{tolerance:10},agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]},estagiarios:{matutino:[],vespertino:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}},estagiarios:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}}},participants:[],absents:[],reports:[],welcomeSchedule:{}};
+const FALLBACK={locations:[{name:'Anápolis',code:'ANP'},{name:'Goiânia',code:'GYN'}],settings:{tolerance:10},agenda:{efetivos:{1:[],2:[]},aprendizes:{matutino:[],vespertino:[]},estagiarios:{unico:[]}},live:{efetivos:{1:{completed:0,activeIndex:0,activePct:0,running:false},2:{completed:0,activeIndex:0,activePct:0,running:false}},aprendizes:{matutino:{completed:0,activeIndex:0,activePct:0,running:false},vespertino:{completed:0,activeIndex:0,activePct:0,running:false}},estagiarios:{unico:{completed:0,activeIndex:0,activePct:0,running:false}}},participants:[],absents:[],reports:[],welcomeSchedule:{}};
 let S=load(), selected={location:S.currentLocation||S.locations?.[0]?.name||'Anápolis',audience:'efetivos',day:1,shift:'matutino'};
 const PORTAL_ACCESS_USER=window.parent.PINC_PORTAL_USER.star;
 selected.location=PORTAL_ACCESS_USER.location;S.currentLocation=PORTAL_ACCESS_USER.location;
@@ -136,7 +136,7 @@ let starsDb=null,starsSharedUnsub=null,starsRealtimeUnsub=null,starsRemoteLock=n
 let starsResets=[],starsRows=[],starsSharedCore=null,starsSyncReady=false,starsLastDataAt=0;
 function applyStarsResets(){window.PINC_RESET.apply(S,starsResets,selected.location)}
 function consumeStarsResets(rows){starsResets=window.PINC_RESET.events(rows);applyStarsResets();if(starsRemoteLock&&!window.PINC_RESET.freshFeed(starsRemoteLock,starsResets))starsRemoteLock=null}
-function starsHasWelcomeData(v){return /\b\d{2}:\d{2}\b/.test(JSON.stringify(v||{}))}function applyAgendaPayloadStars(a,source='fallback'){if(!a||typeof a!=='object')return;const copy=window.PINC_AGENDA.decode(a),fromCore=source==='core';if(copy._welcomeSchedule&&(fromCore||!starsCoreWelcomeReady)){S.welcomeSchedule=structuredClone(copy._welcomeSchedule);if(fromCore&&starsHasWelcomeData(copy._welcomeSchedule))starsCoreWelcomeReady=true}if(Array.isArray(copy._participants)&&(fromCore||!starsCoreParticipantsReady)){S.participants=structuredClone(copy._participants);if(fromCore&&copy._participants.length)starsCoreParticipantsReady=true}if(Array.isArray(copy._absents)&&(fromCore||!starsCoreParticipantsReady))S.absents=structuredClone(copy._absents);if(copy._starsBroadcast&&typeof copy._starsBroadcast==='object')S.starsBroadcast=structuredClone(copy._starsBroadcast);if(copy._settings)S.settings={...(S.settings||{}),...copy._settings};if(copy._migrations)S._migrations={...(S._migrations||{}),...copy._migrations};delete copy._welcomeSchedule;delete copy._participants;delete copy._absents;delete copy._starsBroadcast;delete copy._settings;delete copy._migrations;delete copy._syncAt;S.agenda=copy}
+function starsHasWelcomeData(v){return /\b\d{2}:\d{2}\b/.test(JSON.stringify(v||{}))}function applyAgendaPayloadStars(a,source='fallback'){if(!a||typeof a!=='object')return;const copy=window.PINC_AGENDA.decode(a);copy.estagiarios ||= structuredClone(FALLBACK.agenda.estagiarios);if(!Array.isArray(copy.estagiarios.unico)){const old=[...(copy.estagiarios.matutino||[]),...(copy.estagiarios.vespertino||[])];copy.estagiarios.unico=old.filter((v,i)=>old.findIndex(w=>JSON.stringify(v)===JSON.stringify(w))===i)}const fromCore=source==='core';if(copy._welcomeSchedule&&(fromCore||!starsCoreWelcomeReady)){S.welcomeSchedule=structuredClone(copy._welcomeSchedule);if(fromCore&&starsHasWelcomeData(copy._welcomeSchedule))starsCoreWelcomeReady=true}if(Array.isArray(copy._participants)&&(fromCore||!starsCoreParticipantsReady)){S.participants=structuredClone(copy._participants);if(fromCore&&copy._participants.length)starsCoreParticipantsReady=true}if(Array.isArray(copy._absents)&&(fromCore||!starsCoreParticipantsReady))S.absents=structuredClone(copy._absents);if(copy._starsBroadcast&&typeof copy._starsBroadcast==='object')S.starsBroadcast=structuredClone(copy._starsBroadcast);if(copy._settings)S.settings={...(S.settings||{}),...copy._settings};if(copy._migrations)S._migrations={...(S._migrations||{}),...copy._migrations};delete copy._welcomeSchedule;delete copy._participants;delete copy._absents;delete copy._starsBroadcast;delete copy._settings;delete copy._migrations;delete copy._syncAt;S.agenda=copy}
 function mergeStarsReports(incoming){
   const records=new Map();
   for(const r of [...(S.reports||[]),...(incoming||[])]){
@@ -175,7 +175,7 @@ async function initSharedCoreStars(){try{if(!firebase.apps.length)firebase.initi
 
 
 function starsLockActive(d){if(!d||d.status!=='active'||d.commandLock!==true||d.running!==true)return false;const hb=Number(d.heartbeatAtMillis||d.heartbeatAt?.toMillis?.()||0);return !!hb&&(Date.now()-hb)<90000}
-function starsContextPeriod(){return selected.audience==='efetivos'?String(selected.day):selected.shift}
+function starsContextPeriod(){return selected.audience==='efetivos'?String(selected.day):selected.audience==='estagiarios'?'unico':selected.shift}
 function starsLockMatches(d){return window.PINC_RESET.freshFeed(d,starsResets)&&starsLockActive(d)&&d.location===selected.location&&d.audience===selected.audience&&String(d.period)===String(starsContextPeriod())}
 function consumeStarsRows(rows,fromCache=false){
   starsRows=rows.filter(r=>r.location===selected.location);consumeStarsResets(starsRows);
@@ -206,15 +206,15 @@ async function watchStarsRealtime(){
   }catch(e){console.error('Acolhe+ realtime init',e);setStarsSyncStatus(false)}
 }
 function load(){try{const raw=localStorage.getItem(STORAGE)||localStorage.getItem(BACKUP_STORAGE);return migrate(raw?JSON.parse(raw):structuredClone(FALLBACK))}catch(e){return structuredClone(FALLBACK)}}
-function migrate(x){x=x&&typeof x==='object'?x:structuredClone(FALLBACK);if(!x.locations?.length)x.locations=structuredClone(FALLBACK.locations);if(!x.agenda)x.agenda=structuredClone(FALLBACK.agenda);if(!x.agenda.aprendizes?.matutino)x.agenda.aprendizes=structuredClone(FALLBACK.agenda.aprendizes);if(!x.agenda.estagiarios)x.agenda.estagiarios=structuredClone(FALLBACK.agenda.estagiarios);for(const period of ['matutino','vespertino'])if(!Array.isArray(x.agenda.estagiarios[period]))x.agenda.estagiarios[period]=[];if(!x.live)x.live=structuredClone(FALLBACK.live);if(!x.live.estagiarios)x.live.estagiarios=structuredClone(FALLBACK.live.estagiarios);for(const period of ['matutino','vespertino'])x.live.estagiarios[period] ||= {completed:0,activeIndex:0,activePct:0,running:false};if(!x.participants)x.participants=structuredClone(FALLBACK.participants);if(!x.absents)x.absents=[];if(!x.reports)x.reports=[];if(!x.settings)x.settings={tolerance:10,notificationLead:10,desktopNotifications:false};if(x.settings.notificationLead==null)x.settings.notificationLead=10;if(!x.welcomeSchedule)x.welcomeSchedule={};if(!x.starsBroadcast||typeof x.starsBroadcast!=='object')x.starsBroadcast={};const addMin=(start,mins)=>{const p=String(start||'00:00').split(':').map(Number),t=((p[0]*60+p[1]+(+mins||0))%1440+1440)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};[x.agenda?.efetivos?.[1],x.agenda?.efetivos?.[2],x.agenda?.aprendizes?.matutino,x.agenda?.aprendizes?.vespertino,x.agenda?.estagiarios?.matutino,x.agenda?.estagiarios?.vespertino].forEach(g=>(g||[]).forEach(s=>{if(Array.isArray(s)&&!s[5])s[5]=addMin(s[2],s[3])}));return x}
+function migrate(x){x=x&&typeof x==='object'?x:structuredClone(FALLBACK);if(!x.locations?.length)x.locations=structuredClone(FALLBACK.locations);if(!x.agenda)x.agenda=structuredClone(FALLBACK.agenda);if(!x.agenda.aprendizes?.matutino)x.agenda.aprendizes=structuredClone(FALLBACK.agenda.aprendizes);if(!x.agenda.estagiarios)x.agenda.estagiarios=structuredClone(FALLBACK.agenda.estagiarios);if(!Array.isArray(x.agenda.estagiarios.unico)){const old=[...(x.agenda.estagiarios.matutino||[]),...(x.agenda.estagiarios.vespertino||[])];x.agenda.estagiarios.unico=old.filter((v,i)=>old.findIndex(w=>JSON.stringify(v)===JSON.stringify(w))===i)};if(!x.live)x.live=structuredClone(FALLBACK.live);if(!x.live.estagiarios)x.live.estagiarios=structuredClone(FALLBACK.live.estagiarios);x.live.estagiarios.unico ||= {completed:0,activeIndex:0,activePct:0,running:false};if(!x.participants)x.participants=structuredClone(FALLBACK.participants);if(!x.absents)x.absents=[];if(!x.reports)x.reports=[];if(!x.settings)x.settings={tolerance:10,notificationLead:10,desktopNotifications:false};if(x.settings.notificationLead==null)x.settings.notificationLead=10;if(!x.welcomeSchedule)x.welcomeSchedule={};if(!x.starsBroadcast||typeof x.starsBroadcast!=='object')x.starsBroadcast={};const addMin=(start,mins)=>{const p=String(start||'00:00').split(':').map(Number),t=((p[0]*60+p[1]+(+mins||0))%1440+1440)%1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};[x.agenda?.efetivos?.[1],x.agenda?.efetivos?.[2],x.agenda?.aprendizes?.matutino,x.agenda?.aprendizes?.vespertino,x.agenda?.estagiarios?.unico].forEach(g=>(g||[]).forEach(s=>{if(Array.isArray(s)&&!s[5])s[5]=addMin(s[2],s[3])}));return x}
 if(channel)channel.onmessage=e=>{S=migrate(e.data);renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()};
 window.addEventListener('storage',e=>{if((e.key===STORAGE||e.key===BACKUP_STORAGE)&&e.newValue){S=migrate(JSON.parse(e.newValue));renderLocations();if(!dashboardView.classList.contains('hidden'))renderDashboard()}});
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function starsLocationKey(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()}
 function starsIsGoiania(v=selected.location){return ['goiania','gyn'].includes(starsLocationKey(v))}
 function applyStarsLocationPolicy(){
- const gyn=starsIsGoiania();if(gyn){selected.audience='efetivos';selected.day=1}
- if(appChoice)appChoice.style.display=gyn?'none':'';
+ const gyn=starsIsGoiania();if(gyn){if(selected.audience==='estagiarios')selected.audience='efetivos';selected.day=1}
+ if(appChoice)appChoice.style.display='';
  if(internChoice)internChoice.style.display=gyn?'none':'';
  const dayButtons=document.querySelectorAll('#effSegment .option');
  if(dayButtons[1])dayButtons[1].style.display=gyn?'none':'';
@@ -223,8 +223,8 @@ function applyStarsLocationPolicy(){
   node?.setAttribute('aria-pressed',String(selected.audience===audience));
  }
  effSegment.classList.toggle('hidden',selected.audience!=='efetivos');
- appSegment.classList.toggle('hidden',gyn||selected.audience==='efetivos');
- if(window.periodLabel)periodLabel.textContent=selected.audience==='efetivos'?'3 • Dia':'3 • Turno';
+ appSegment.classList.toggle('hidden',selected.audience!=='aprendizes');internSegment.classList.toggle('hidden',selected.audience!=='estagiarios');
+ if(window.periodLabel)periodLabel.textContent=selected.audience==='efetivos'?'3 • Dia':selected.audience==='estagiarios'?'3 • Horário':'3 • Turno';
  dayButtons.forEach((b,i)=>b.classList.toggle('active',i===selected.day-1));
  document.querySelectorAll('#appSegment .option').forEach((b,i)=>b.classList.toggle('active',i===(selected.shift==='vespertino'?1:0)));
 }
@@ -239,9 +239,9 @@ function renderLocations(){
   if(identity)identity.textContent=user?'CDC '+user.cdc+' • '+user.location+' • Acompanhamento dos colaboradores do CDC informado':'';
   applyStarsLocationPolicy();
 }
-function chooseAudience(v){if(!['efetivos','aprendizes','estagiarios'].includes(v))return;if(starsIsGoiania()&&v!=='efetivos')return starsNotifyToast('Em Goiânia o PINC está disponível somente para Efetivos.');selected.audience=v;applyStarsLocationPolicy()}
+function chooseAudience(v){if(!['efetivos','aprendizes','estagiarios'].includes(v))return;if(starsIsGoiania()&&v==='estagiarios')return starsNotifyToast('Em Goiânia estão disponíveis Efetivos e Aprendizes.');selected.audience=v;applyStarsLocationPolicy()}
 function chooseDay(v){if(starsIsGoiania()&&Number(v)!==1)return starsNotifyToast('Em Goiânia o PINC acontece em um único dia.');selected.day=v;applyStarsLocationPolicy()}
-function chooseShift(v){if(!['matutino','vespertino'].includes(v))return;if(starsIsGoiania())return starsNotifyToast('Em Goiânia este turno não está disponível.');selected.shift=v;applyStarsLocationPolicy()}
+function chooseShift(v){if(!['matutino','vespertino'].includes(v))return;if(starsIsGoiania()&&selected.audience!=='aprendizes')return starsNotifyToast('Em Goiânia estão disponíveis os turnos de Aprendizes.');selected.shift=v;applyStarsLocationPolicy()}
 
 async function enforceStarsCalendar(){
   const location=String((window.parent.PINC_PORTAL_USER?.star||PORTAL_ACCESS_USER)?.location||'').trim();
@@ -256,7 +256,7 @@ async function enforceStarsCalendar(){
 }
 async function enterStars(){if(!await enforceStarsCalendar())return;try{const account=await parent.PINC_VALIDATE_PORTAL('star');selected.location=account.location;S.currentLocation=account.location;renderLocations()}catch(e){starsNotifyToast('Neste PINC não há colaboradores pendentes para esse CDC. Consulte outro CDC.');parent.PINC_NAV('home');parent.PINC_SHOW_STAR_LOGIN();return}applyStarsLocationPolicy();starsAgendaAt=0;await fetchLatestAgendaStars(selected.location);if(!await enforceStarsCalendar())return;selectionView.classList.add('hidden');dashboardView.classList.remove('hidden');watchStarsRealtime();renderDashboard()}
 function backToSelection(){dashboardView.classList.add('hidden');selectionView.classList.remove('hidden');if(starsRealtimeUnsub){starsRealtimeUnsub();starsRealtimeUnsub=null}starsRemoteLock=null;starsPublishedFeed=null;starsRows=[];setStarsSyncStatus(false);S=load();renderLocations()}
-function list(){return selected.audience==='efetivos'?(S.agenda?.efetivos?.[selected.day]||[]):(S.agenda?.[selected.audience]?.[selected.shift]||[])}
+function list(){return selected.audience==='efetivos'?(S.agenda?.efetivos?.[selected.day]||[]):(S.agenda?.[selected.audience]?.[selected.audience==='estagiarios'?'unico':selected.shift]||[])}
 function contextRows(audience,period){return starsRows.filter(d=>d.location===selected.location&&d.audience===audience&&String(d.period)===String(period)&&window.PINC_RESET.freshFeed(d,starsResets))}
 function contextProgress(audience,period){return contextRows(audience,period).filter(d=>d.type==='facilitatorProgress').sort((a,b)=>Number(b.updatedAtMillis||0)-Number(a.updatedAtMillis||0))[0]||null}
 function contextLock(audience,period){
@@ -275,12 +275,12 @@ function contextLive(audience,period){
 function live(){return contextLive(selected.audience,starsContextPeriod())}
 function currentStage(){const a=list(),l=live(),local=a[l.activeIndex]||null;if(local)return local;if(starsLockMatches(starsRemoteLock))return[starsRemoteLock.stageName||'Etapa em andamento',starsRemoteLock.stageOwner||'',starsRemoteLock.plannedStart||'',Number(starsRemoteLock.stageDuration||1),'',''];return null}
 function overall(){const a=list(),l=live();if(!a.length){const lock=contextLock(selected.audience,starsContextPeriod());return{pct:Number(lock?.overallPct||0),completed:Number(lock?.completed||0),total:Number(lock?.agendaTotal||0)}}const totalMinutes=a.reduce((sum,x)=>sum+(Number(x[3])||0),0)||1;let done=0;for(let i=0;i<Math.min(l.completed||0,a.length);i++)done+=Number(a[i][3])||0;if((l.activeIndex||0)<a.length&&(l.activeIndex||0)>=(l.completed||0))done+=(Number(a[l.activeIndex][3])||0)*Math.min(100,Math.max(0,l.activePct||0))/100;return{pct:Math.min(100,Math.round(done/totalMinutes*100)),completed:Math.min(l.completed||0,a.length),total:a.length}}
-function periodKey(){return selected.audience==='efetivos'?`Dia ${selected.day}`:selected.shift}
+function periodKey(){return selected.audience==='efetivos'?`Dia ${selected.day}`:selected.audience==='estagiarios'?'unico':selected.shift}
 function contextReports(audience=selected.audience,period=starsContextPeriod()){return(S.reports||[]).filter(r=>window.PINC_RESET.reportMatches(r,selected.location,audience,period))}
 function contextDelay(audience=selected.audience,period=starsContextPeriod()){return window.PINC_SCHEDULE.delay({agenda:S.agenda?.[audience]?.[period]||[],live:contextLive(audience,period),reports:contextReports(audience,period)})}
 function shiftTime(time,minutes){return window.PINC_SCHEDULE.shift(time,minutes)}
 function activeStarsFeed(){if(starsPublishedFeed&&starsPublishedFeed.enabled!==false)return starsPublishedFeed;const feed=S.starsBroadcast?.[selected.location];return feed?.enabled?feed:null}
-function welcomeContext(){return{audience:selected.audience,period:selected.audience==='efetivos'?'2':selected.shift}}
+function welcomeContext(){return{audience:selected.audience,period:selected.audience==='efetivos'?'2':selected.audience==='estagiarios'?'unico':selected.shift}}
 function findWelcomeTimes(){
   const ctx=welcomeContext(),a=S.agenda?.[ctx.audience]?.[ctx.period]||[],feed=activeStarsFeed();
   const cfg={...(S.welcomeSchedule?.[selected.location]?.[ctx.audience]?.[ctx.period]||{}),...(feed?.welcomeSchedule?.[ctx.audience]?.[ctx.period]||{})};
@@ -298,7 +298,7 @@ function renderStageRoute(){
   el.innerHTML=visible.length?visible.map((row,offset)=>{const i=start+offset,current=i===Number(l.activeIndex||0),done=i<Number(l.completed||0),parts=String(row[0]||'Etapa').split('/'),title=parts.shift(),subtitle=parts.join(' / ')||row[1]||'';return `<li class="route-step ${current?'is-current':done?'is-complete':''}" ${current?'aria-current="step"':''} title="${esc(row[0])}"><div class="route-marker" aria-hidden="true">${done?'✓':i+1}</div><strong>${esc(title)}</strong><span>${esc(subtitle)}</span></li>`}).join(''):'<li class="route-empty">Aguardando a agenda da Gestão.</li>';
 }
 function renderDashboard(){applyStarsResets();
-const period=selected.audience==='efetivos'?'Dia '+selected.day:(selected.shift==='matutino'?'Matutino':'Vespertino');
+const period=selected.audience==='efetivos'?'Dia '+selected.day:selected.audience==='estagiarios'?'Horário único':(selected.shift==='matutino'?'Matutino':'Vespertino');
 dashTitle.textContent='PINC • '+(selected.audience==='efetivos'?'Efetivos':selected.audience==='estagiarios'?'Estagiários':'Aprendizes');
 locChip.textContent=selected.location;
 audChip.textContent=selected.audience==='efetivos'?'Efetivos':selected.audience==='estagiarios'?'Estagiários':'Aprendizes';
@@ -307,9 +307,9 @@ renderStageRoute();renderWelcome();renderPeople();renderLastUpdate();
 }
 function renderWelcome(){
   const card=document.getElementById('welcomeCard');if(!card)return;
-  card.classList.toggle('hidden',starsIsGoiania());if(starsIsGoiania())return;
+  const hideWelcome=starsIsGoiania()&&selected.audience==='efetivos';card.classList.toggle('hidden',hideWelcome);if(hideWelcome)return;
   const ctx=welcomeContext(),a=S.agenda?.[ctx.audience]?.[ctx.period]||[],l=contextLive(ctx.audience,ctx.period),reports=contextReports(ctx.audience,ctx.period),delay=contextDelay(ctx.audience,ctx.period);
-  const period=ctx.audience==='efetivos'?'Dia 2':ctx.period==='matutino'?'Matutino':'Vespertino';
+  const period=ctx.audience==='efetivos'?'Dia 2':ctx.audience==='estagiarios'?'Horário único':ctx.period==='matutino'?'Matutino':'Vespertino';
   scheduleStatusText.textContent=`Previsões baseadas no ${period}. `+(delay===0?'Cronograma sem desvio.':delay>0?`${delay} min de atraso.`:`${Math.abs(delay)} min de adiantamento.`);
   const html=findWelcomeTimes().map(x=>{
     const actual=x.index>=0?window.PINC_SCHEDULE.actualTimes(a,reports,x.index).start:'';
